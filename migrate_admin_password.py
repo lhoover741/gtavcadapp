@@ -83,12 +83,13 @@ def ensure_platform_owner():
 
             admin_user = cursor.fetchone()
             if not admin_user:
-                logger.warning('   ! PlatformOwner user not found for email=%s, creating one', platform_owner_email)
                 if not initial_password:
-                    logger.warning('   ⚠️  PLATFORM_OWNER_INITIAL_PASSWORD not set; skipping PlatformOwner user creation')
+                    logger.warning('   ! PlatformOwner user not found for email=%s and PLATFORM_OWNER_INITIAL_PASSWORD is not set; skipping creation', platform_owner_email)
                     cursor.close()
                     connection.close()
+                    logger.info('   ✓ Migration skipped (no initial password configured)')
                     return True
+                logger.warning('   ! PlatformOwner user not found for email=%s, creating one', platform_owner_email)
                 password_hash = generate_password_hash(initial_password, method='pbkdf2:sha256')
                 cursor.execute("""
                     INSERT INTO users (username, email, password_hash, role, platform_role, active)

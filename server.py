@@ -356,7 +356,7 @@ def bootstrap_system():
             logger.error(f'❌ Database connection failed: {e}')
             return False
 
-        # Check and run pending migrations
+        # Check migration system
         try:
             inspector = sa_inspect(db.engine)
             if 'alembic_version' in inspector.get_table_names():
@@ -386,8 +386,151 @@ def bootstrap_system():
         except Exception as e:
             logger.error(f'❌ Error checking admin users: {e}')
 
+        # Run PlatformOwner migration to ensure admin account is properly configured
+        try:
+            _run_platform_owner_migration()
+        except Exception as e:
+            logger.warning(f'⚠️  PlatformOwner migration skipped (non-fatal): {e}')
+
     logger.info('✅ System bootstrap completed')
     return True
+
+
+def _run_platform_owner_migration():
+    """Ensure the PlatformOwner account exists and has a valid password_hash.
+
+    This replicates the logic from migrate_admin_password.py inline so it can
+    run inside the already-established app context without a circular import.
+    Gracefully skips user creation when the required password env var is absent.
+    """
+    from werkzeug.security import generate_password_hash as _gen_hash
+
+    def _env_true(value):
+        return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+    logger.info('🔑 Running PlatformOwner migration...')
+
+    platform_owner_email = (
+        os.getenv('PLATFORM_OWNER_EMAIL') or
+        os.getenv('ADMIN_EMAIL') or
+        'admin@govdirect.org'
+    ).strip().lower()
+    platform_owner_username = (
+        os.getenv('PLATFORM_OWNER_USERNAME') or
+        os.getenv('ADMIN_USERNAME') or
+        'platformowner'
+    ).strip()
+    initial_password = (
+        os.getenv('PLATFORM_OWNER_PASSWORD') or
+        os.getenv('PLATFORM_OWNER_INITIAL_PASSWORD') or
+        os.getenv('ADMIN_PASSWORD')
+    )
+    force_reset = _env_true(os.environ.get('FORCE_ADMIN_PASSWORD_RESET', 'false'))
+
+    connection = db.engine.raw_connection()
+    try:
+        cursor = connection.cursor()
+
+        # Ensure users table exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_name = 'users'
+            )
+        """)
+        if not cursor.fetchone()[0]:
+            logger.warning('⚠️  PlatformOwner migration skipped: users table does not exist yet')
+            cursor.close()
+            return
+
+        # Ensure platform_role column exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'users' AND column_name = 'platform_role'
+            )
+        """)
+        if not cursor.fetchone()[0]:
+            logger.info('   Adding platform_role column to users table...')
+            cursor.execute('ALTER TABLE users ADD COLUMN platform_role VARCHAR(64)')
+            connection.commit()
+            logger.info('   ✓ platform_role column added')
+
+        # Look up existing PlatformOwner by email
+        cursor.execute("""
+            SELECT id, email, password_hash, role, platform_role, active
+            FROM users
+            WHERE LOWER(email) = %s
+        """, (platform_owner_email,))
+        admin_user = cursor.fetchone()
+
+        if not admin_user:
+            # No user found — only create one if we have a password to set
+            if not initial_password:
+                logger.warning(
+                    '⚠️  PlatformOwner user not found for email=%s and no password env var '
+                    '(PLATFORM_OWNER_PASSWORD / ADMIN_PASSWORD) is set — skipping creation '
+                    'to avoid inserting a NULL password_hash',
+                    platform_owner_email,
+                )
+                cursor.close()
+                return
+
+            password_hash = _gen_hash(initial_password, method='pbkdf2:sha256')
+            cursor.execute("""
+                INSERT INTO users (username, email, password_hash, role, platform_role, active)
+                VALUES (%s, %s, %s, 'PlatformOwner', 'PlatformOwner', true)
+            """, (platform_owner_username, platform_owner_email, password_hash))
+            connection.commit()
+            logger.info('✅ PlatformOwner user created: %s', platform_owner_email)
+            cursor.close()
+            return
+
+        user_id, email, current_hash, current_role, current_platform_role, current_active = admin_user
+        should_set_password = (not current_hash) or force_reset
+
+        if should_set_password:
+            if not initial_password:
+                logger.warning(
+                    '⚠️  PlatformOwner (id=%s) has no password_hash and no password env var is set — '
+                    'updating role/status only to avoid NULL constraint violation',
+                    user_id,
+                )
+                cursor.execute("""
+                    UPDATE users
+                    SET role = 'PlatformOwner', platform_role = 'PlatformOwner', active = true
+                    WHERE LOWER(email) = %s AND password_hash IS NOT NULL
+                """, (platform_owner_email,))
+                if cursor.rowcount == 0:
+                    logger.warning(
+                        '⚠️  Skipped UPDATE for PlatformOwner (id=%s): password_hash is NULL '
+                        'and no password provided — set PLATFORM_OWNER_PASSWORD to fix this',
+                        user_id,
+                    )
+            else:
+                new_hash = _gen_hash(initial_password, method='pbkdf2:sha256')
+                cursor.execute("""
+                    UPDATE users
+                    SET password_hash = %s, role = 'PlatformOwner', platform_role = 'PlatformOwner', active = true
+                    WHERE LOWER(email) = %s
+                """, (new_hash, platform_owner_email))
+                logger.info('✅ PlatformOwner password initialized/reset for: %s', email)
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET role = 'PlatformOwner', platform_role = 'PlatformOwner', active = true
+                WHERE LOWER(email) = %s
+            """, (platform_owner_email,))
+            logger.info('✅ PlatformOwner role/status confirmed for: %s (existing password preserved)', email)
+
+        connection.commit()
+        logger.info('✅ PlatformOwner migration completed successfully')
+        cursor.close()
+    except Exception as e:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def initialize_default_config():
