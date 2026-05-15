@@ -20,7 +20,7 @@ from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import text, or_, func
+from sqlalchemy import text, or_, and_, func
 from security_service import (
     admin_required,
     police_required,
@@ -78,7 +78,7 @@ from models import (
     UseOfForceReport, OfficerNote, CaseFile, CaseCharge, CadAuditLog,
     AIGenerationLog, AuditLog, EvidenceAttachment,
     Community, CommunityMember, CommunityInvite,
-    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession
+    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession, Notification, NotificationRecipient
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -861,6 +861,19 @@ def socket_connect(auth=None):
     if sid:
         ACTIVE_SOCKET_CONNECTIONS[user_id] = sid
     join_room(room_name)
+    join_room(f'user:{user_id}')
+    join_room(f'community:{community_id}')
+    normalized_role = normalize_community_role(membership.role)
+    if normalized_role in ('Police', 'LEO', 'Officer'):
+        join_room(f'community:{community_id}:police')
+    if normalized_role in ('Dispatch',):
+        join_room(f'community:{community_id}:dispatch')
+    if normalized_role in ('DMV',):
+        join_room(f'community:{community_id}:dmv')
+    if normalized_role in ('Admin', 'Owner', 'CommunityAdmin', 'CommunityOwner'):
+        join_room(f'community:{community_id}:admin')
+    if session.get('is_platform_owner'):
+        join_room('platform:owners')
     from cad_helpers import log_audit
     log_audit(str(user_id), 'websocket_join', 'Socket', sid or 'unknown', actor_role=session.get('role'), ip_address=request.remote_addr)
     emit('socket:ready', {'success': True, 'room': room_name, 'community_id': community_id})
@@ -1301,6 +1314,22 @@ def ensure_arrest_automation_schema():
     db.session.commit()
 
 
+
+
+def ensure_notification_schema():
+    """Safely ensure backend notification tables exist for additive rollout."""
+    try:
+        db.create_all()
+        inspector = sa_inspect(db.engine)
+        tables = set(inspector.get_table_names())
+        if 'notifications' not in tables or 'notification_recipients' not in tables:
+            logger.warning('Notification tables still missing after create_all; check migration permissions.')
+            return False
+        return True
+    except Exception as exc:
+        logger.warning('Notification schema verification skipped: %s', exc)
+        return False
+
 def ensure_evidence_attachment_schema():
     """Safely create/sync additive evidence attachment storage table."""
     db.create_all()
@@ -1445,6 +1474,7 @@ with app.app_context():
         ensure_civilians_user_id_schema()
         ensure_evidence_attachment_schema()
         ensure_arrest_automation_schema()
+        ensure_notification_schema()
         backfill_criminal_record_links()
         logger.info('✓ Database tables verified on startup')
     except Exception as e:
@@ -8186,9 +8216,6 @@ def serve_static(path):
     return frontend_page('index.html')
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
-
 
 def configured_platform_owner_matches_user(user):
     owner_email = (os.getenv('PLATFORM_OWNER_EMAIL') or '').strip().lower()
@@ -11474,6 +11501,152 @@ def cad_ai_charge_suggestions():
         return ai_result
     out = ai_result[0]
     return jsonify({'success': True, 'suggestions': out.get('suggestions', []), 'warnings': out.get('warnings', [])})
+# For production with gunicorn + eventlet:
+# gunicorn --worker-class eventlet -w 1 server:app --bind 0.0.0.0:$PORT
+
+
+def _serialize_notification(n, recipient=None):
+    return {
+        'id': n.id,
+        'community_id': n.community_id,
+        'target_scope': n.target_scope,
+        'target_role': n.target_role,
+        'target_department': n.target_department,
+        'target_user_id': n.target_user_id,
+        'title': n.title,
+        'message': n.message,
+        'category': n.category,
+        'priority': n.priority,
+        'action_url': n.action_url,
+        'created_at': n.created_at.isoformat() if n.created_at else None,
+        'read': bool(recipient and recipient.read_at),
+        'dismissed': bool(recipient and recipient.dismissed_at),
+    }
+
+
+def get_active_community_auth_context(user_id, community_id):
+    context = {
+        'is_platform_owner': False,
+        'community_role': None,
+        'department': None,
+        'membership': None,
+    }
+    if not isinstance(user_id, int):
+        return context
+    user = User.query.get(user_id)
+    context['is_platform_owner'] = bool(user and (getattr(user, 'role', None) == 'PlatformOwner' or getattr(user, 'platform_role', None) == 'PlatformOwner'))
+    if not community_id:
+        return context
+    membership = CommunityMember.query.filter_by(user_id=user_id, community_id=community_id, status='Active').first()
+    if membership:
+        context['membership'] = membership
+        context['community_role'] = normalize_community_role(getattr(membership, 'role', None))
+        context['department'] = (getattr(membership, 'department', None) or '').strip() or None
+    return context
+
+
+def _notification_visibility_filter(user_id, community_id, auth_context):
+    role = auth_context.get('community_role')
+    department = auth_context.get('department')
+    filters = [
+        and_(Notification.target_scope == 'user', Notification.target_user_id == user_id),
+    ]
+    if community_id and auth_context.get('membership'):
+        filters.append(and_(Notification.target_scope == 'community', Notification.community_id == community_id))
+        if role:
+            filters.append(and_(Notification.target_scope == 'role', Notification.community_id == community_id, Notification.target_role == role))
+        if department:
+            filters.append(and_(Notification.target_scope == 'department', Notification.community_id == community_id, Notification.target_department == department))
+    if auth_context.get('is_platform_owner'):
+        filters.append(and_(Notification.target_scope.in_(['platform_owner', 'global'])))
+    return or_(*filters)
+
+
+def _query_notifications_for_user(user_id, community_id, auth_context):
+    q = Notification.query.filter(
+        (Notification.expires_at.is_(None)) | (Notification.expires_at > datetime.utcnow())
+    )
+    return q.filter(_notification_visibility_filter(user_id, community_id, auth_context))
+
+
+@app.route('/api/notifications', methods=['GET'])
+@require_auth
+def get_notifications():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    category = (request.args.get('category') or '').strip()
+    unread_only = parse_bool(request.args.get('unread'), default=False)
+
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).order_by(Notification.created_at.desc()).limit(100).all()
+    notif_ids = [n.id for n in rows]
+    rec_map = {}
+    if notif_ids:
+        recipients = NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids)).all()
+        rec_map = {r.notification_id: r for r in recipients}
+    results = []
+    for n in rows:
+        item = _serialize_notification(n, rec_map.get(n.id))
+        if category and item['category'].lower() != category.lower():
+            continue
+        if unread_only and item['read']:
+            continue
+        results.append(item)
+    return jsonify({'success': True, 'notifications': results})
+
+
+@app.route('/api/notifications/unread-count', methods=['GET'])
+@require_auth
+def notifications_unread_count():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
+    notif_ids = [n.id for n in rows]
+    read_ids = set()
+    if notif_ids:
+        read_ids = {r.notification_id for r in NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids), NotificationRecipient.read_at.isnot(None)).all()}
+    unread = len([nid for nid in notif_ids if nid not in read_ids])
+    return jsonify({'success': True, 'unread_count': unread})
+
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['POST'])
+@require_auth
+def mark_notification_read(notification_id):
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    visible = _query_notifications_for_user(user_id, community_id, auth_context).filter(Notification.id == notification_id).first()
+    if not visible:
+        return jsonify({'success': False, 'error': 'Notification not found'}), 404
+    rec = NotificationRecipient.query.filter_by(notification_id=notification_id, user_id=user_id).first()
+    if not rec:
+        rec = NotificationRecipient(notification_id=notification_id, user_id=user_id)
+        db.session.add(rec)
+    rec.read_at = datetime.utcnow()
+    db.session.commit()
+    socketio.emit('notification:read', {'notification_id': notification_id}, room=f'user:{user_id}')
+    return jsonify({'success': True})
+
+
+@app.route('/api/notifications/read-all', methods=['POST'])
+@require_auth
+def mark_all_notifications_read():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    now = datetime.utcnow()
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
+    for n in rows:
+        rec = NotificationRecipient.query.filter_by(notification_id=n.id, user_id=user_id).first()
+        if not rec:
+            rec = NotificationRecipient(notification_id=n.id, user_id=user_id)
+            db.session.add(rec)
+        rec.read_at = now
+    db.session.commit()
+    socketio.emit('notification:count', {'unread_count': 0}, room=f'user:{user_id}')
+    return jsonify({'success': True})
+
 import os
 
 if __name__ == "__main__":
@@ -11486,6 +11659,3 @@ if __name__ == "__main__":
         debug=False,
         allow_unsafe_werkzeug=True
     )
-
-# For production with gunicorn + eventlet:
-# gunicorn --worker-class eventlet -w 1 server:app --bind 0.0.0.0:$PORT
