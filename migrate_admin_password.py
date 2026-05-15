@@ -84,12 +84,18 @@ def ensure_platform_owner():
             admin_user = cursor.fetchone()
             if not admin_user:
                 logger.warning('   ! PlatformOwner user not found for email=%s, creating one', platform_owner_email)
-                password_hash = generate_password_hash(initial_password, method='pbkdf2:sha256') if initial_password else None
+                if not initial_password:
+                    logger.warning('   ⚠️  PLATFORM_OWNER_INITIAL_PASSWORD not set; skipping PlatformOwner user creation')
+                    cursor.close()
+                    connection.close()
+                    return True
+                password_hash = generate_password_hash(initial_password, method='pbkdf2:sha256')
                 cursor.execute("""
                     INSERT INTO users (username, email, password_hash, role, platform_role, active)
                     VALUES (%s, %s, %s, 'PlatformOwner', 'PlatformOwner', true)
                     RETURNING id, email, password_hash, role, platform_role, active
                 """, (platform_owner_username, platform_owner_email, password_hash))
+                connection.commit()
                 admin_user = cursor.fetchone()
 
             user_id, email, current_hash, current_role, current_platform_role, current_active = admin_user

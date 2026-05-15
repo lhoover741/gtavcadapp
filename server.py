@@ -346,61 +346,45 @@ def bootstrap_system():
     if admin_password_hash and len(admin_password_hash) < 60:  # bcrypt hashes are ~60 chars
         logger.warning('⚠️  ADMIN_PASSWORD_HASH appears to be weak or incorrectly set.')
 
-    # Check database connection
-    try:
-        db.engine.execute(text('SELECT 1'))
-        logger.info('✅ Database connection successful')
-    except Exception as e:
-        logger.error(f'❌ Database connection failed: {e}')
-        return False
+    with app.app_context():
+        # Check database connection
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(text('SELECT 1'))
+            logger.info('✅ Database connection successful')
+        except Exception as e:
+            logger.error(f'❌ Database connection failed: {e}')
+            return False
 
-    # Check and run pending migrations
-    try:
-        from flask_migrate import upgrade
-        with app.app_context():
-            # Check if alembic_version table exists
+        # Check and run pending migrations
+        try:
             inspector = sa_inspect(db.engine)
             if 'alembic_version' in inspector.get_table_names():
                 logger.info('✅ Migration system initialized')
             else:
                 logger.warning('⚠️  Migration system not initialized. Run `flask db upgrade` to apply migrations.')
-    except Exception as e:
-        logger.error(f'❌ Migration check failed: {e}')
+        except Exception as e:
+            logger.error(f'❌ Migration check failed: {e}')
 
-    # Check if users table exists and has admin
-    try:
-        inspector = sa_inspect(db.engine)
-        if 'users' in inspector.get_table_names():
-            admin_count = User.query.filter_by(role='Admin', active=True).count()
-            if admin_count == 0:
-                logger.warning('⚠️  No active admin users found. System will run in setup mode.')
-                logger.info('To create the first admin user, use the bootstrap endpoint or create manually.')
+        # Check if users table exists and has admin
+        try:
+            inspector = sa_inspect(db.engine)
+            if 'users' in inspector.get_table_names():
+                admin_count = User.query.filter_by(role='Admin', active=True).count()
+                if admin_count == 0:
+                    logger.warning('⚠️  No active admin users found. System will run in setup mode.')
+                    logger.info('To create the first admin user, use the bootstrap endpoint or create manually.')
+                else:
+                    logger.info(f'✅ Found {admin_count} active admin user(s)')
             else:
-                logger.info(f'✅ Found {admin_count} active admin user(s)')
-        else:
-            logger.warning('⚠️  Users table not found. Run migrations or create tables.')
-    except Exception as e:
-        logger.error(f'❌ Error checking admin users: {e}')
+                logger.warning('⚠️  Users table not found. Run migrations or create tables.')
 
-    # Check if users table exists and has admin
-    try:
-        inspector = sa_inspect(db.engine)
-        if 'users' in inspector.get_table_names():
-            admin_count = User.query.filter_by(role='Admin', active=True).count()
-            if admin_count == 0:
-                logger.warning('⚠️  No active admin users found. System will run in setup mode.')
-                logger.info('To create the first admin user, use the bootstrap endpoint or create manually.')
-            else:
-                logger.info(f'✅ Found {admin_count} active admin user(s)')
-        else:
-            logger.warning('⚠️  Users table not found. Run migrations or create tables.')
-
-        # Initialize default config if config table exists
-        if 'config' in inspector.get_table_names():
-            initialize_default_config()
-            logger.info('✅ Config initialized')
-    except Exception as e:
-        logger.error(f'❌ Error checking admin users: {e}')
+            # Initialize default config if config table exists
+            if 'config' in inspector.get_table_names():
+                initialize_default_config()
+                logger.info('✅ Config initialized')
+        except Exception as e:
+            logger.error(f'❌ Error checking admin users: {e}')
 
     logger.info('✅ System bootstrap completed')
     return True
@@ -3697,7 +3681,8 @@ def health_check():
 
     # Database health
     try:
-        db.engine.execute(text('SELECT 1'))
+        with db.engine.connect() as conn:
+            conn.execute(text('SELECT 1'))
         health['checks']['database'] = {'status': 'healthy', 'message': 'Database connection OK'}
     except Exception as e:
         health['status'] = 'unhealthy'
