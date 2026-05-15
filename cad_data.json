@@ -1,0 +1,159 @@
+{
+  "civilians": [],
+  "vehicles": [],
+  "licenses": [],
+  "warrants": [
+    {
+      "createdAt": "2026-05-06T08:17:09.862Z",
+      "id": "wrn-1778055429862-ub52zshzz",
+      "warrantCharges": "Murder",
+      "warrantExpiration": "2026-06-05",
+      "warrantIssuer": "Dispatch (D-04)",
+      "warrantName": "Terry crews",
+      "warrantNotes": "On the date of the incident, suspect Terry Crews was identified at the scene of a homicide that occurred in the vicinity of Davis. Witness statements corroborate that Crews was seen fleeing the area shortly after the gunshots were heard. Additionally, surveillance footage from local businesses in Strawberry captured Crews' vehicle leaving the scene. Forensic evidence collected indicates that the firearm used in the murder was registered to Crews. Given the violent nature of the crime and the suspect's previous offenses, there is an immediate threat to public safety in Los Santos, warranting the issuance of this arrest warrant.",
+      "warrantStatus": "Active"
+    },
+    {
+      "warrantName": "Yucca",
+      "warrantCharges": "Assult",
+      "warrantIssuer": "Gang Unit 2 (GU-02)",
+      "warrantExpiration": "2026-06-05",
+      "warrantStatus": "Active",
+      "warrantNotes": "On October 15, 2023, officers from the Gang Unit 2 (GU-02) responded to an assault reported at a known gathering location in Davis. Witnesses identified the suspect, Yucca, as the individual who initiated the altercation, resulting in significant injuries to the victim. Surveillance footage from nearby establishments corroborates witness statements, depicting Yucca's aggressive behavior preceding the incident. The suspect's known affiliation with local gangs, combined with the recent surge in violence in the Davis area, establishes probable cause for this warrant. The ongoing threat to public safety necessitates immediate intervention to prevent further violent acts within the community.",
+      "id": "wrn-1778103948798-h7tjv98w3",
+      "createdAt": "2026-05-06T21:45:48.798Z"
+    }
+  ],
+  "arrests": [
+    {
+      "arrestLocation": "Grove st gas station",
+      "arrestingOfficer": "Agent nfl",
+      "charges": "Assault deadly weapon",
+      "createdAt": "2026-05-06T01:51:54.206Z",
+      "evidenceAttached": "Yes",
+      "id": "arr-1778032314206-61msvpynz",
+      "penalty": "None",
+      "reportNotes": "",
+      "suspectName": "Team nihy"
+    }
+  ],
+  "incidents": [],
+  "evidence": [],
+  "trafficStops": [],
+  "calls911": [
+    {
+      "assignedUnit": "D-04",
+      "callerName": "None",
+      "createdAt": "2026-05-06T02:05:50.638Z",
+      "description": "Shot fired",
+      "id": "911-1778033150638-dlstdzsfj",
+      "incidentType": "Shots fired",
+      "location": "Davis",
+      "priority": "Critical",
+      "status": "Closed"
+    }
+  ],
+  "officers": [
+    {
+      "department": "LSPD",
+      "id": "1L-01",
+      "name": "Chief Unit",
+      "status": "Available"
+    },
+    {
+      "department": "LSPD",
+      "id": "2L-12",
+      "name": "Patrol Unit",
+      "status": "En Route"
+    },
+    {
+      "department": "Traffic Division",
+      "id": "3L-22",
+      "name": "Traffic Unit",
+      "status": "On Scene"
+    },
+    {
+      "department": "Dispatch",
+      "id": "D-04",
+      "name": "Dispatch",
+      "status": "Active"
+    },
+    {
+      "department": "K9 Unit",
+      "id": "K9-02",
+      "name": "K9 Unit",
+      "status": "Available"
+    },
+    {
+      "department": "Gang Enforcement",
+      "id": "GU-01",
+      "lastUpdate": "2026-05-06T01:50:11.395404",
+      "name": "Gang Unit 1",
+      "status": "On Scene"
+    },
+    {
+      "department": "Gang Enforcement",
+      "id": "GU-02",
+      "lastUpdate": "2026-05-06T21:43:13.935Z",
+      "name": "Gang Unit 2",
+      "status": "Busy"
+    },
+    {
+      "department": "BCSO",
+      "id": "BCSO-1",
+      "name": "BCSO Deputy 1",
+      "status": "Available"
+    },
+    {
+      "department": "BCSO",
+      "id": "BCSO-2",
+      "name": "BCSO Deputy 2",
+      "status": "Off Duty"
+    },
+    {
+      "department": "SWAT",
+      "id": "SWT-1",
+      "name": "SWAT Unit",
+      "status": "Off Duty"
+    }
+  ],
+  "activityLog": [
+    {
+      "id": "act-1778103948800-aor8jz2xa",
+      "type": "Warrant",
+      "message": "Warrant issued for undefined - undefined",
+      "timestamp": "2026-05-06T21:45:48.800Z"
+    },
+    {
+      "id": "act-1778055429864-hoyyrlsjh",
+      "message": "Warrant issued for undefined - undefined",
+      "timestamp": "2026-05-06T08:17:09.864Z",
+      "type": "Warrant"
+    },
+    {
+      "id": "act-1778033175870-dwsf1k2nb",
+      "message": "Call 911-1778033150638-dlstdzsfj status changed to En Route",
+      "timestamp": "2026-05-06T02:06:15.870Z",
+      "type": "Call Update"
+    },
+    {
+      "id": "act-1778033170794-kdfp9lh3n",
+      "message": "Call 911-1778033150638-dlstdzsfj status changed to Assigned",
+      "timestamp": "2026-05-06T02:06:10.794Z",
+      "type": "Call Update"
+    },
+    {
+      "id": "act-1778033150639-vbwvrfyxp",
+      "message": "New call created: Shots fired at Davis",
+      "timestamp": "2026-05-06T02:05:50.639Z",
+      "type": "911 Call"
+    },
+    {
+      "id": "act-1778032314207-eqrux1n8l",
+      "message": "Arrest filed for Team nihy - Assault deadly weapon",
+      "timestamp": "2026-05-06T01:51:54.207Z",
+      "type": "Arrest Report"
+    }
+  ],
+  "hearings": []
+}

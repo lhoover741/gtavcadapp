@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTAVCAD Platform Admin</title>
+  <style>
+    :root{--bg-main:#050505;--bg-panel:#0d0d0f;--bg-panel-soft:#151518;--text-main:#f5f5f5;--text-muted:#b9b9b9;--text-dim:#8f8f8f;--accent-red:#e63946;--accent-red-soft:#7a1018;--border-red:rgba(230,57,70,.45);--border-soft:rgba(255,255,255,.12);--success:#27c46b;--warning:#f6c343;--danger:#ff4d5e;--info:#5dade2;--bad:var(--danger);--muted:var(--text-muted)}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at top,rgba(230,57,70,.12),transparent 35%),var(--bg-main);color:var(--text-main);font-family:Inter,Arial,sans-serif}
+    .layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}.side{background:#080808;border-right:1px solid var(--border-soft);padding:1rem;position:sticky;top:0;height:100vh}
+    .brand{color:#ff7f89;font-weight:800;letter-spacing:.08em}.content{padding:1rem}.top{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .live{padding:.25rem .6rem;border-radius:999px;background:var(--bg-panel-soft);border:1px solid var(--border-soft);color:var(--text-main)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.4rem;background:var(--success);box-shadow:0 0 8px var(--success)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.8rem;margin:1rem 0}.card{background:linear-gradient(180deg,var(--bg-panel),#090909);border:1px solid var(--border-soft);padding:.8rem;border-radius:12px}
+    .k{font-size:.8rem;color:var(--text-muted)} .v{font-size:1.4rem;font-weight:700;color:#fff}
+    .panels{display:grid;grid-template-columns:2fr 1fr;gap:1rem}.panel{background:linear-gradient(180deg,var(--bg-panel),#080808);border:1px solid var(--border-soft);border-radius:12px;padding:1rem}
+    table{width:100%;border-collapse:collapse;font-size:.9rem;color:var(--text-main)}th,td{padding:.55rem;border-bottom:1px solid var(--border-soft);text-align:left;white-space:nowrap}
+    tbody tr:hover{background:rgba(255,255,255,.03)} th{color:#ffadb5}.status{padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid var(--border-soft)}.ONLINE{background:#082113;color:#a6f2c8}.IDLE{background:#2a2107;color:#ffe2a0}.OFFLINE{background:#2f0b10;color:#ffbcc3}
+    button{background:#1d1013;color:var(--text-main);border:1px solid var(--border-red);padding:.4rem .55rem;border-radius:8px;margin:.1rem;cursor:pointer}button:hover{background:#311215;border-color:#ff6b77}button:disabled{opacity:.6;color:var(--text-muted);cursor:not-allowed}
+    .feed{max-height:280px;overflow:auto}.feed-item{border-bottom:1px solid var(--border-soft);padding:.5rem 0;font-size:.9rem}.small{font-size:.8rem;color:var(--text-muted)}
+    .chart{height:180px;display:flex;align-items:flex-end;gap:8px}.bar{flex:1;background:linear-gradient(#ff5f6c,var(--accent-red-soft));border-radius:6px 6px 0 0}
+    .modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:1rem}.modal.active{display:flex}.box{width:min(420px,100%);background:var(--bg-panel);border:1px solid var(--border-red);padding:1rem;border-radius:12px}
+    input{width:100%;padding:.6rem;background:#0b0b0d;color:var(--text-main);border:1px solid var(--border-soft);border-radius:8px;margin:.3rem 0 .8rem}input::placeholder{color:var(--text-dim)}
+    .toast{position:fixed;right:10px;bottom:10px;background:var(--bg-panel);color:var(--text-main);border:1px solid var(--border-soft);padding:.7rem 1rem;border-radius:8px;display:none}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.side{height:auto;position:relative}.panels{grid-template-columns:1fr}th,td{font-size:.8rem}.table-wrap{overflow:auto}}
+  </style>
+</head>
+<body>
+<div class="layout"><aside class="side"><div class="brand">GTAVCAD ADMIN</div><p class="small">PlatformOwner Console</p></aside>
+<main class="content">
+  <div class="top"><h2>Platform Dashboard</h2><div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><span id="authMeta" class="small"></span><button id="logoutBtn" type="button">Logout</button><div class="live"><span class="dot"></span><span id="liveMeta">Fetching...</span></div></div></div>
+  <section class="cards" id="cards"></section>
+  <section class="panels"><div class="panel"><h3>Community Management</h3><div class="table-wrap"><table><thead><tr><th>Community</th><th>CAD</th><th>Invite</th><th>Owner</th><th>Members</th><th>Online</th><th>Last Active</th><th>Status</th><th>Actions</th></tr></thead><tbody id="communityRows"></tbody></table></div></div>
+  <div class="panel"><h3>Activity Feed</h3><div id="feed" class="feed"></div><h3>Load Chart</h3><div id="chart" class="chart"></div></div></section>
+  <section class="panel" style="margin-top:1rem"><h3>User Management</h3><div class="table-wrap"><table><thead><tr><th>Username</th><th>Email</th><th>Platform Role</th><th>Community</th><th>Community Role</th><th>Last Login</th><th>Status</th><th>Sessions</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div></section>
+</main></div>
+<div id="resetModal" class="modal"><div class="box"><h3>Reset Password</h3><input id="pw1" type="password" placeholder="New password"/><input id="pw2" type="password" placeholder="Confirm password"/><div class="small">Minimum 10 chars with uppercase, lowercase, number, and special character.</div><button id="resetSubmitBtn" type="button">Submit</button> <button id="resetCancelBtn" type="button">Cancel</button></div></div>
+<div id="toast" class="toast"></div>
+<script>
+(() => {
+  'use strict';
+
+  let targetUserId = null;
+  let lastOverview = null;
+  let refreshTimer = null;
+  let feedTimer = null;
+
+  const fmt = (value) => value ?? '—';
+  const byId = (id) => document.getElementById(id);
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (match) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[match]));
+  const statusFromTime = (iso) => {
+    if (!iso) return 'OFFLINE';
+    const diffMinutes = (Date.now() - new Date(iso).getTime()) / 60000;
+    if (!Number.isFinite(diffMinutes)) return 'OFFLINE';
+    return diffMinutes < 5 ? 'ONLINE' : diffMinutes < 30 ? 'IDLE' : 'OFFLINE';
+  };
+  const safeMessage = (error, fallback = 'Unexpected dashboard error') => {
+    const message = typeof error === 'string' ? error : (error && error.message) || fallback;
+    return String(message).replace(/[\r\n\t]+/g, ' ').slice(0, 180);
+  };
+
+  function toast(message, isError = false) {
+    const target = byId('toast');
+    if (!target) return;
+    target.textContent = safeMessage(message);
+    target.style.borderColor = isError ? 'var(--danger)' : 'var(--border-soft)';
+    target.style.display = 'block';
+    clearTimeout(target._timer);
+    target._timer = setTimeout(() => {
+      target.style.display = 'none';
+    }, 3500);
+  }
+
+  function showOverviewError(message = 'Unable to load platform dashboard') {
+    const main = document.querySelector('main.content');
+    if (!main) return;
+    let banner = byId('overviewError');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'overviewError';
+      banner.style.cssText = 'background:#1a0a0a;border:2px solid var(--danger);border-radius:10px;padding:1rem;margin:1rem 0;color:var(--text-main)';
+      banner.innerHTML = '<strong style="color:var(--danger)">Unable to load platform dashboard</strong><p class="small" data-error-message style="margin:.4rem 0 0"></p><button type="button" data-action="refresh" style="margin-top:.5rem">Retry</button>';
+      main.insertAdjacentElement('afterbegin', banner);
+    }
+    const text = banner.querySelector('[data-error-message]');
+    if (text) text.textContent = safeMessage(message, 'Unable to load platform dashboard');
+    toast('Unable to load platform dashboard', true);
+  }
+
+  function clearOverviewError() {
+    const banner = byId('overviewError');
+    if (banner) banner.remove();
+  }
+
+  function setLiveMeta(message) {
+    const el = byId('liveMeta');
+    if (el) el.textContent = message;
+  }
+
+  function requireArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function normalizeOverview(data) {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Malformed dashboard response');
+    }
+    if (data.success !== true) {
+      throw new Error(data.error || 'Unable to load platform dashboard');
+    }
+    const overview = data.overview && typeof data.overview === 'object' ? data.overview : {};
+    const metrics = data.metrics && typeof data.metrics === 'object' ? data.metrics : {};
+    return {
+      ...metrics,
+      ...overview,
+      communities: requireArray(data.communities ?? overview.communities),
+      users: requireArray(data.users ?? overview.users),
+      activity: requireArray(data.activity ?? overview.activity),
+      chart: data.chart && typeof data.chart === 'object' ? data.chart : (overview.chart || {}),
+      warnings: requireArray(data.warnings ?? overview.warnings),
+    };
+  }
+
+  async function apiCall(url, method = 'POST', body = null) {
+    const response = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : null,
+    });
+    const data = await response.json().catch(() => ({ success: false, error: 'Invalid response' }));
+    if (!response.ok || data.success === false) {
+      const message = data.error || `HTTP ${response.status}`;
+      toast(message, true);
+      throw new Error(message);
+    }
+    return data;
+  }
+
+  function renderCards(overview) {
+    const cards = byId('cards');
+    if (!cards) return;
+    const data = [
+      ['Total Communities', overview.total_communities],
+      ['Total Users', overview.total_users],
+      ['Online Users', overview.online_users],
+      ['Active Sessions', overview.active_sessions],
+      ['Total Officers', overview.total_officers],
+      ['Total Warrants', overview.total_warrants],
+      ['Total Arrests', overview.total_arrests],
+      ['Total Businesses', overview.total_businesses],
+      ['Platform Uptime', `${Math.floor(performance.now() / 1000)}s`],
+    ];
+    cards.innerHTML = data.map(([key, value]) => `<div class="card"><div class="k">${esc(key)}</div><div class="v">${esc(fmt(value))}</div></div>`).join('');
+  }
+
+  function communityRow(community) {
+    const id = String(community.community_id ?? '');
+    const status = community.status || 'OFFLINE';
+    return `<tr>
+      <td>${esc(community.name || community.community_name || id)}</td>
+      <td>${esc(fmt(community.cad_name))}</td>
+      <td>${esc(fmt(community.invite_code))}</td>
+      <td>${esc(fmt(community.owner_username))}</td>
+      <td>${esc(fmt(community.member_count))}</td>
+      <td>${esc(fmt(community.online_users))}</td>
+      <td>${esc(fmt(community.last_active))}</td>
+      <td><span class="status ${esc(status)}">${esc(status)}</span></td>
+      <td class="actions">
+        <button type="button" data-action="open-community" data-id="${esc(id)}">Open</button>
+        <button type="button" data-action="manage-community" data-id="${esc(id)}">Manage</button>
+        <button type="button" data-action="suspend-community" data-id="${esc(id)}">Suspend</button>
+        <button type="button" data-action="disable-community" data-id="${esc(id)}">Disable</button>
+        <button type="button" data-action="reset-invite" data-id="${esc(id)}">Reset Invite</button>
+        <button type="button" data-action="view-logs" data-id="${esc(id)}">View Logs</button>
+        <button type="button" data-action="impersonate-community" data-id="${esc(id)}">Impersonate</button>
+      </td>
+    </tr>`;
+  }
+
+  function userRow(user) {
+    const status = user.online_status || statusFromTime(user.last_login);
+    const id = Number(user.id);
+    return `<tr>
+      <td>${esc(user.username)}</td>
+      <td>${esc(fmt(user.email))}</td>
+      <td>${esc(user.platform_role || 'User')}</td>
+      <td>${esc(fmt(user.community_name))}</td>
+      <td>${esc(fmt(user.community_role))}</td>
+      <td>${esc(fmt(user.last_login))}</td>
+      <td><span class="status ${esc(status)}">${esc(status)}</span></td>
+      <td>${esc(fmt(user.session_count))}</td>
+      <td class="actions">
+        <button type="button" data-action="reset-password" data-id="${esc(id)}">Reset Password</button>
+        <button type="button" data-action="user-action" data-user-action="ban" data-id="${esc(id)}">Ban</button>
+        <button type="button" data-action="user-action" data-user-action="unban" data-id="${esc(id)}">Unban</button>
+        <button type="button" data-action="user-action" data-user-action="force-logout" data-id="${esc(id)}">Force Logout</button>
+        <button type="button" data-action="user-action" data-user-action="disable" data-id="${esc(id)}">Disable</button>
+        <button type="button" data-action="promote-user" data-id="${esc(id)}">Promote</button>
+      </td>
+    </tr>`;
+  }
+
+  function renderTables(overview) {
+    const communityRows = byId('communityRows');
+    const userRows = byId('userRows');
+    if (communityRows) {
+      const communities = requireArray(overview.communities);
+      communityRows.innerHTML = communities.length ? communities.map(communityRow).join('') : '<tr><td colspan="9" class="small">No communities found.</td></tr>';
+    }
+    if (userRows) {
+      const users = requireArray(overview.users);
+      userRows.innerHTML = users.length ? users.map(userRow).join('') : '<tr><td colspan="9" class="small">No users found.</td></tr>';
+    }
+  }
+
+  function renderFeed() {
+    const feed = byId('feed');
+    if (!feed) return;
+    const feedData = requireArray(lastOverview && lastOverview.activity);
+    if (!feedData.length) {
+      feed.innerHTML = '<div class="small">No recent activity.</div>';
+      return;
+    }
+    feed.innerHTML = feedData.map((activity) => `<div class="feed-item"><b>${esc((activity.type || activity.t || 'activity').toUpperCase())}</b> - ${esc(activity.message || activity.m || 'Updated')}<div class="small">${esc(activity.created_at || activity.timestamp || '')}</div></div>`).join('');
+  }
+
+  function renderChart(overview) {
+    const chart = byId('chart');
+    if (!chart) return;
+    const nums = [overview.total_users, overview.online_users, overview.total_arrests, overview.total_warrants, overview.total_businesses]
+      .map((n) => Math.max(1, Number(n) || 1));
+    const max = Math.max(...nums, 1);
+    chart.innerHTML = nums.map((n) => `<div class="bar" style="height:${Math.round((n / max) * 100)}%"></div>`).join('');
+  }
+
+  function renderOverview(data) {
+    const overview = normalizeOverview(data);
+    clearOverviewError();
+    lastOverview = overview;
+    renderCards(overview);
+    renderTables(overview);
+    renderFeed();
+    renderChart(overview);
+    if (overview.warnings.length) console.warn('Platform overview warnings:', overview.warnings.map(safeMessage));
+  }
+
+  async function refresh() {
+    setLiveMeta('Fetching...');
+    try {
+      const response = await fetch('/api/platform-admin/overview', { credentials: 'include' });
+      if (response.status === 403) {
+        document.body.innerHTML = "<div style='display:grid;place-items:center;min-height:100vh;background:#0a0a0a;color:#eee;font-family:Arial'><div style='max-width:560px;background:#121212;border:1px solid #3a2323;border-radius:12px;padding:1.2rem'><h2 style='color:#ff5a5a'>Platform Access Restricted</h2><p>You are authenticated but not a PlatformOwner.</p></div></div>";
+        return;
+      }
+      const data = await response.json().catch(() => {
+        throw new Error('Malformed dashboard response');
+      });
+      if (!response.ok) {
+        throw new Error((data && data.error) || `Server error (HTTP ${response.status})`);
+      }
+      renderOverview(data);
+      setLiveMeta(`Last refresh: ${new Date().toLocaleTimeString()}`);
+    } catch (error) {
+      console.error('Unable to load platform dashboard:', safeMessage(error));
+      showOverviewError('Unable to load platform dashboard');
+      renderTables({ communities: [], users: [] });
+      renderFeed();
+    } finally {
+      const live = byId('liveMeta');
+      if (live && live.textContent === 'Fetching...') live.textContent = 'Refresh failed';
+    }
+  }
+
+  async function hydrateAuth() {
+    try {
+      const response = await fetch('/api/auth/session', { credentials: 'include' });
+      const data = await response.json().catch(() => ({ success: false }));
+      if (!response.ok || !data.success) {
+        window.location.href = '/login';
+        return;
+      }
+      const user = data.user || {};
+      const authMeta = byId('authMeta');
+      if (authMeta) authMeta.textContent = `${user.username || 'Unknown'} · ${user.platform_role || user.role || 'User'}`;
+    } catch (error) {
+      console.warn('Unable to hydrate admin session:', safeMessage(error));
+    }
+  }
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+    localStorage.removeItem('gtavcad_context');
+    sessionStorage.removeItem('gtavcad_context');
+    window.location.href = '/login';
+  }
+
+  async function submitReset() {
+    const first = byId('pw1');
+    const second = byId('pw2');
+    const p1 = first ? first.value : '';
+    const p2 = second ? second.value : '';
+    const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}$/;
+    if (!strong.test(p1) || p1 !== p2) {
+      toast('Password mismatch or must meet complexity requirements', true);
+      return;
+    }
+    try {
+      const data = await apiCall(`/api/platform-admin/users/${encodeURIComponent(targetUserId)}/reset-password`, 'POST', { new_password: p1 });
+      if (data.success) {
+        toast('Password reset + sessions invalidated');
+        toggleModal(false);
+      }
+    } catch (error) {
+      toast(safeMessage(error, 'Reset failed'), true);
+    }
+  }
+
+  function toggleModal(on, id = null) {
+    targetUserId = id;
+    const modal = byId('resetModal');
+    if (modal) modal.classList.toggle('active', Boolean(on));
+  }
+
+  async function openCommunity(id) {
+    const data = await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/open`);
+    window.location.href = data.redirect;
+  }
+  async function suspendCommunity(id) {
+    await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/suspend`);
+    toast('Community suspended');
+    refresh();
+  }
+  async function disableCommunity(id) {
+    await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/disable`);
+    toast('Community disabled');
+    refresh();
+  }
+  async function resetInvite(id) {
+    const data = await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/reset-invite`);
+    window.prompt('New invite code', data.invite_code);
+  }
+  async function viewLogs(id) {
+    const data = await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/logs`, 'GET');
+    window.alert(requireArray(data.logs).map((log) => `${log.created_at || ''} ${log.action || ''}`).join('\n') || 'No logs found.');
+  }
+  async function manageCommunity(id) {
+    const data = await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/select`);
+    window.location.href = data.redirect_url || data.redirect || '/community-admin';
+  }
+  async function impersonateCommunity(id) {
+    const data = await apiCall(`/api/platform-admin/communities/${encodeURIComponent(id)}/impersonate`);
+    window.location.href = data.redirect_url || data.redirect || '/community-admin';
+  }
+  async function userAction(id, action, body = null) {
+    await apiCall(`/api/platform-admin/users/${encodeURIComponent(id)}/${encodeURIComponent(action)}`, 'POST', body);
+    toast(`User ${action} completed`);
+    refresh();
+  }
+  async function promoteUser(id) {
+    const role = window.prompt('Role: Admin, CommunityAdmin, CommunityOwner, PlatformOwner');
+    if (!role) return;
+    const body = { role };
+    if (role !== 'PlatformOwner') body.community_id = window.prompt('Community ID required for community role');
+    await userAction(id, 'promote', body);
+  }
+
+  function bindEvents() {
+    byId('logoutBtn')?.addEventListener('click', logout);
+    byId('resetSubmitBtn')?.addEventListener('click', submitReset);
+    byId('resetCancelBtn')?.addEventListener('click', () => toggleModal(false));
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-action]');
+      if (!button) return;
+      const { action, id, userAction: requestedUserAction } = button.dataset;
+      const handlers = {
+        refresh: () => refresh(),
+        'open-community': () => openCommunity(id),
+        'manage-community': () => manageCommunity(id),
+        'suspend-community': () => suspendCommunity(id),
+        'disable-community': () => disableCommunity(id),
+        'reset-invite': () => resetInvite(id),
+        'view-logs': () => viewLogs(id),
+        'impersonate-community': () => impersonateCommunity(id),
+        'reset-password': () => toggleModal(true, Number(id)),
+        'user-action': () => userAction(Number(id), requestedUserAction),
+        'promote-user': () => promoteUser(Number(id)),
+      };
+      Promise.resolve(handlers[action]?.()).catch((error) => {
+        console.error('Admin action failed:', safeMessage(error));
+        toast(safeMessage(error, 'Admin action failed'), true);
+      });
+    });
+  }
+
+  function installGlobalErrorSurface() {
+    window.addEventListener('error', (event) => {
+      const message = safeMessage(event.error || event.message, 'Unexpected dashboard error');
+      console.error('Frontend error:', message);
+      toast('A dashboard error occurred. Please refresh and try again.', true);
+    });
+    window.addEventListener('unhandledrejection', (event) => {
+      const message = safeMessage(event.reason, 'Unexpected dashboard error');
+      console.error('Frontend promise rejection:', message);
+      toast('A dashboard error occurred. Please refresh and try again.', true);
+      event.preventDefault();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    installGlobalErrorSurface();
+    bindEvents();
+    hydrateAuth().catch((error) => console.warn('Admin auth init failed:', safeMessage(error)));
+    refresh().catch((error) => {
+      console.error('Initial dashboard refresh failed:', safeMessage(error));
+      showOverviewError('Unable to load platform dashboard');
+    });
+    refreshTimer = setInterval(() => refresh().catch((error) => console.warn('Scheduled refresh failed:', safeMessage(error))), 15000);
+    feedTimer = setInterval(renderFeed, 10000);
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (refreshTimer) clearInterval(refreshTimer);
+    if (feedTimer) clearInterval(feedTimer);
+  });
+})();
+</script>
+</body></html>

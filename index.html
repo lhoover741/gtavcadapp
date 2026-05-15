@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTAVCAD | Multi-Community RP/CAD Platform</title>
+  <link rel="icon" type="image/png" href="/assets/images/gtavcad-logo.png" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/gtavcad-branding.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+</head>
+<body data-platform-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="gtavcad-brand-lockup" href="/">
+        <img class="gtavcad-brand-mark" src="/assets/images/gtavcad-logo.png" alt="GTAVCAD logo">
+        <span class="gtavcad-brand-text">
+          <span class="gtavcad-brand-title">GTAVCAD</span>
+          <span class="gtavcad-brand-subtitle">Dispatch System</span>
+        </span>
+      </a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="/communities">Communities</a>
+        <a href="/login">Login</a>
+        <a class="button button-primary" href="/create-community">Create Community</a>
+        <a class="button button-ghost" href="/join-community">Join Community</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero panel hero-panel">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Multi-Community RP/CAD Platform</p>
+          <h1>GTAVCAD</h1>
+          <p class="intro">Host, create, and join isolated GTA V roleplay CAD communities from one shared platform at gtavcad.app.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/create-community">Create a Community</a>
+            <a class="button button-secondary" href="/communities">Join Existing Community</a>
+          </div>
+        </div>
+        <div class="hero-panel card hero-card">
+          <h2>Create or Join a Community</h2>
+          <ul class="status-list">
+            <li><span class="badge badge-alert">PLATFORM</span> GTAVCAD global identity</li>
+            <li><span class="badge badge-secondary">TENANTS</span> Separate CAD data and branding</li>
+            <li><span class="badge badge-primary">DEFAULT</span> Migrated default tenant support</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section feature-section">
+      <h2>Built for many communities</h2>
+      <div class="card-grid">
+        <article class="card feature-card">
+          <h3>Community Workspaces</h3>
+          <p>Create dedicated CAD spaces for Metro RP, Alpha RP, DOJ RP, Blaine County RP, or any other RP community.</p>
+          <a class="card-link" href="/communities">Browse Communities</a>
+        </article>
+        <article class="card feature-card">
+          <h3>Isolated CAD Data</h3>
+          <p>Community-scoped civilians, warrants, calls, DMV records, reports, invites, memberships, and settings.</p>
+          <a class="card-link" href="/communities">Preview Default Tenant</a>
+        </article>
+        <article class="card feature-card">
+          <h3>Custom Branding</h3>
+          <p>Each tenant can set its own community name, CAD name, logo, colors, departments, rules, and server identity.</p>
+          <a class="card-link" href="/create-community">Start Setup</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel section system-panel">
+      <div class="container">
+        <h2>Platform vs community</h2>
+        <div class="system-grid">
+          <div class="system-item"><strong>GTAVCAD</strong> is the platform, domain, global navbar, login, onboarding, and community host.</div>
+          <div class="system-item"><strong>Default tenants</strong> only display their own branding inside their community context.</div>
+          <div class="system-item"><strong>Members</strong> can belong to multiple communities with scoped roles and departments.</div>
+          <div class="system-item"><strong>Tenants</strong> never share CAD records, config, or operational data.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> GTAVCAD — Multi-Community RP/CAD Platform.</p>
+      <p>GTAVCAD hosts communities; each community controls its own CAD data and branding.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

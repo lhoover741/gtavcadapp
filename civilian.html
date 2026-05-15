@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Civilian Registration | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/static/css/ai-assist.css" />
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <strong>GTAVCAD</strong>
+      <span>Community: <strong data-context-community>Loading…</strong></span>
+      <span>CAD: <strong data-context-cad>Loading…</strong></span>
+      <span>Role: <strong data-context-role>Loading…</strong></span>
+      <span>Invite: <strong data-context-invite>Loading…</strong></span>
+    </div>
+  </section>
+
+
+  <main>
+    <section class="hero page-hero panel">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Civilian identity system</p>
+          <h1>Civilian Registration</h1>
+          <p class="intro">Register your <span data-community-name>community</span> civilian identity for police lookup, DMV records, licenses, jobs, vehicles, and RP documentation.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#civilian-form">Register Civilian</a>
+            <a class="button button-secondary" href="dmv.html">View DMV</a>
+            <a class="button button-secondary" href="join.html">Join Discord</a>
+          </div>
+        </div>
+        <div class="hero-panel card">
+          <h2>Why this matters</h2>
+          <ul class="feature-list">
+            <li>Civilian profiles help organize RP identity and continuity.</li>
+            <li>Police can later use records for legal RP and scene management.</li>
+            <li>DMV links licenses and vehicles to official records.</li>
+            <li>Businesses can verify employee information and faction ties.</li>
+            <li>Staff can review identity consistency and RP consent.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section content-grid">
+      <article class="card info-card">
+        <h2>System overview</h2>
+        <p>Registered civilians form the backbone of the <span data-community-cad-name>community CAD</span> system. Profiles connect police checks, licensing, vehicle ownership, and faction roles with credible in-character history.</p>
+      </article>
+      <article class="card info-card">
+        <h2>Roleplay integration</h2>
+        <ul>
+          <li>Build an identity that officers, DMV, and businesses can trust.</li>
+          <li>Keep record data accurate for investigations and reporting.</li>
+          <li>Store emergency contacts, vehicle info, and license status.</li>
+          <li>Maintain clean RP continuity with backstory and consent.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="panel section form-panel">
+      <div class="container">
+        <div class="section-header civilian-form-header">
+          <h2>Register Civilian</h2>
+          <button id="ai-assist-btn" class="ai-assist-btn">
+            🤖 AI Assist
+          </button>
+        </div>
+        <p class="civilian-form-desc">Complete the profile for your <span data-community-name>community</span> civilian persona. This information is securely stored in the live CAD database and is immediately searchable by police and staff.</p>
+        <form id="civilian-form" class="system-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label><span>First name</span><input name="firstName" type="text" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Last name</span><input name="lastName" type="text" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Date of birth</span><input name="dob" type="date" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Gender</span><select name="gender" required><option value="">Select</option><option>Male</option><option>Female</option><option>Non-binary</option><option>Prefer not to say</option></select></label>
+            </div>
+            <div class="form-row">
+              <label><span>Phone number</span><input name="phone" type="tel" placeholder="(555) 019-8497" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Discord username</span><input name="discord" type="text" placeholder="player#1234" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Address / neighborhood</span><input name="address" type="text" placeholder="Little Seoul / Vinewood" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Occupation</span><input name="occupation" type="text" placeholder="Taxi driver / Mechanic" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Gang / faction affiliation</span><input name="faction" type="text" placeholder="None / Chamberlain" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Emergency contact name</span><input name="emergencyName" type="text" placeholder="Family or ally" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Emergency contact phone</span><input name="emergencyPhone" type="tel" placeholder="(555) 018-2029" required /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Driver license status</span><select name="driverLicense" required><option value="">Select</option><option>Valid</option><option>Suspended</option><option>Revoked</option><option>Pending</option><option>None</option></select></label>
+            </div>
+            <div class="form-row">
+              <label><span>Firearm license status</span><select name="firearmLicense" required><option value="">Select</option><option>Valid</option><option>Expired</option><option>None</option></select></label>
+            </div>
+            <div class="form-row">
+              <label><span>Business license status</span><select name="businessLicense" required><option value="">Select</option><option>Approved</option><option>Pending</option><option>None</option></select></label>
+            </div>
+            <div class="form-row">
+              <label><span>Vehicle make</span><input name="vehicleMake" type="text" placeholder="Bravado / Declasse" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Vehicle model</span><input name="vehicleModel" type="text" placeholder="Buffalo / Sultan" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Vehicle year</span><input name="vehicleYear" type="number" min="1980" max="2026" placeholder="2024" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Vehicle color</span><input name="vehicleColor" type="text" placeholder="Matte black" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Plate number</span><input name="plate" type="text" placeholder="LS-7823" /></label>
+            </div>
+            <div class="form-row">
+              <label><span>Insurance status</span><select name="insurance" required><option value="">Select</option><option>Active</option><option>Expired</option><option>None</option><option>Pending</option></select></label>
+            </div>
+            <div class="form-row full-width">
+              <label><span>Criminal background notes</span><textarea name="background" rows="4" placeholder="Mention active warrants, past arrests, or clean record." required></textarea></label>
+            </div>
+            <div class="form-row full-width">
+              <label><span>Character backstory</span><textarea name="backstory" rows="4" placeholder="Write a concise RP biography for your civilian persona." required></textarea></label>
+            </div>
+            <div class="checkbox-row full-width">
+              <input name="rpConsent" type="checkbox" required />
+              <label for="rpConsent">I confirm this information is for roleplay use only and understand it may be searched by police and staff.</label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="button button-primary">Save Civilian Profile</button>
+          </div>
+          <div class="form-status" id="civilian-status"></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="container section record-section">
+      <h2>Civilian record preview</h2>
+      <div id="civilian-preview" class="record-preview card">
+        <div class="record-empty">
+          <p>No civilian profile saved yet. Submit the form to preview the latest record here.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section notice-panel">
+      <div class="card notice-card">
+        <h2>Live database integration</h2>
+        <p>All civilian records are securely stored in the live CAD database. Records are immediately searchable by police and staff after registration.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Keep your profile updated for law enforcement, DMV, business, and community interactions.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/static/js/ai-assist.js"></script>
+</body>
+</html>

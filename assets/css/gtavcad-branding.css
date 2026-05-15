@@ -1,0 +1,107 @@
+/* GTAVCAD logo branding */
+.brand.brand-logo-lockup,
+.gtavcad-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: max-content;
+}
+
+.gtavcad-brand-mark,
+.brand-logo-lockup img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 12px rgba(255, 45, 45, 0.45));
+}
+
+.gtavcad-brand-text {
+  display: grid;
+  gap: 2px;
+  line-height: 1;
+}
+
+.gtavcad-brand-title {
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  font-size: 1.05rem;
+}
+
+.gtavcad-brand-subtitle {
+  color: var(--muted, #b3b3b3);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.gtavcad-login-logo-wrap {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 16px 0 8px;
+}
+
+.gtavcad-login-logo {
+  width: min(280px, 86%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(255, 45, 45, 0.34));
+}
+
+.gtavcad-login-title {
+  margin: 0;
+  color: #fff;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.gtavcad-login-subtitle {
+  margin: 0;
+  color: var(--muted, #b3b3b3);
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cad-topbar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cad-topbar-logo img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 45, 45, 0.35));
+}
+
+.cad-hero-logo-card {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.cad-hero-logo-card img {
+  width: min(360px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 26px rgba(255, 45, 45, 0.32));
+}
+
+@media (max-width: 720px) {
+  .gtavcad-brand-subtitle {
+    display: none;
+  }
+
+  .gtavcad-brand-mark,
+  .brand-logo-lockup img {
+    width: 42px;
+    height: 42px;
+  }
+}

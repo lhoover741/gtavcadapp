@@ -1,0 +1,145 @@
+EXTEND CURRENT CAD SYSTEM WITH THE FOLLOWING:
+
+-----------------------------------
+🚨 USE OF FORCE REPORT MODE
+-----------------------------------
+When force is mentioned or implied, automatically generate a Use of Force Report.
+
+FORMAT:
+
+REPORT TYPE: USE OF FORCE
+REPORT ID:
+DATE/TIME:
+LOCATION (GTA V ACCURATE):
+OFFICER(S) INVOLVED:
+SUBJECT(S) INVOLVED:
+
+INCIDENT SUMMARY:
+(Brief overview)
+
+-----------------------------------
+📊 FORCE DETAILS
+-----------------------------------
+TYPE OF FORCE USED:
+- Presence
+- Verbal Commands
+- Physical Control
+- Less Lethal (Taser, Baton)
+- Lethal Force (Firearm)
+
+REASON FOR FORCE:
+(Must clearly justify based on subject actions)
+
+LEVEL OF RESISTANCE:
+- Compliant
+- Passive Resistance
+- Active Resistance
+- Assaultive
+- Life-Threatening
+
+THREAT ASSESSMENT:
+- Weapons observed?
+- Threat to officer?
+- Threat to public?
+
+-----------------------------------
+🧠 LEGAL JUSTIFICATION (CRITICAL)
+-----------------------------------
+Generate a professional, court-defensible justification:
+
+- Clearly explain WHY force was necessary
+- Tie officer actions to subject behavior
+- Use objective, neutral wording
+- Avoid emotion or opinion
+- Emphasize proportional response
+
+-----------------------------------
+⏱️ FORCE TIMELINE
+-----------------------------------
+List events step-by-step:
+
+Example:
+- Officer arrival
+- Initial contact
+- Escalation
+- Force applied
+- Subject detained
+
+-----------------------------------
+🏥 MEDICAL + AFTERCARE
+-----------------------------------
+- Was EMS requested?
+- Injuries observed?
+- Treatment provided?
+
+-----------------------------------
+📷 EVIDENCE
+-----------------------------------
+- Bodycam (Yes/No)
+- Witnesses
+- Scene evidence
+
+-----------------------------------
+📌 DISPOSITION
+-----------------------------------
+- Arrested / Hospitalized / Released
+- Charges recommended
+
+-----------------------------------
+⚖️ COURT-READY LOGIC (VERY IMPORTANT)
+-----------------------------------
+ALL REPORTS MUST:
+
+- Be internally consistent (no contradictions)
+- Include time, location, actions, and reasoning
+- Avoid vague phrases like "acted suspicious"
+- Replace with observable behavior:
+  ❌ "acted suspicious"
+  ✅ "subject repeatedly reached into waistband and ignored commands"
+
+- Justify EVERY escalation step
+- Ensure force matches threat level
+- Flag missing critical data as:
+  "UNKNOWN – REQUIRES OFFICER INPUT"
+
+-----------------------------------
+🚔 AUTO CHARGE RECOMMENDATION
+-----------------------------------
+Based on incident, suggest charges:
+
+Examples:
+- Evading Police
+- Assault on Officer
+- Resisting Arrest
+- Brandishing Weapon
+
+-----------------------------------
+⚠️ LIABILITY PROTECTION MODE
+-----------------------------------
+Before finalizing report:
+
+AI MUST VERIFY:
+✔ Clear reason for stop/contact  
+✔ Lawful escalation of force  
+✔ Proportional response  
+✔ Documentation of warnings given  
+✔ Medical consideration  
+
+If any are missing:
+→ Add warning: "⚠️ REPORT MAY BE LEGALLY WEAK – MISSING DETAILS"
+
+-----------------------------------
+🔁 AUTO-INTEGRATION WITH CAD
+-----------------------------------
+- If suspect flees → trigger BOLO (existing system)
+- If force used → attach UOF report to main incident
+- If arrest made → include charges in final report
+
+-----------------------------------
+🎯 OUTPUT MODES UPDATE
+-----------------------------------
+Add:
+- “Use of Force” → UOF report only
+- “Full Legal” → Call + Report + UOF + Charges + BOLO
+
+-----------------------------------

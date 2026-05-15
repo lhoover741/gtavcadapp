@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Applications | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <strong>GTAVCAD</strong>
+      <span>Community: <strong data-context-community>Loading…</strong></span>
+      <span>CAD: <strong data-context-cad>Loading…</strong></span>
+      <span>Role: <strong data-context-role>Loading…</strong></span>
+      <span>Invite: <strong data-context-invite>Loading…</strong></span>
+    </div>
+  </section>
+
+
+  <main>
+    <section class="panel section page-hero">
+      <div class="container">
+        <p class="eyebrow">Role application center</p>
+        <h1>Applications</h1>
+        <p class="intro">Submit your interest for police, EMS, staff, business, gang, court, and DMV roles through a structured application process.</p>
+      </div>
+    </section>
+
+    <section class="container section cards-overview">
+      <div class="card-grid">
+        <article class="card feature-card">
+          <h3>Police Department</h3>
+          <p>Apply to join the police force and work on dispatch, investigations, and community safety.</p>
+        </article>
+        <article class="card feature-card">
+          <h3>EMS</h3>
+          <p>Join medical response teams to support injury RP, rescue scenes, and hospital roleplay.</p>
+        </article>
+        <article class="card feature-card">
+          <h3>Staff</h3>
+          <p>Help maintain community spaces, coordinate events, and support member experience.</p>
+        </article>
+        <article class="card feature-card">
+          <h3>Business Owner</h3>
+          <p>Request approval for storefronts, clubs, dealerships, and commercial faction operations.</p>
+        </article>
+        <article class="card feature-card">
+          <h3>Gang / Faction</h3>
+          <p>Apply for leadership or membership in a gang, crew, or street organization.</p>
+        </article>
+        <article class="card feature-card">
+          <h3>Court / Judge / Lawyer</h3>
+          <p>Take on legal roles that shape justice RP, trials, and courtroom scenes.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel section form-panel">
+      <div class="container">
+        <h2>Application form</h2>
+        <form id="application-form" class="system-form">
+          <div class="form-grid">
+            <label><span>Discord username</span><input name="appDiscord" type="text" required /></label>
+            <label><span>Character name</span><input name="appCharacter" type="text" required /></label>
+            <label><span>Application type</span><select name="applicationType" required><option value="">Select</option><option>Police Department</option><option>EMS</option><option>Staff</option><option>Business Owner</option><option>Gang / Faction</option><option>Court / Judge / Lawyer</option><option>DMV Worker</option></select></label>
+            <label><span>Age confirmation</span><select name="ageConfirmation" required><option value="">Select</option><option>18+</option><option>Under 18</option></select></label>
+            <label><span>RP experience</span><textarea name="experience" rows="3" required></textarea></label>
+            <label><span>Why do you want this role?</span><textarea name="roleReason" rows="3" required></textarea></label>
+            <label><span>Availability</span><input name="availability" type="text" placeholder="Evenings / Weekends" required /></label>
+            <label class="full-width"><span>Agreement to follow rules</span><select name="applicationAgreement" required><option value="">Select</option><option>I agree to follow all server rules and role requirements.</option><option>I do not agree.</option></select></label>
+          </div>
+          <div class="form-actions">
+            <button class="button button-primary" type="submit">Submit Application</button>
+          </div>
+          <div class="form-status" id="application-status"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Application entries are captured locally and ready for future integration.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('application-form');
+      const status = document.getElementById('application-status');
+      if (!form) return;
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+        status.className = 'form-status';
+        status.textContent = '';
+
+        const data = {};
+        new FormData(form).forEach((v, k) => { data[k] = v; });
+
+        if (data.applicationAgreement !== 'I agree to follow all server rules and role requirements.') {
+          status.className = 'form-status error';
+          status.textContent = 'You must agree to follow all server rules to submit an application.';
+          btn.disabled = false;
+          btn.textContent = 'Submit Application';
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const json = await res.json();
+
+          if (json.success) {
+            status.className = 'form-status success';
+            status.textContent = `Application ${json.id} submitted! Staff will review it and reach out via Discord.`;
+            form.reset();
+          } else {
+            status.className = 'form-status error';
+            status.textContent = json.error || 'Submission failed. Please try again.';
+          }
+        } catch (err) {
+          status.className = 'form-status error';
+          status.textContent = 'Network error. Please check your connection and try again.';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Submit Application';
+        }
+      });
+    })();
+  </script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

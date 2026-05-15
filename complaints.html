@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complaints | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <strong>GTAVCAD</strong>
+      <span>Community: <strong data-context-community>Loading…</strong></span>
+      <span>CAD: <strong data-context-cad>Loading…</strong></span>
+      <span>Role: <strong data-context-role>Loading…</strong></span>
+      <span>Invite: <strong data-context-invite>Loading…</strong></span>
+    </div>
+  </section>
+
+
+  <main>
+    <section class="panel section page-hero">
+      <div class="container">
+        <p class="eyebrow">Incident reporting</p>
+        <h1>Complaints & Reports</h1>
+        <p class="intro">Submit detailed complaints for player, staff, officer, or rule break incidents and support fair review through the ticket system.</p>
+      </div>
+    </section>
+
+    <section class="container section content-grid">
+      <article class="card info-card">
+        <h2>Complaint types</h2>
+        <ul>
+          <li>Player report</li>
+          <li>Staff complaint</li>
+          <li>Officer complaint</li>
+          <li>Rule break</li>
+          <li>Fail RP</li>
+          <li>RDM / VDM</li>
+          <li>Harassment</li>
+          <li>Evidence submission</li>
+        </ul>
+      </article>
+      <article class="card info-card">
+        <h2>Officer complaint process</h2>
+        <p>Complaints against officers go through the complaint-ticket channel and are reviewed by staff to maintain accountability and RP integrity.</p>
+      </article>
+    </section>
+
+    <section class="panel section form-panel">
+      <div class="container">
+        <h2>Submit complaint</h2>
+        <form id="complaint-form" class="system-form">
+          <div class="form-grid">
+            <label><span>Discord username</span><input name="complaintDiscord" type="text" required /></label>
+            <label><span>Reported player/staff/officer</span><input name="reportedName" type="text" required /></label>
+            <label><span>Complaint type</span><select name="complaintType" required><option value="">Select</option><option>Player report</option><option>Staff complaint</option><option>Officer complaint</option><option>Rule break</option><option>Fail RP</option><option>RDM / VDM</option><option>Harassment</option><option>Evidence submission</option></select></label>
+            <label><span>Date/time of incident</span><input name="incidentDate" type="datetime-local" required /></label>
+            <label><span>Location/channel</span><input name="incidentLocation" type="text" placeholder="Mission Row / #traffic-stop-1" required /></label>
+            <label><span>Evidence link</span><input name="evidenceLink" type="url" placeholder="https://" /></label>
+            <label><span>Witnesses</span><input name="witnesses" type="text" placeholder="Player1, Player2" /></label>
+          </div>
+          <label class="full-width"><span>Description</span><textarea name="description" rows="4" required></textarea></label>
+          <label class="full-width"><span>Desired resolution</span><textarea name="resolution" rows="3" placeholder="Explain how you want the complaint handled." required></textarea></label>
+          <div class="form-actions">
+            <button class="button button-primary" type="submit">Submit Complaint</button>
+          </div>
+          <div class="form-status" id="complaint-status"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Use the ticket system for fair review and officer accountability.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('complaint-form');
+      const status = document.getElementById('complaint-status');
+      if (!form) return;
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+        status.className = 'form-status';
+        status.textContent = '';
+
+        const data = {};
+        new FormData(form).forEach((v, k) => { data[k] = v; });
+
+        try {
+          const res = await fetch('/api/complaint', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const json = await res.json();
+
+          if (json.success) {
+            status.className = 'form-status success';
+            status.textContent = `Complaint ${json.id} submitted successfully. Staff will review it shortly.`;
+            form.reset();
+          } else {
+            status.className = 'form-status error';
+            status.textContent = json.error || 'Submission failed. Please try again.';
+          }
+        } catch (err) {
+          status.className = 'form-status error';
+          status.textContent = 'Network error. Please check your connection and try again.';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Submit Complaint';
+        }
+      });
+    })();
+  </script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

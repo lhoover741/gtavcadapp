@@ -1,0 +1,2957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Police / CAD | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-cad-auth-header data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+      <div style="display:grid;gap:4px;">
+        <strong><span data-context-cad>GTAVCAD</span></strong>
+        <span data-context-community>Loading community…</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span><strong data-context-username>Signed in</strong> · <span data-context-role>Loading role…</span></span>
+        <span class="badge" data-cad-access-badge>CAD ACCESS</span>
+        <button type="button" class="button button-secondary hidden" data-exit-impersonation>Exit Impersonation</button>
+        <a class="button button-ghost" data-community-link="index" href="#">Return to Community Home</a>
+        <button type="button" class="button button-primary" data-auth-logout>Logout</button>
+      </div>
+    </div>
+  </section>
+
+  <main>
+
+    <section class="cad-shell" id="cad-shell">
+      <div class="cad-topbar">
+        <div><strong>GTAVCAD</strong> · <span id="cad-topbar-community">Community</span> · CAD / MDT</div>
+        <div><span id="cad-module-title">Dashboard</span> · <span id="cad-aop">AOP: Citywide</span> · <span id="cad-now"></span></div>
+        <div><span id="cad-topbar-username">Officer</span> · <span id="cad-topbar-role">Police</span>
+          <select id="cad-officer-status"><option>Available</option><option>En Route</option><option>On Scene</option><option>Busy</option><option>Off Duty</option></select>
+          <a class="button button-ghost" data-community-link="index" href="#">Back to Community</a>
+          <button type="button" class="button button-primary" data-auth-logout>Logout</button>
+        </div>
+      </div>
+      <div class="cad-grid">
+        <aside class="cad-sidebar" id="cad-sidebar">
+          <button class="cad-sidebar-btn active" data-cad-module-target="dashboard">Dashboard</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="calls">Active Calls</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="traffic">Traffic Stops</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="lookup">Lookup</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="warrants">Warrants</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="arrests">Arrests</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="evidence">Evidence</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="reports">Reports</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="court">Court / Case Packets</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="officer-status">Officer Status</button>
+          <button class="cad-sidebar-btn" data-cad-module-target="gang-investigations">Gang Unit / Investigations</button>
+        </aside>
+        <div class="cad-main">
+          <section class="cad-module active" data-cad-module="dashboard"><div class="cad-panel"><h3>Dashboard</h3><div class="cad-map-card"><h4>City Map / AOP Map</h4><div class="cad-map-panel"><div class="cad-map-toolbar"><button class="cad-map-filter active" data-map-target="dashboard" data-map-filter="all">All</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="police">Police</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="dmv">DMV</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="businesses">Businesses</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="gangs">Gangs</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="emergency">Emergency</button><button class="cad-map-filter" data-map-target="dashboard" data-map-filter="court">Court</button></div><div class="cad-map-frame"><iframe src="https://gta-5-map.com?embed=light" height="500" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="position: relative; width: 100%; border: 0;" title="GTA 5 Los Santos CAD Map"></iframe></div></div></div><div class="cad-action-row"><button class="button button-secondary" data-cad-quick-action="calls" data-cad-focus="#dispatch-form [name=callerName]">Create 911 Call</button><button class="button button-secondary" data-cad-quick-action="traffic" data-cad-focus="#traffic-form [name=suspectName]">Start Traffic Stop</button><button class="button button-secondary" data-cad-quick-action="lookup" data-cad-focus="#civilian-lookup-form [name=lookupName]">Lookup Civilian</button><button class="button button-secondary" data-cad-quick-action="lookup" data-cad-focus="#plate-lookup-form [name=plateLookup]">Lookup Vehicle Plate</button><button class="button button-secondary" data-cad-quick-action="warrants" data-cad-focus="#warrant-form [name=subject_name]">Add Warrant</button><button class="button button-secondary" data-cad-quick-action="arrests" data-cad-focus="#arrest-form [name=suspectName]">File Arrest Report</button><button class="button button-secondary" data-cad-quick-action="evidence" data-cad-focus="#evidence-form [name=evidenceDescription]">Submit Evidence</button><button class="button button-secondary" data-cad-quick-action="court" data-cad-focus="#case-packet-form [name=incident_summary]">Generate Case Packet</button><button class="button button-secondary" data-cad-quick-action="gang-investigations">Gang Investigation</button></div></div><div data-cad-mount="dashboard"></div></section>
+          <section class="cad-module" data-cad-module="calls"><div data-cad-mount="calls"></div></section>
+          <section class="cad-module" data-cad-module="traffic"><div data-cad-mount="traffic"></div></section>
+          <section class="cad-module" data-cad-module="lookup"><div data-cad-mount="lookup"></div></section>
+          <section class="cad-module" data-cad-module="warrants"><div data-cad-mount="warrants"></div></section>
+          <section class="cad-module" data-cad-module="arrests"><div data-cad-mount="arrests"></div></section>
+          <section class="cad-module" data-cad-module="evidence"><div data-cad-mount="evidence"></div></section>
+          <section class="cad-module" data-cad-module="reports"><div data-cad-mount="reports"></div></section>
+          <section class="cad-module" data-cad-module="court"><div data-cad-mount="court"></div></section>
+          <section class="cad-module" data-cad-module="officer-status"><div data-cad-mount="officer-status"></div></section>
+          <section class="cad-module" data-cad-module="gang-investigations"><div class="cad-panel"><h3>Gang Unit / Investigations</h3><div class="gang-intel-grid"><div class="cad-card"><div class="cad-card-header"><h4>Gang Profiles</h4><button class="button button-secondary" type="button" id="gang-profile-toggle">Add Gang Profile</button></div><form id="gang-profile-form" class="cad-inline-form hidden"><input name="gangName" placeholder="Gang / Crew Name" required><input name="aliases" placeholder="Known Aliases"><input name="territory" placeholder="Territory / Block"><input name="colors" placeholder="Colors / Identifiers"><select name="threatLevel"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><input name="knownMembers" placeholder="Known Members"><input name="knownVehicles" placeholder="Known Vehicles"><input name="knownWeapons" placeholder="Known Weapons"><input name="notes" placeholder="Notes"><select name="status"><option>Active</option><option>Inactive</option><option>Under Investigation</option><option>Cleared</option></select><button class="button button-primary" type="submit">Save Profile</button></form><div id="gang-profiles-list"></div></div><div class="cad-card cad-map-card gang-map-span"><h4>Territory Map</h4><div class="cad-map-panel"><div class="cad-map-toolbar"><button class="cad-map-filter active" data-map-target="gang" data-map-filter="all">All</button><button class="cad-map-filter" data-map-target="gang" data-map-filter="gangs">Gangs</button><button class="cad-map-filter" data-map-target="gang" data-map-filter="police">Police</button><button class="cad-map-filter" data-map-target="gang" data-map-filter="emergency">Emergency</button></div><div class="cad-map-frame"><iframe src="https://gta-5-map.com?embed=light" height="500" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="position: relative; width: 100%; border: 0;" title="GTA 5 Los Santos CAD Map"></iframe></div></div></div><div class="cad-card"><div class="cad-card-header"><h4>Investigation Cases</h4><button class="button button-secondary" type="button" id="gang-case-toggle">Create Investigation Case</button></div><form id="gang-case-form" class="cad-inline-form hidden"><input name="caseTitle" placeholder="Case Title" required><input name="investigationId" placeholder="Investigation ID"><input name="linkedGang" placeholder="Linked Gang"><input name="linkedSuspect" placeholder="Linked Suspect"><input name="leadDetective" placeholder="Lead Detective"><input name="priority" placeholder="Priority"><select name="status"><option>Open</option><option>Monitoring</option><option>Warrant Requested</option><option>Arrest Made</option><option>Closed</option></select><input name="linkedEvidence" placeholder="Linked Evidence"><input name="linkedWarrants" placeholder="Linked Warrants"><input name="linkedPacket" placeholder="Linked Case Packet"><input name="summary" placeholder="Summary / Notes"><button class="button button-primary" type="submit">Save Case</button></form><div id="gang-cases-list"></div></div><div class="cad-card"><div class="cad-card-header"><h4>Suspect Watchlist</h4><button class="button button-secondary" type="button" id="gang-watchlist-toggle">Add Watchlist Suspect</button></div><form id="gang-watchlist-form" class="cad-inline-form hidden"><input name="suspectName" placeholder="Suspect Name" required><input name="alias" placeholder="Alias"><input name="dob" placeholder="DOB"><input name="gangAffiliation" placeholder="Gang Affiliation"><input name="location" placeholder="Last Known Location"><select name="threatLevel"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><input name="warrantStatus" placeholder="Warrant Status"><input name="arrestHistoryFlag" placeholder="Arrest History Flag"><input name="vehiclePlate" placeholder="Vehicle Plate"><input name="officerSafetyNotes" placeholder="Officer Safety Notes"><select name="status"><option>Watching</option><option>Wanted</option><option>Arrested</option><option>Cleared</option></select><button class="button button-primary" type="submit">Save Suspect</button></form><div id="gang-watchlist-list"></div></div><div class="cad-card"><div class="cad-card-header"><h4>Intelligence Notes</h4><button class="button button-secondary" type="button" id="gang-intel-toggle">Add Intel Note</button></div><form id="gang-intel-form" class="cad-inline-form hidden"><input name="linkedGang" placeholder="Linked Gang"><input name="linkedSuspect" placeholder="Linked Suspect"><select name="sourceType"><option>Officer Observation</option><option>911 Call</option><option>Witness Statement</option><option>Evidence</option><option>Informant RP</option><option>Other</option></select><select name="sourceReliability"><option>Unverified</option><option>Low</option><option>Medium</option><option>High</option><option>Confirmed</option></select><input name="note" placeholder="Note" required><input name="reviewStatus" placeholder="Review Status"><button class="button button-primary" type="submit">Save Note</button></form><div id="gang-intel-filters" class="cad-map-toolbar"></div><div id="gang-intel-list"></div></div><div class="cad-card"><h4>Gang Investigation Packet</h4><button class="button button-secondary" id="generate-gang-packet" type="button">Generate Gang Investigation Packet</button><div id="gang-packet-list"></div></div></div></div></section>
+        </div>
+        <aside class="cad-feed"><h3>Live Dispatch Feed</h3><div id="cad-feed-items"></div></aside>
+      </div>
+    </section>
+
+    <section class="hero page-hero panel">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Law enforcement command</p>
+          <h1>Police Department / CAD</h1>
+          <p class="intro">Official law enforcement hub for dispatch, warrants, arrests, reports, evidence, and officer activity.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#cad-dashboard">Open CAD Dashboard</a>
+            <a class="button button-secondary" href="#dispatch-form">Create 911 Call</a>
+            <a class="button button-secondary" href="#warrant-form">Add Warrant</a>
+          </div>
+        </div>
+        <div class="hero-panel card">
+          <h2>Law enforcement hub</h2>
+          <ul class="feature-list">
+            <li>Officers enforce RP law and manage traffic stops.</li>
+            <li>Respond to /911 calls and process arrests.</li>
+            <li>Control scenes professionally and remain in character.</li>
+            <li>Police cannot be killed unless approved by host/owner.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section content-grid">
+      <article class="card info-card">
+        <h2>Police Department overview</h2>
+        <ul>
+          <li>Officers enforce RP law and manage traffic stops.</li>
+          <li>Respond to /911 calls with procedure and authority.</li>
+          <li>Process arrests, evidence, and scene control.</li>
+          <li>Officers must stay in character and follow server rules.</li>
+          <li>Police cannot be killed unless scene is approved by host/owner.</li>
+        </ul>
+      </article>
+      <article class="card info-card">
+        <h2>Dispatch and investigation</h2>
+        <p>Use this interface to coordinate active units, identify active warrants, manage recent arrests, and keep investigative notes in the <span data-community-cad-name>community CAD</span> system.</p>
+      </article>
+    </section>
+
+    <section class="panel section map-panel">
+      <div class="container">
+        <div class="panel-header">
+          <h2>Los Santos Interactive Map</h2>
+          <div class="filter-toolbar">
+            <button class="badge filter-btn active" data-filter="all">All</button>
+            <button class="badge filter-btn" data-filter="police">Police</button>
+            <button class="badge filter-btn" data-filter="dmv">DMV</button>
+            <button class="badge filter-btn" data-filter="business">Businesses</button>
+            <button class="badge filter-btn" data-filter="gang">Gangs</button>
+            <button class="badge filter-btn" data-filter="emergency">Emergency</button>
+            <button class="badge filter-btn" data-filter="court">Court</button>
+          </div>
+        </div>
+        <div class="map-panel-inner">
+          <div class="cad-map-frame"><iframe src="https://gta-5-map.com?embed=light" height="500" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="position: relative; width: 100%; border: 0;" title="GTA 5 Los Santos CAD Map"></iframe></div>
+          <div id="map-details" class="map-details">
+            <div class="empty-state">
+              <div class="empty-icon">📍</div>
+              <h3>Click a location</h3>
+              <p>Select a pin on the map to view details.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section cad-panel">
+      <div class="container">
+        <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="margin-bottom:4px;">CAD Command Center</h2>
+            <p style="margin:0;">Real-time dispatch dashboard for law enforcement operations.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span id="officer-header-chip" title="Logged in as this unit">👮 </span>
+            <button class="button button-primary" style="font-size:0.82rem;padding:10px 18px;gap:6px;" onclick="openAlertModal()">🚨 Broadcast Alert</button>
+            <div id="cad-sync-indicator" style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted);">
+              <span id="cad-sync-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;"></span>
+              <span id="cad-sync-label">Connecting…</span>
+            </div>
+          </div>
+        </div>
+        <div class="command-dashboard">
+          <div class="dashboard-card" id="active-units-card">
+            <div class="card-icon">👮</div>
+            <span>Active Units</span>
+            <strong id="active-units">0</strong>
+            <div class="card-status">Available</div>
+            <div class="card-desc">Officers on duty</div>
+          </div>
+          <div class="dashboard-card" id="pending-calls-card">
+            <div class="card-icon">📞</div>
+            <span>Pending Calls</span>
+            <strong id="pending-calls">0</strong>
+            <div class="card-status badge badge-alert">Live</div>
+            <div class="card-desc">911 calls awaiting response</div>
+          </div>
+          <div class="dashboard-card" id="critical-calls-card">
+            <div class="card-icon">🚨</div>
+            <span>Critical Calls</span>
+            <strong id="critical-calls">0</strong>
+            <div class="card-status badge priority-critical">Priority</div>
+            <div class="card-desc">High-priority emergencies</div>
+          </div>
+          <div class="dashboard-card" id="active-warrants-card">
+            <div class="card-icon">📋</div>
+            <span>Active Warrants</span>
+            <strong id="active-warrants">0</strong>
+            <div class="card-status badge badge-warning">Outstanding</div>
+            <div class="card-desc">Unserved arrest warrants</div>
+          </div>
+          <div class="dashboard-card" id="recent-arrests-card">
+            <div class="card-icon">🔒</div>
+            <span>Recent Arrests</span>
+            <strong id="recent-arrests">0</strong>
+            <div class="card-status badge badge-success">Filed</div>
+            <div class="card-desc">Arrest reports this week</div>
+          </div>
+          <div class="dashboard-card" id="open-reports-card">
+            <div class="card-icon">📄</div>
+            <span>Open Reports</span>
+            <strong id="open-reports">0</strong>
+            <div class="card-status badge badge-primary">Active</div>
+            <div class="card-desc">Pending investigations</div>
+          </div>
+          <div class="dashboard-card" id="evidence-items-card">
+            <div class="card-icon">📦</div>
+            <span>Evidence Items</span>
+            <strong id="evidence-items">0</strong>
+            <div class="card-status badge badge-secondary">Locked</div>
+            <div class="card-desc">Items in lock-up</div>
+          </div>
+          <div class="dashboard-card" id="traffic-stops-card">
+            <div class="card-icon">🚗</div>
+            <span>Traffic Stops</span>
+            <strong id="traffic-stops">0</strong>
+            <div class="card-status badge badge-primary">Logged</div>
+            <div class="card-desc">Stops this week</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- My Dashboard — only visible when an officer is logged in -->
+    <section id="my-dashboard-section" class="container section" style="display:none;">
+      <div class="my-dashboard">
+        <div class="my-dashboard-header">
+          <div>
+            <h2 style="margin-bottom:4px;">My Dashboard</h2>
+            <p id="my-officer-label" style="margin:0;color:var(--muted);font-size:0.9rem;">—</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button type="button" id="ai-shift-btn" style="font-size:0.8rem;padding:8px 14px;background:rgba(255,45,45,0.12);color:var(--accent);border:1px solid rgba(255,45,45,0.3);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;" title="Generate AI end-of-shift summary for Discord">
+              <span id="ai-shift-icon">✦</span> AI Shift Summary
+            </button>
+            <button class="button button-ghost" style="font-size:0.82rem;" onclick="officerLogout()">🔓 End Shift</button>
+          </div>
+        </div>
+        <div class="my-dashboard-grid">
+          <div class="my-panel">
+            <h3 class="my-panel-title">📞 My Active Calls</h3>
+            <div id="my-calls-list"><p class="my-empty">No active calls assigned to you.</p></div>
+          </div>
+          <div class="my-panel">
+            <h3 class="my-panel-title">⚖️ My Open Warrants</h3>
+            <div id="my-warrants-list"><p class="my-empty">No warrants issued by you.</p></div>
+          </div>
+          <div class="my-panel">
+            <h3 class="my-panel-title">🔒 My Recent Arrests</h3>
+            <div id="my-arrests-list"><p class="my-empty">No arrest reports filed by you.</p></div>
+          </div>
+        </div>
+        <div id="shift-summary-wrap" style="display:none;margin-top:20px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:16px 18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+            <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0;">AI Shift Summary — Discord Ready</p>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('shift-summary-text').value);this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy',2000);" style="background:#1e1e1e;border:1px solid #333;color:#ccc;padding:5px 14px;border-radius:6px;font-size:0.78rem;cursor:pointer;">Copy</button>
+          </div>
+          <textarea id="shift-summary-text" rows="10" readonly style="width:100%;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;padding:12px;color:#e0e0e0;font-size:0.83rem;line-height:1.6;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section dispatch-section">
+      <div class="dispatch-layout">
+        <div class="dispatch-main">
+          <div class="panel call-queue-panel">
+            <div class="panel-header">
+              <h2>Active 911 Call Queue</h2>
+              <p>Emergency calls requiring dispatch response.</p>
+            </div>
+            <div id="call-queue" class="call-queue">
+              <div class="empty-state">
+                <div class="empty-icon">📞</div>
+                <h3>No active calls</h3>
+                <p>All emergency calls have been resolved.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel warrants-panel">
+            <div class="panel-header">
+              <h2>Active Warrants</h2>
+              <div class="filter-toolbar">
+                <button class="badge filter-btn active" data-filter="active">Active</button>
+                <button class="badge filter-btn" data-filter="served">Served</button>
+                <button class="badge filter-btn" data-filter="expired">Expired</button>
+                <button class="badge filter-btn" data-filter="withdrawn">Withdrawn</button>
+                <button class="badge filter-btn" data-filter="all">All</button>
+              </div>
+            </div>
+            <div id="warrants-table" class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Warrant #</th>
+                    <th>Type</th>
+                    <th>Subject/Target</th>
+                    <th>Charges/Basis</th>
+                    <th>Issuing Agency</th>
+                    <th>Judge/Authority</th>
+                    <th>Expiration</th>
+                    <th>Status</th>
+                    <th>PDF</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="warrants-tbody">
+                  <tr>
+                    <td colspan="10" class="empty-row">No active warrants found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel arrests-panel">
+            <div class="panel-header">
+              <h2>Arrest Records</h2>
+              <p>Recent arrest documentation and case details.</p>
+            </div>
+            <div id="arrests-table" class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Arrest ID</th>
+                    <th>Suspect</th>
+                    <th>Charges</th>
+                    <th>Officer</th>
+                    <th>Location</th>
+                    <th>Jail Time/Fine</th>
+                    <th>Evidence</th>
+                    <th>Created Date</th>
+                  </tr>
+                </thead>
+                <tbody id="arrests-tbody">
+                  <tr>
+                    <td colspan="10" class="empty-row">No arrest records have been filed locally yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel traffic-panel">
+            <div class="panel-header">
+              <h2>Traffic Stop Log</h2>
+              <p>Vehicle stops, citations, and enforcement actions.</p>
+            </div>
+            <div id="traffic-table" class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Stop ID</th>
+                    <th>Officer</th>
+                    <th>Driver</th>
+                    <th>Plate</th>
+                    <th>Vehicle</th>
+                    <th>Location</th>
+                    <th>Reason</th>
+                    <th>Outcome</th>
+                    <th>Notes</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody id="traffic-tbody">
+                  <tr>
+                    <td colspan="10" class="empty-row">No traffic stops logged yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel evidence-panel">
+            <div class="panel-header">
+              <h2>Evidence Lock-Up</h2>
+              <p>Secure storage for case evidence and digital files.</p>
+            </div>
+            <div id="evidence-table" class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Evidence ID</th>
+                    <th>Case Number</th>
+                    <th>Officer</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Link</th>
+                    <th>Storage Status</th>
+                    <th>Created Date</th>
+                  </tr>
+                </thead>
+                <tbody id="evidence-tbody">
+                  <tr>
+                    <td colspan="10" class="empty-row">No evidence submitted yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="dispatch-sidebar">
+          <div class="panel activity-feed-panel">
+            <div class="panel-header">
+              <h2>CAD Activity Feed</h2>
+              <p>Recent system actions and updates.</p>
+            </div>
+            <div id="activity-feed" class="activity-feed">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <h3>No recent activity</h3>
+                <p>System activity will appear here.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel officers-panel">
+            <div class="panel-header">
+              <h2>Officer Status Board</h2>
+              <p>Unit availability and current assignments.</p>
+            </div>
+            <div id="officers-board" class="officers-board">
+              <!-- Officer cards will be populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section forms-full">
+      <div class="panel-header">
+        <h2>Police operations forms</h2>
+        <p>Use these forms to capture dispatch events, stops, arrests, evidence, and warrants in the frontend system.</p>
+      </div>
+      <div class="card-grid">
+        <article class="card form-card">
+          <h3>Create 911 Call</h3>
+          <form id="dispatch-form" class="system-form">
+            <label><span>Caller name</span><input name="callerName" id="callerName" type="text" required /></label>
+            <label><span>Location</span><input name="location" id="dispatchLocation" type="text" placeholder="Legion Square" required /></label>
+            <label>
+              <span style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                Description
+                <button type="button" id="ai-dispatch-btn" style="font-size:0.75rem;padding:4px 12px;background:rgba(255,45,45,0.12);color:var(--accent);border:1px solid rgba(255,45,45,0.3);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;" title="AI triage: auto-fill incident type, priority, unit, and status">
+                  <span id="ai-dispatch-icon">✦</span> AI Triage
+                </button>
+              </span>
+              <textarea name="description" id="dispatchDescription" rows="3" required placeholder="Describe the incident — AI will classify type, priority, and suggest a unit…"></textarea>
+            </label>
+            <div id="ai-dispatch-status" style="font-size:0.82rem;margin-top:-8px;margin-bottom:4px;display:none;"></div>
+            <label><span>Incident type</span>
+              <select name="incidentType" id="dispatchIncidentType" required>
+                <option value="">Select</option>
+                <option>Robbery</option>
+                <option>Assault</option>
+                <option>Suspicious activity</option>
+                <option>Traffic accident</option>
+                <option>Shots fired</option>
+                <option>Domestic disturbance</option>
+                <option>Drug activity</option>
+                <option>Pursuit</option>
+                <option>Hostage situation</option>
+                <option>Noise complaint</option>
+              </select>
+            </label>
+            <label><span>Priority level</span>
+              <select name="priority" id="dispatchPriority" required>
+                <option value="">Select</option>
+                <option>Critical</option>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </label>
+            <label><span>Assigned unit</span><input name="assignedUnit" id="dispatchUnit" type="text" placeholder="Unit 12" required /></label>
+            <label><span>Status</span>
+              <select name="status" id="dispatchStatus" required>
+                <option value="">Select</option>
+                <option>New</option>
+                <option>Assigned</option>
+                <option>En Route</option>
+                <option>On Scene</option>
+                <option>Closed</option>
+              </select>
+            </label>
+            <button class="button button-primary" type="submit">Submit Call</button>
+            <div class="form-status" id="dispatch-status"></div>
+          </form>
+        </article>
+
+        <article class="card form-card">
+          <h3>Create Traffic Stop</h3>
+          <form id="traffic-form" class="system-form">
+            <label><span>Officer name</span><input name="officerName" type="text" required /></label>
+            <label><span>Location</span><input name="trafficLocation" type="text" required /></label>
+            <label><span>Vehicle make/model</span><input name="vehicleInfo" type="text" required /></label>
+            <label><span>Plate number</span><input name="trafficPlate" type="text" required /></label>
+            <label><span>Driver name</span><input name="driverName" type="text" required /></label>
+            <label><span>Reason for stop</span><textarea name="trafficReason" rows="3" required></textarea></label>
+            <label><span>Outcome</span><select name="trafficOutcome" id="trafficOutcome" required><option value="">Select</option><option>Citation</option><option>Warning</option><option>Arrest</option></select></label>
+            <div id="traffic-outcome-flow" class="traffic-outcome-panel hidden"></div>
+            <button class="button button-primary" type="submit">Log Traffic Stop</button>
+            <div class="form-status" id="traffic-status"></div>
+          </form>
+        </article>
+      </div>
+
+      <div class="card-grid">
+        <article class="card form-card">
+          <h3>File Arrest Report</h3>
+          <form id="arrest-form" class="system-form">
+            <label><span>Suspect name</span><input name="suspectName" type="text" required /></label>
+            <label><span>Charges</span><input name="charges" type="text" required /></label>
+            <label><span>Arresting officer</span><input name="arrestingOfficer" type="text" required /></label>
+            <label><span>Location</span><input name="arrestLocation" type="text" required /></label>
+            <label><span>Evidence attached</span><input name="evidenceAttached" type="text" placeholder="Photos / case file" required /></label>
+            <label><span>Jail time / fine</span><input name="penalty" type="text" required /></label>
+            <label class="full-width">
+              <span style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                Report notes
+                <button type="button" id="ai-report-btn" style="font-size:0.75rem;padding:4px 12px;background:rgba(255,45,45,0.12);color:var(--accent);border:1px solid rgba(255,45,45,0.3);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.2s;" title="Auto-generate a formal report narrative using AI">
+                  <span id="ai-btn-icon">✦</span> AI Generate
+                </button>
+              </span>
+              <textarea name="reportNotes" id="reportNotes" rows="5" placeholder="Describe the incident, circumstances of arrest, and any relevant observations…"></textarea>
+            </label>
+            <div id="ai-report-status" style="font-size:0.82rem;margin-top:-8px;margin-bottom:4px;display:none;"></div>
+            <button class="button button-primary" type="submit">Submit Arrest</button>
+            <div class="form-status" id="arrest-status"></div>
+          </form>
+        </article>
+
+        <article class="card form-card">
+          <h3>Submit Evidence</h3>
+          <form id="evidence-form" class="system-form" enctype="multipart/form-data">
+            <p class="form-hint" data-evidence-upload-hint>Direct uploads are not configured. Attach an external evidence link instead.</p>
+            <label><span>Case ID / number</span><input name="caseNumber" type="text" placeholder="Optional — auto-created if blank" /></label>
+            <p class="form-hint">No case selected? GTAVCAD will create a new tenant-scoped case record for this evidence.</p>
+            <label><span>Evidence record ID</span><input name="evidence_id" type="text" placeholder="Optional existing evidence ID" /></label>
+            <label><span>Arrest ID</span><input name="arrest_id" type="text" placeholder="Optional arrest ID" /></label>
+            <label><span>Warrant ID</span><input name="warrant_id" type="text" placeholder="Optional warrant ID" /></label>
+            <label><span>Evidence type</span><select name="evidenceType" required><option value="">Select</option><option>Photo</option><option>Video clip</option><option>PDF</option><option>Text note</option><option>External link</option><option>Document</option></select></label>
+            <label><span>Category</span><input name="category" type="text" placeholder="Bodycam, dashcam, screenshot, report…" /></label>
+            <label><span>Description</span><textarea name="evidenceDescription" rows="3" required></textarea></label>
+            <label><span>External clip / screenshot link</span><input name="evidenceLink" type="url" placeholder="https://" /></label>
+            <label><span>Direct upload file</span><input name="file" type="file" accept=".png,.jpg,.jpeg,.webp,.mp4,.mov,.webm,.pdf,.txt,.zip" /></label>
+            <button class="button button-primary" type="submit">Attach Evidence</button>
+            <div class="form-status" id="evidence-status"></div>
+          </form>
+        </article>
+      </div>
+
+      <div class="card-grid">
+        <article class="card form-card">
+          <h3>Add Warrant</h3>
+          <form id="warrant-form" class="system-form">
+            <label><span>Warrant Type</span><select name="warrant_type" id="warrantType" required><option>Arrest Warrant</option><option>Search Warrant</option><option>Bench Warrant</option><option>Administrative Warrant</option><option>Extradition Warrant</option><option>Fugitive Warrant</option><option>Alias Warrant</option></select></label>
+            <label><span>Subject / target name</span><input name="subject_name" type="text" required /></label><div class="actions"><button type="button" id="find-warrant-civilian-btn">Find Civilian</button><span id="find-warrant-civilian-status" class="form-status"></span></div>
+            <label><span>Subject DOB</span><input name="subject_dob" type="date" /></label>
+            <label><span>Subject address</span><input name="subject_address" type="text" /></label>
+            <label><span>Charges / basis</span><input name="charges_or_basis" type="text" required /></label>
+            <label><span>Issuing agency</span><input name="issuing_agency" type="text" required /></label>
+            <label><span>Judge / authority</span><input name="judge_or_authority" type="text" /></label>
+            <label><span>Expiration</span><input name="expiration_date" id="warrantExpiration" type="date" required /></label>
+            <label><span>Status</span><select name="status" id="warrantStatus" required><option value="">Select</option><option>Active</option><option>Suspended</option><option>Cleared</option><option>Served</option><option>Expired</option><option>Withdrawn</option></select></label>
+            <label class="warrant-type-field" data-warrant-types="Search Warrant"><span>Search location</span><input name="search_location" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Search Warrant"><span>Items to seize</span><input name="items_to_seize" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Bench Warrant"><span>Court case number</span><input name="court_case_number" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Bench Warrant"><span>Bench failure reason</span><input name="bench_failure_reason" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Administrative Warrant"><span>Administrative basis</span><input name="administrative_basis" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Administrative Warrant"><span>Inspection scope</span><input name="inspection_scope" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Extradition Warrant"><span>Originating jurisdiction</span><input name="originating_jurisdiction" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Extradition Warrant"><span>Extradition location</span><input name="extradition_location" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Fugitive Warrant"><span>Last known location</span><input name="fugitive_last_known_location" type="text" /></label>
+            <label class="warrant-type-field" data-warrant-types="Alias Warrant"><span>Alias names</span><input name="alias_names" type="text" /></label>
+            <label><span>Execution instructions</span><input name="execution_instructions" type="text" /></label>
+            <label class="full-width">
+              <span style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                Warrant Justification / Notes
+                <button type="button" id="ai-warrant-btn" style="font-size:0.75rem;padding:4px 12px;background:rgba(255,45,45,0.12);color:var(--accent);border:1px solid rgba(255,45,45,0.3);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.2s;" title="Auto-generate warrant justification and fill form fields">
+                  <span id="ai-warrant-icon">✦</span> AI Generate
+                </button>
+              </span>
+              <textarea name="probable_cause" id="warrantNotes" rows="4" placeholder="Probable cause, circumstances, and supporting evidence for this warrant…"></textarea>
+            </label>
+            <div id="ai-warrant-status" style="font-size:0.82rem;margin-top:-8px;margin-bottom:4px;display:none;"></div>
+            <button class="button button-primary" type="submit">Create Warrant</button>
+            <div class="form-status" id="warrant-status"></div>
+          </form>
+        </article>
+
+        <article class="card form-card">
+          <h3>Lookup Civilian</h3>
+          <form id="civilian-lookup-form" class="system-form">
+            <label><span>Civilian name</span><input name="lookupName" type="text" required /></label>
+            <label><span>Date of birth</span><input name="lookupDob" type="date" /></label>
+            <label><span>License number</span><input name="lookupLicense" type="text" /></label>
+            <button class="button button-primary" type="submit">Search Civilian</button>
+            <div class="form-status" id="civilian-lookup-status"></div>
+          </form>
+        </article>
+      </div>
+
+      <div class="card-grid" style="grid-column:1/-1;">
+        <article class="card form-card" style="grid-column:1/-1;">
+          <h3>🚨 CAD Call Generator</h3>
+          <div class="system-form">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+              <label style="flex:1;min-width:200px;">
+                <span>Call type <span style="color:var(--muted);font-weight:400;">(optional — leave blank for random)</span></span>
+                <select id="gen-call-type">
+                  <option value="">— Random —</option>
+                  <option>Shots Fired</option>
+                  <option>Armed Robbery</option>
+                  <option>Traffic Accident</option>
+                  <option>Pursuit</option>
+                  <option>Assault in Progress</option>
+                  <option>Domestic Disturbance</option>
+                  <option>Drug Activity</option>
+                  <option>Suspicious Person</option>
+                  <option>Hostage Situation</option>
+                  <option>Noise Complaint</option>
+                </select>
+              </label>
+              <button class="button button-primary" type="button" id="ai-gen-call-btn" style="display:flex;align-items:center;gap:8px;height:42px;">
+                <span id="ai-gen-call-icon">✦</span> Generate Call
+              </button>
+            </div>
+            <div id="gen-call-output" style="margin-top:18px;"></div>
+          </div>
+        </article>
+      </div>
+
+      <!-- RADIO LOG -->
+      <section style="margin-top:32px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <h2 style="margin:0;font-size:1.4rem;">Radio Log</h2>
+          <span style="font-size:0.75rem;color:var(--muted);">Live officer transmissions</span>
+        </div>
+        <article class="card form-card" style="margin-bottom:16px;">
+          <div class="system-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr 3fr auto;gap:10px;align-items:end;">
+              <label style="margin:0;"><span style="font-size:0.75rem;">Unit</span><input id="radio-unit" type="text" placeholder="LSPD-1A23" /></label>
+              <label style="margin:0;"><span style="font-size:0.75rem;">Channel</span>
+                <select id="radio-channel">
+                  <option>Primary</option>
+                  <option>Secondary</option>
+                  <option>Tac-1</option>
+                  <option>Tac-2</option>
+                  <option>BCSO</option>
+                  <option>Air</option>
+                </select>
+              </label>
+              <label style="margin:0;"><span style="font-size:0.75rem;">Transmission</span><input id="radio-message" type="text" placeholder="10-4, en route to Legion Square, shots fired call…" /></label>
+              <button class="button button-primary" type="button" id="radio-post-btn" style="height:42px;white-space:nowrap;">Transmit</button>
+            </div>
+            <div id="radio-status" style="font-size:0.8rem;margin-top:4px;"></div>
+          </div>
+        </article>
+        <div id="radio-feed" style="display:grid;gap:6px;">
+          <p style="color:var(--muted);font-size:0.88rem;">No transmissions logged yet.</p>
+        </div>
+      </section>
+
+      <!-- BOLO BOARD -->
+      <section style="margin-top:32px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <h2 style="margin:0;font-size:1.4rem;">Active BOLOs</h2>
+          <span id="bolo-count-badge" style="background:#e0525222;color:#e05252;border:1px solid #e0525244;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;">0 Active</span>
+          <button class="button button-ghost" type="button" id="toggle-bolo-form-btn" style="margin-left:auto;font-size:0.82rem;">+ Post BOLO</button>
+        </div>
+
+        <!-- Post BOLO form (hidden by default) -->
+        <div id="bolo-form-wrap" style="display:none;margin-bottom:22px;">
+          <article class="card form-card">
+            <h3>Post BOLO</h3>
+            <div class="system-form">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <label><span>Suspect name</span>
+                  <div style="display:flex;gap:6px;">
+                    <input id="bolo-name" type="text" placeholder="John Doe / Unknown" style="flex:1;" />
+                    <button type="button" id="bolo-lookup-btn" title="Look up civilian records to auto-fill vehicle &amp; description" style="white-space:nowrap;padding:0 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#aaa;font-size:0.78rem;cursor:pointer;">🔍 Lookup</button>
+                  </div>
+                </label>
+                <label><span>Threat level</span>
+                  <select id="bolo-threat">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </label>
+                <label style="grid-column:1/-1;"><span>Physical description</span><textarea id="bolo-desc" rows="2" placeholder="e.g. Male, early 30s, stocky build, red hoodie, neck tattoo"></textarea></label>
+                <label><span>Last known location</span><input id="bolo-location" type="text" placeholder="e.g. Forum Drive, Davis" /></label>
+                <label><span>Vehicle</span><input id="bolo-vehicle" type="text" placeholder="e.g. Black Baller, partial plate 8XK" /></label>
+                <label style="grid-column:1/-1;"><span>Charges / reason</span><input id="bolo-charges" type="text" placeholder="e.g. Armed Robbery, Evading" /></label>
+                <label><span>Issued by</span><input id="bolo-issuer" type="text" placeholder="Officer name" /></label>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+                <button class="button button-primary" type="button" id="ai-gen-bolo-btn" style="display:flex;align-items:center;gap:8px;">
+                  <span id="ai-gen-bolo-icon">✦</span> AI Generate BOLO
+                </button>
+                <button class="button button-ghost" type="button" id="submit-bolo-btn">Post BOLO</button>
+              </div>
+              <div id="bolo-form-status" style="margin-top:8px;font-size:0.85rem;"></div>
+            </div>
+          </article>
+        </div>
+
+        <!-- BOLO list -->
+        <div id="bolo-list">
+          <p style="color:var(--muted);font-size:0.88rem;">No active BOLOs on file.</p>
+        </div>
+      </section>
+
+      <div class="card-grid">
+        <article class="card form-card" style="grid-column:1/-1;">
+          <h3>Use of Force Report <span style="font-size:0.75rem;color:var(--muted);font-weight:400;margin-left:8px;">AI-generated · court-defensible</span></h3>
+          <div class="system-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <label><span>Officer name / badge</span><input id="uof-officer" type="text" placeholder="Officer J. Smith / B-2241" /></label>
+              <label><span>Subject name</span><input id="uof-subject" type="text" placeholder="John Doe / Unknown" /></label>
+              <label><span>Location</span><input id="uof-location" type="text" placeholder="e.g. Forum Drive, Davis" /></label>
+              <label><span>Charges</span><input id="uof-charges" type="text" placeholder="e.g. Assault on Officer, Evading" /></label>
+              <label><span>Force type used</span>
+                <select id="uof-force-type">
+                  <option value="">— Select —</option>
+                  <option>Presence</option>
+                  <option>Verbal Commands</option>
+                  <option>Physical Control</option>
+                  <option>Less Lethal (Taser/Baton)</option>
+                  <option>Lethal Force (Firearm)</option>
+                </select>
+              </label>
+              <label><span>Subject resistance level</span>
+                <select id="uof-resistance">
+                  <option value="">— Select —</option>
+                  <option>Compliant</option>
+                  <option>Passive Resistance</option>
+                  <option>Active Resistance</option>
+                  <option>Assaultive</option>
+                  <option>Life-Threatening</option>
+                </select>
+              </label>
+              <label><span>Weapons observed?</span>
+                <select id="uof-weapons"><option value="No">No</option><option value="Yes">Yes</option></select>
+              </label>
+              <label><span>Bodycam active?</span>
+                <select id="uof-bodycam"><option value="Yes">Yes</option><option value="No">No</option></select>
+              </label>
+              <label><span>Injuries observed</span><input id="uof-injuries" type="text" placeholder="e.g. laceration to left arm / none" /></label>
+              <label style="grid-column:1/-1;"><span>Incident description <span style="color:var(--muted);font-weight:400;">(raw notes — AI will structure this)</span></span>
+                <textarea id="uof-desc" rows="3" placeholder="e.g. Subject ran from traffic stop on Forum Dr, pulled firearm when cornered at alley, officer deployed taser after verbal commands ignored, subject fell and was cuffed…"></textarea>
+              </label>
+            </div>
+            <button class="button button-primary" type="button" id="ai-uof-btn" style="display:flex;align-items:center;gap:8px;">
+              <span id="ai-uof-icon">✦</span> Generate UOF Report
+            </button>
+            <div id="uof-output" style="margin-top:18px;"></div>
+          </div>
+        </article>
+
+        <article class="card form-card">
+          <h3>AI Suspect Matcher</h3>
+          <div class="system-form">
+            <label>
+              <span>Physical description</span>
+              <textarea id="suspect-description" rows="4" placeholder="e.g. Male, early 30s, tall, heavy build, black hoodie, short dreadlocks, last seen near Legion Square…" style="width:100%;"></textarea>
+            </label>
+            <button class="button button-primary" type="button" id="ai-suspect-btn" style="display:flex;align-items:center;gap:8px;">
+              <span id="ai-suspect-icon">✦</span> Search Civilians
+            </button>
+            <div id="suspect-match-results" style="margin-top:16px;"></div>
+          </div>
+        </article>
+
+        <article class="card form-card">
+          <h3>AI Incident Summariser</h3>
+          <div class="system-form">
+            <label>
+              <span>Raw CAD notes</span>
+              <textarea id="incident-notes" rows="6" placeholder="Paste raw notes here… e.g. unit 4 responded to shots fired legion square, suspect male black hoodie fled on foot, arrested corner of forum dr, charged with agg assault + illegal firearm, booked 22:14…" style="width:100%;"></textarea>
+            </label>
+            <button class="button button-primary" type="button" id="ai-summary-btn" style="display:flex;align-items:center;gap:8px;">
+              <span id="ai-summary-icon">✦</span> Generate Summary
+            </button>
+            <div id="incident-summary-output" style="margin-top:16px;"></div>
+          </div>
+        </article>
+
+        <article class="card form-card">
+          <h3>Lookup Vehicle Plate</h3>
+          <form id="plate-lookup-form" class="system-form">
+            <label><span>Plate number</span><input name="plateLookup" type="text" required /></label>
+            <label><span>Vehicle make/model</span><input name="plateVehicle" type="text" /></label>
+            <label><span>Registered owner</span><input name="plateOwner" type="text" /></label>
+            <button class="button button-primary" type="submit">Search Plate</button>
+            <div class="form-status" id="plate-lookup-status"></div>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <section class="container section lookup-results">
+      <div id="civilian-lookup-results"></div>
+      <div id="plate-lookup-results"></div>
+    </section>
+
+    <section class="container section">
+      <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;padding:24px 28px;">
+        <div style="margin-bottom:18px;">
+          <h2 style="margin-bottom:4px;">🗂️ Criminal Record Check</h2>
+          <p style="margin:0;color:var(--muted);font-size:0.88rem;">Search all server records — warrants, arrests, traffic stops, and evidence — for any civilian.</p>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <input id="criminal-record-input" type="text" placeholder="Civilian name (e.g. John Smith)…" style="flex:1;min-width:200px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px 14px;color:#fff;font-size:0.9rem;outline:none;" />
+          <button id="criminal-record-btn" class="button button-primary" style="white-space:nowrap;">Search Records</button>
+        </div>
+        <div id="criminal-record-output"></div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;padding:24px 28px;">
+        <div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="margin-bottom:4px;">⚖️ Court Hearings</h2>
+            <p style="margin:0;color:var(--muted);font-size:0.88rem;">Schedule arraignments, bail hearings, sentencings, and dismissals. Track outcomes per arrest.</p>
+          </div>
+          <button id="court-schedule-toggle" class="button button-primary" style="font-size:0.85rem;padding:9px 18px;">+ Schedule Hearing</button>
+        </div>
+
+        <div id="court-schedule-form" style="display:none;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-bottom:20px;">
+          <h3 style="margin:0 0 16px;font-size:1rem;">Schedule a Hearing</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Suspect Name *</label>
+              <input id="court-suspect" type="text" placeholder="John Smith" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Hearing Type *</label>
+              <select id="court-type" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;">
+                <option>Arraignment</option>
+                <option>Bail Hearing</option>
+                <option>Sentencing</option>
+                <option>Dismissal</option>
+                <option>Trial</option>
+                <option>Appeal</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Date &amp; Time *</label>
+              <input id="court-datetime" type="datetime-local" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Charges *</label>
+              <input id="court-charges" type="text" placeholder="e.g. Armed Robbery, Assault" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Presiding Judge</label>
+              <input id="court-judge" type="text" placeholder="Judge name (optional)" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Filing Officer *</label>
+              <input id="court-officer" type="text" placeholder="Officer name / callsign" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div style="grid-column:1/-1;">
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Notes</label>
+              <textarea id="court-notes" rows="2" placeholder="Additional notes, conditions, etc." style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;resize:vertical;"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px;">
+            <button id="court-submit-btn" class="button button-primary" style="font-size:0.85rem;padding:9px 22px;">Schedule</button>
+            <button id="court-cancel-btn" style="font-size:0.85rem;padding:9px 18px;background:transparent;border:1px solid #333;border-radius:8px;color:#aaa;cursor:pointer;">Cancel</button>
+          </div>
+          <p id="court-form-status" style="margin:10px 0 0;font-size:0.83rem;"></p>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="court-filter-btn badge filter-btn active-filter" data-status="all" style="font-size:0.75rem;">All</button>
+          <button class="court-filter-btn badge filter-btn" data-status="Scheduled" style="font-size:0.75rem;">Scheduled</button>
+          <button class="court-filter-btn badge filter-btn" data-status="Completed" style="font-size:0.75rem;">Completed</button>
+          <button class="court-filter-btn badge filter-btn" data-status="Continued" style="font-size:0.75rem;">Continued</button>
+          <button class="court-filter-btn badge filter-btn" data-status="Dismissed" style="font-size:0.75rem;">Dismissed</button>
+        </div>
+        <div id="court-hearings-list">
+          <p style="color:var(--muted);font-size:0.85rem;">Loading hearings…</p>
+        </div>
+        <div style="margin-top:20px;">
+          <h3>Case Packets</h3>
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr><th>Packet ID / Case ID</th><th>Subject / Suspect</th><th>Packet type</th><th>Linked arrest ID</th><th>Linked warrant ID</th><th>Linked traffic stop ID</th><th>Created by</th><th>Created date</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="case-packets-tbody"><tr><td colspan="11" class="empty-row">No case packets generated yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;padding:24px 28px;">
+        <div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="margin-bottom:4px;">🔒 Jail / Custody Tracker</h2>
+            <p style="margin:0;color:var(--muted);font-size:0.88rem;">Track suspects in custody, set release times, and auto-release when court hearings resolve.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="jail-in-custody-badge" style="background:#e0525222;color:#e05252;border:1px solid #e0525244;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px;">0 In Custody</span>
+            <button id="jail-book-toggle" class="button button-primary" style="font-size:0.85rem;padding:9px 18px;">+ Book Inmate</button>
+          </div>
+        </div>
+
+        <div id="jail-book-form" style="display:none;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:20px;margin-bottom:20px;">
+          <h3 style="margin:0 0 16px;font-size:1rem;">Book Suspect into Custody</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Suspect Name *</label>
+              <div style="display:flex;gap:6px;">
+                <input id="jail-suspect" type="text" placeholder="John Smith" style="flex:1;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+                <button type="button" id="jail-autofill-btn" title="Auto-fill from recent arrests" style="padding:0 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#aaa;font-size:0.78rem;cursor:pointer;white-space:nowrap;">📋 Fill</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Charges *</label>
+              <input id="jail-charges" type="text" placeholder="e.g. Armed Robbery, Assault" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Sentence / Penalty</label>
+              <input id="jail-penalty" type="text" placeholder="e.g. 30 mins, Life" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Est. Release Date &amp; Time</label>
+              <input id="jail-release-time" type="datetime-local" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Cell / Block</label>
+              <input id="jail-cell" type="text" placeholder="e.g. Block A, Cell 3" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Booking Officer *</label>
+              <input id="jail-officer" type="text" placeholder="Officer name / callsign" style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;" />
+            </div>
+            <div style="grid-column:1/-1;">
+              <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:5px;">Notes</label>
+              <textarea id="jail-notes" rows="2" placeholder="Behaviour, contraband found, risk level, etc." style="width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:8px;padding:9px 12px;color:#fff;font-size:0.88rem;outline:none;resize:vertical;"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px;">
+            <button id="jail-submit-btn" class="button button-primary" style="font-size:0.85rem;padding:9px 22px;">Book into Custody</button>
+            <button id="jail-cancel-btn" style="font-size:0.85rem;padding:9px 18px;background:transparent;border:1px solid #333;border-radius:8px;color:#aaa;cursor:pointer;">Cancel</button>
+          </div>
+          <p id="jail-form-status" style="margin:10px 0 0;font-size:0.83rem;"></p>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="jail-filter-btn badge filter-btn active-filter" data-status="In Custody" style="font-size:0.75rem;">In Custody</button>
+          <button class="jail-filter-btn badge filter-btn" data-status="All" style="font-size:0.75rem;">All Records</button>
+          <button class="jail-filter-btn badge filter-btn" data-status="Released" style="font-size:0.75rem;">Released</button>
+        </div>
+        <div id="jail-inmates-list">
+          <p style="color:var(--muted);font-size:0.85rem;">Loading custody records…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section content-grid">
+      <article class="card rule-card">
+        <h2>Police rules</h2>
+        <ul>
+          <li>First police interaction must be obeyed.</li>
+          <li>Officers must control scenes professionally.</li>
+          <li>No abuse of police power or arbitrary enforcement.</li>
+          <li>Police must use proper RP procedure for stops, arrests, and detentions.</li>
+          <li>Arrests should be documented in CAD and evidence logged.</li>
+          <li>Evidence should be placed in police evidence lock-up.</li>
+          <li>Complaints against officers go through complaint-ticket channels.</li>
+          <li>Killing cops is not allowed unless approved by host/owner.</li>
+        </ul>
+      </article>
+      <article class="card rule-card">
+        <h2>Discord channel references</h2>
+        <ul>
+          <li>#911-dispatch</li>
+          <li>#traffic-stop-1</li>
+          <li>#traffic-stop-2</li>
+          <li>#traffic-stop-3</li>
+          <li>JAIL VOICE</li>
+          <li>POLICE INTERROGATION ROOM</li>
+          <li>#active-warrants</li>
+          <li>#police-evidence-lock-up</li>
+          <li>#criminal-files</li>
+          <li>#city-hall</li>
+          <li>Courtroom</li>
+          <li>JuryDuty</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Keep all police actions documented in the RP system and follow host-approved procedures.</p>
+    </div>
+  </footer>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/assets/js/main.js"></script>
+  <script>
+    /* ── RADIO LOG ── */
+    const channelColor = { Primary: '#4c9af5', Secondary: '#9b59b6', 'Tac-1': '#e05252', 'Tac-2': '#e08252', BCSO: '#4caf82', Air: '#52c8e0' };
+
+    async function loadRadioFeed() {
+      try {
+        const res = await fetch('/api/radio-log');
+        const entries = await res.json();
+        const feedEl = document.getElementById('radio-feed');
+        if (!entries.length) {
+          feedEl.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No transmissions logged yet.</p>';
+          return;
+        }
+        feedEl.innerHTML = entries.map(e => {
+          const cc = channelColor[e.channel] || '#888';
+          const ts = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+          return `<div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:10px 14px;display:flex;align-items:flex-start;gap:12px;">
+            <span style="font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:4px;background:${cc}22;color:${cc};border:1px solid ${cc}44;white-space:nowrap;margin-top:2px;">${e.channel}</span>
+            <div style="flex:1;">
+              <span style="font-size:0.8rem;font-weight:700;color:#ddd;">${e.unit}</span>
+              <span style="font-size:0.82rem;color:#bbb;margin-left:10px;">${e.message}</span>
+            </div>
+            <span style="font-size:0.72rem;color:#555;white-space:nowrap;">${ts}</span>
+          </div>`;
+        }).join('');
+      } catch { /* silent */ }
+    }
+
+    document.getElementById('radio-post-btn').addEventListener('click', async function () {
+      const unit = document.getElementById('radio-unit').value.trim();
+      const channel = document.getElementById('radio-channel').value;
+      const message = document.getElementById('radio-message').value.trim();
+      const statusEl = document.getElementById('radio-status');
+      if (!unit || !message) {
+        statusEl.innerHTML = '<span style="color:var(--accent);">Unit and message are required.</span>';
+        return;
+      }
+      this.disabled = true;
+      try {
+        const res = await fetch('/api/radio-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ unit, channel, message })
+        });
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('radio-message').value = '';
+          statusEl.innerHTML = '';
+          loadRadioFeed();
+        } else {
+          statusEl.innerHTML = `<span style="color:var(--accent);">${json.error}</span>`;
+        }
+      } catch {
+        statusEl.innerHTML = '<span style="color:var(--accent);">Network error.</span>';
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('radio-message').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('radio-post-btn').click();
+    });
+
+    loadRadioFeed();
+    setInterval(loadRadioFeed, 15000);
+
+    /* ── BOLO BOARD ── */
+    const threatColor = { High: '#e05252', Medium: '#f5a623', Low: '#4caf82' };
+
+    async function loadBolos() {
+      try {
+        const [bolosRes, hearingsRes] = await Promise.all([
+          fetch('/api/bolos'),
+          fetch('/api/court/hearings')
+        ]);
+        const bolos    = await bolosRes.json();
+        const hearJson = await hearingsRes.json();
+        const activeHearings = (hearJson.success ? hearJson.hearings : [])
+          .filter(h => (h.status || 'Scheduled') === 'Scheduled');
+
+        function hearingFlagFor(suspectName) {
+          if (!suspectName) return null;
+          const nm = suspectName.toLowerCase();
+          return activeHearings.find(h => (h.suspectName || '').toLowerCase().includes(nm) || nm.includes((h.suspectName || '').toLowerCase()));
+        }
+
+        const active = bolos.filter(b => b.status === 'Active');
+        document.getElementById('bolo-count-badge').textContent = `${active.length} Active`;
+        const listEl = document.getElementById('bolo-list');
+        if (!active.length) {
+          listEl.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No active BOLOs on file.</p>';
+          return;
+        }
+        listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+          ${active.map(b => {
+            const tc = threatColor[b.threatLevel] || '#888';
+            const dt = b.issuedAt ? new Date(b.issuedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+            const hearing = hearingFlagFor(b.suspectName);
+            const hearingBadge = hearing
+              ? `<div style="margin-top:10px;background:#4c9af515;border:1px solid #4c9af544;border-radius:6px;padding:6px 10px;font-size:0.75rem;color:#4c9af5;">⚖️ <strong>Court Hearing Scheduled</strong> — ${hearing.hearingType} · ${hearing.scheduledAt ? new Date(hearing.scheduledAt).toLocaleDateString() : '—'}${hearing.judge ? ` · Judge: ${hearing.judge}` : ''}</div>`
+              : '';
+            return `<div style="background:#0d0d0d;border:1px solid ${tc}44;border-left:3px solid ${tc};border-radius:10px;padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <strong style="font-size:0.95rem;flex:1;">${b.suspectName}</strong>
+                <span style="font-size:0.7rem;padding:2px 8px;border-radius:20px;background:${tc}22;color:${tc};border:1px solid ${tc}44;font-weight:700;">${b.threatLevel}</span>
+                ${b.autoGenerated ? '<span style="font-size:0.65rem;color:#666;border:1px solid #222;border-radius:4px;padding:1px 5px;">AUTO</span>' : ''}
+              </div>
+              <p style="font-size:0.82rem;color:#ccc;margin:0 0 6px;">${b.description}</p>
+              <div style="font-size:0.78rem;color:var(--muted);display:grid;gap:3px;">
+                <span>📍 <strong style="color:#aaa;">Last seen:</strong> ${b.lastLocation}</span>
+                ${b.vehicle ? `<span>🚗 <strong style="color:#aaa;">Vehicle:</strong> ${b.vehicle}</span>` : ''}
+                ${b.charges ? `<span>⚖️ <strong style="color:#aaa;">Charges:</strong> ${b.charges}</span>` : ''}
+                <span>👮 <strong style="color:#aaa;">Issued by:</strong> ${b.issuedBy} · ${dt}</span>
+                <span style="font-size:0.7rem;color:#555;">${b.id}</span>
+              </div>
+              ${hearingBadge}
+              <button onclick="clearBolo('${b.id}')" style="margin-top:10px;background:transparent;border:1px solid #333;color:#888;padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;">✓ Clear BOLO</button>
+            </div>`;
+          }).join('')}
+        </div>`;
+      } catch { /* silent */ }
+    }
+
+    async function clearBolo(id) {
+      await fetch(`/api/bolo/${id}/clear`, { method: 'POST' });
+      loadBolos();
+    }
+
+    /* ── BOLO CIVILIAN LOOKUP ── */
+    document.getElementById('bolo-lookup-btn').addEventListener('click', async function () {
+      const name = document.getElementById('bolo-name').value.trim();
+      const status = document.getElementById('bolo-form-status');
+      if (!name || name.length < 2) {
+        status.innerHTML = '<span style="color:var(--accent);">Enter a suspect name first to lookup civilian records.</span>';
+        return;
+      }
+      status.innerHTML = '<span style="color:var(--muted);">Searching PostgreSQL civilian records…</span>';
+      const res = await fetch('/api/cad/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'name', query: name })
+      });
+      const json = await res.json();
+      const match = json.success ? (json.results || [])[0] : null;
+      if (!match) {
+        status.innerHTML = '<span style="color:var(--muted);">No matching civilian found in PostgreSQL records.</span>';
+        return;
+      }
+      const vehicleParts = [match.vehicleYear, match.vehicleColor, match.vehicleMake, match.vehicleModel].filter(Boolean);
+      const vehicleStr   = vehicleParts.length ? `${vehicleParts.join(' ')}${match.plate ? ` — Plate: ${match.plate}` : ''}` : '';
+      const descParts    = [match.gender, match.dob ? `DOB: ${match.dob}` : '', match.occupation ? `Occ: ${match.occupation}` : ''].filter(Boolean);
+      if (vehicleStr) document.getElementById('bolo-vehicle').value = vehicleStr;
+      if (descParts.length && !document.getElementById('bolo-desc').value.trim()) {
+        document.getElementById('bolo-desc').value = descParts.join(', ');
+      }
+      status.innerHTML = `<span style="color:#4caf82;">✓ Civilian found — vehicle and description pre-filled. Driver license: <strong>${match.driverLicense || 'Unknown'}</strong>${match.firearmLicense ? ` · Firearm: <strong>${match.firearmLicense}</strong>` : ''}</span>`;
+    });
+
+    document.getElementById('toggle-bolo-form-btn').addEventListener('click', function () {
+      const wrap = document.getElementById('bolo-form-wrap');
+      const visible = wrap.style.display !== 'none';
+      wrap.style.display = visible ? 'none' : 'block';
+      this.textContent = visible ? '+ Post BOLO' : '✕ Cancel';
+    });
+
+    document.getElementById('ai-gen-bolo-btn').addEventListener('click', async function () {
+      const charges = document.getElementById('bolo-charges').value.trim();
+      const icon = document.getElementById('ai-gen-bolo-icon');
+      icon.textContent = '⏳';
+      this.disabled = true;
+      document.getElementById('bolo-form-status').innerHTML = '<span style="color:var(--muted);">Generating BOLO…</span>';
+      try {
+        const res = await fetch('/api/ai/generate-bolo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ charges })
+        });
+        const json = await res.json();
+        if (json.success && json.bolo) {
+          const b = json.bolo;
+          document.getElementById('bolo-name').value = b.suspectName || '';
+          document.getElementById('bolo-desc').value = b.description || '';
+          document.getElementById('bolo-location').value = b.lastLocation || '';
+          document.getElementById('bolo-vehicle').value = b.vehicle || '';
+          document.getElementById('bolo-charges').value = b.charges || '';
+          document.getElementById('bolo-threat').value = b.threatLevel || 'Medium';
+          document.getElementById('bolo-form-status').innerHTML = '<span style="color:#4caf82;">✓ Fields filled — review and post.</span>';
+        } else {
+          document.getElementById('bolo-form-status').innerHTML = `<span style="color:var(--accent);">${json.error || 'Generation failed.'}</span>`;
+        }
+      } catch {
+        document.getElementById('bolo-form-status').innerHTML = '<span style="color:var(--accent);">Network error.</span>';
+      } finally {
+        icon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('submit-bolo-btn').addEventListener('click', async function () {
+      const payload = {
+        suspectName: document.getElementById('bolo-name').value.trim() || 'Unknown',
+        description: document.getElementById('bolo-desc').value.trim(),
+        lastLocation: document.getElementById('bolo-location').value.trim(),
+        vehicle: document.getElementById('bolo-vehicle').value.trim(),
+        charges: document.getElementById('bolo-charges').value.trim(),
+        threatLevel: document.getElementById('bolo-threat').value,
+        issuedBy: document.getElementById('bolo-issuer').value.trim()
+      };
+      if (!payload.description || !payload.lastLocation || !payload.issuedBy) {
+        document.getElementById('bolo-form-status').innerHTML = '<span style="color:var(--accent);">Description, location, and issuing officer are required.</span>';
+        return;
+      }
+      this.disabled = true;
+      try {
+        const res = await fetch('/api/bolo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          ['bolo-name','bolo-desc','bolo-location','bolo-vehicle','bolo-charges','bolo-issuer'].forEach(id => document.getElementById(id).value = '');
+          document.getElementById('bolo-threat').value = 'Medium';
+          document.getElementById('bolo-form-status').innerHTML = '<span style="color:#4caf82;">✓ BOLO posted.</span>';
+          document.getElementById('bolo-form-wrap').style.display = 'none';
+          document.getElementById('toggle-bolo-form-btn').textContent = '+ Post BOLO';
+          loadBolos();
+        } else {
+          document.getElementById('bolo-form-status').innerHTML = `<span style="color:var(--accent);">${json.error}</span>`;
+        }
+      } catch {
+        document.getElementById('bolo-form-status').innerHTML = '<span style="color:var(--accent);">Network error.</span>';
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    loadBolos();
+
+    /* ── CAD CALL GENERATOR ── */
+    document.getElementById('ai-gen-call-btn').addEventListener('click', async function () {
+      const callType = document.getElementById('gen-call-type').value;
+      const outputEl = document.getElementById('gen-call-output');
+      const btnIcon = document.getElementById('ai-gen-call-icon');
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      outputEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Generating call…</p>';
+
+      try {
+        const res = await fetch('/api/ai/generate-call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ callType })
+        });
+        const json = await res.json();
+
+        if (json.success && json.call) {
+          const c = json.call;
+          const prioColor = { Critical: '#e05252', High: '#f5a623', Medium: '#4c9af5', Low: '#888' };
+          const pColor = prioColor[c.priority] || '#888';
+
+          const transcriptHtml = (c.transcript || []).map(t => `
+            <div style="display:flex;gap:10px;margin-bottom:6px;align-items:flex-start;">
+              <span style="min-width:72px;font-size:0.75rem;font-weight:700;padding:2px 7px;border-radius:4px;text-align:center;background:${t.speaker==='Dispatch'?'#1a2a1a':'#1a1a2a'};color:${t.speaker==='Dispatch'?'#4caf82':'#6fa3f5'};flex-shrink:0;">${t.speaker}</span>
+              <span style="font-size:0.85rem;line-height:1.5;color:#d8d8d8;">${t.line}</span>
+            </div>
+          `).join('');
+
+          outputEl.innerHTML = `
+            <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden;">
+              <div style="padding:14px 18px;border-bottom:1px solid #1e1e1e;display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+                <span style="font-size:1rem;font-weight:700;color:#fff;">${c.callType || 'Unknown'}</span>
+                <span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;background:${pColor}22;color:${pColor};border:1px solid ${pColor}44;font-weight:600;">${c.priority}</span>
+                <span style="font-size:0.8rem;color:var(--muted);">📍 ${c.location || '—'}</span>
+                <span style="font-size:0.8rem;color:var(--muted);">👤 ${c.caller || '—'}</span>
+                <span style="font-size:0.8rem;color:#6fa3f5;">🚔 ${c.assignedUnit || '—'}</span>
+              </div>
+              <div style="padding:14px 18px;border-bottom:1px solid #1e1e1e;">
+                <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Caller Description</p>
+                <p style="font-size:0.88rem;line-height:1.6;margin:0;color:#d0d0d0;">${c.description || '—'}</p>
+              </div>
+              <div style="padding:14px 18px;border-bottom:1px solid #1e1e1e;">
+                <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Dispatch Notes</p>
+                <p style="font-size:0.85rem;line-height:1.5;margin:0;color:#aaa;">${c.dispatchNotes || '—'}</p>
+              </div>
+              <div style="padding:14px 18px;">
+                <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Call Transcript</p>
+                ${transcriptHtml}
+              </div>
+            </div>
+            <button onclick="document.getElementById('ai-gen-call-btn').click()" style="margin-top:10px;background:#1e1e1e;border:1px solid #333;color:#ccc;padding:6px 16px;border-radius:6px;font-size:0.8rem;cursor:pointer;">↺ Generate Another</button>
+          `;
+        } else {
+          outputEl.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">${json.error || 'Generation failed.'}</p>`;
+        }
+      } catch {
+        outputEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Network error. Try again.</p>';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── USE OF FORCE REPORT ── */
+    document.getElementById('ai-uof-btn').addEventListener('click', async function () {
+      const outputEl = document.getElementById('uof-output');
+      const btnIcon  = document.getElementById('ai-uof-icon');
+
+      const officer      = document.getElementById('uof-officer').value.trim();
+      const subject      = document.getElementById('uof-subject').value.trim();
+      const location     = document.getElementById('uof-location').value.trim();
+      const charges      = document.getElementById('uof-charges').value.trim();
+      const forceType    = document.getElementById('uof-force-type').value;
+      const resistance   = document.getElementById('uof-resistance').value;
+      const weapons      = document.getElementById('uof-weapons').value;
+      const bodycam      = document.getElementById('uof-bodycam').value;
+      const injuries     = document.getElementById('uof-injuries').value.trim();
+      const incidentDesc = document.getElementById('uof-desc').value.trim();
+
+      if (!officer || !subject || !location) {
+        outputEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Officer, subject, and location are required.</p>';
+        return;
+      }
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      outputEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Generating Use of Force Report…</p>';
+
+      try {
+        const res = await fetch('/api/ai/use-of-force', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ officer, subject, location, charges, forceType, resistance, weaponsObserved: weapons, bodycam, injuries, incidentDesc })
+        });
+        const json = await res.json();
+
+        if (json.success && json.report) {
+          const r = json.report;
+
+          const boolIcon = v => v ? '<span style="color:#4caf82;">✔ Yes</span>' : '<span style="color:#e05252;">✘ No</span>';
+          const tlHtml   = (r.forceTimeline || []).map((s,i) => `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:5px;"><span style="min-width:20px;text-align:right;color:#555;font-size:0.75rem;">${i+1}.</span><span style="font-size:0.85rem;color:#ccc;">${s}</span></div>`).join('');
+
+          const warningHtml = r.liabilityWarning
+            ? `<div style="background:#f5a62315;border:1px solid #f5a62344;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:0.85rem;color:#f5a623;">${r.liabilityWarning}</div>`
+            : '';
+
+          const autBoloHtml = json.autoBolo
+            ? `<div style="background:#e0525215;border:1px solid #e0525244;border-radius:8px;padding:10px 14px;margin-top:14px;font-size:0.83rem;color:#e05252;">⚠️ <strong>Auto-BOLO Issued</strong> — ${json.autoBolo.suspectName} · Last seen: ${json.autoBolo.lastLocation} · <span style="opacity:.7;">${json.autoBolo.id}</span></div>`
+            : '';
+
+          outputEl.innerHTML = `
+            <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden;">
+              <!-- Header -->
+              <div style="background:#111;padding:14px 18px;border-bottom:1px solid #1e1e1e;display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+                <div>
+                  <p style="margin:0;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Use of Force Report</p>
+                  <p style="margin:2px 0 0;font-size:1rem;font-weight:700;color:#fff;">${r.reportId || '—'}</p>
+                </div>
+                <span style="margin-left:auto;font-size:0.75rem;color:#888;">${r.dateTime || '—'}</span>
+              </div>
+
+              <div style="padding:16px 18px;display:grid;gap:16px;">
+                ${warningHtml}
+
+                <!-- Core details -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.83rem;">
+                  <div><span style="color:var(--muted);">📍 Location</span><br><strong>${r.location || '—'}</strong></div>
+                  <div><span style="color:var(--muted);">👮 Officer</span><br><strong>${r.officerInvolved || '—'}</strong></div>
+                  <div><span style="color:var(--muted);">🧑 Subject</span><br><strong>${r.subjectInvolved || '—'}</strong></div>
+                  <div><span style="color:var(--muted);">⚖️ Disposition</span><br><strong>${r.disposition || '—'}</strong></div>
+                </div>
+
+                <!-- Summary -->
+                <div>
+                  <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Incident Summary</p>
+                  <p style="font-size:0.85rem;line-height:1.6;color:#ccc;margin:0;">${r.incidentSummary || '—'}</p>
+                </div>
+
+                <!-- Force details -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.83rem;">
+                  <div><span style="color:var(--muted);">Force Type</span><br><strong>${r.forceType || '—'}</strong></div>
+                  <div><span style="color:var(--muted);">Resistance</span><br><strong>${r.resistanceLevel || '—'}</strong></div>
+                </div>
+
+                <!-- Reason for force -->
+                <div>
+                  <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Reason for Force</p>
+                  <p style="font-size:0.85rem;line-height:1.6;color:#ccc;margin:0;">${r.reasonForForce || '—'}</p>
+                </div>
+
+                <!-- Threat assessment -->
+                <div>
+                  <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Threat Assessment</p>
+                  <div style="display:grid;gap:5px;font-size:0.82rem;">
+                    <div>${boolIcon(r.threatAssessment?.weaponsObserved)} <span style="color:#aaa;margin-left:6px;">${r.threatAssessment?.weaponsObservedNote || 'Weapons observed'}</span></div>
+                    <div>${boolIcon(r.threatAssessment?.threatToOfficer)} <span style="color:#aaa;margin-left:6px;">${r.threatAssessment?.threatToOfficerNote || 'Threat to officer'}</span></div>
+                    <div>${boolIcon(r.threatAssessment?.threatToPublic)} <span style="color:#aaa;margin-left:6px;">${r.threatAssessment?.threatToPublicNote || 'Threat to public'}</span></div>
+                  </div>
+                </div>
+
+                <!-- Legal justification -->
+                <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:12px 14px;">
+                  <p style="font-size:0.7rem;color:#4caf82;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">⚖️ Legal Justification</p>
+                  <p style="font-size:0.85rem;line-height:1.6;color:#c8e6c9;margin:0;">${r.legalJustification || '—'}</p>
+                </div>
+
+                <!-- Timeline -->
+                <div>
+                  <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Force Timeline</p>
+                  ${tlHtml}
+                </div>
+
+                <!-- Medical + Evidence -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:0.82rem;">
+                  <div>
+                    <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Medical / Aftercare</p>
+                    <div style="display:grid;gap:4px;color:#aaa;">
+                      <span>EMS: ${boolIcon(r.medicalAftercare?.emsRequested)}</span>
+                      <span>Injuries: ${r.medicalAftercare?.injuriesObserved || 'None'}</span>
+                      <span>Treatment: ${r.medicalAftercare?.treatmentProvided || 'None'}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Evidence</p>
+                    <div style="display:grid;gap:4px;color:#aaa;">
+                      <span>Bodycam: ${boolIcon(r.evidence?.bodycam)}</span>
+                      <span>Witnesses: ${r.evidence?.witnesses || 'None'}</span>
+                      <span>Scene: ${r.evidence?.sceneEvidence || 'None'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Charges -->
+                <div>
+                  <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Charges Recommended</p>
+                  <p style="font-size:0.88rem;color:#e0a052;margin:0;">${r.chargesRecommended || 'None'}</p>
+                </div>
+
+                ${autBoloHtml}
+              </div>
+            </div>
+          `;
+          if (json.autoBolo) loadBolos();
+        } else {
+          outputEl.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">${json.error || 'Generation failed.'}</p>`;
+        }
+      } catch {
+        outputEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Network error. Try again.</p>';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── AI INCIDENT SUMMARISER ── */
+    document.getElementById('ai-summary-btn').addEventListener('click', async function () {
+      const notes = document.getElementById('incident-notes').value.trim();
+      const outputEl = document.getElementById('incident-summary-output');
+      const btnIcon = document.getElementById('ai-summary-icon');
+
+      if (!notes) {
+        outputEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Paste your CAD notes first.</p>';
+        return;
+      }
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      outputEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Generating summary…</p>';
+
+      try {
+        const res = await fetch('/api/ai/incident-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes })
+        });
+        const json = await res.json();
+
+        if (json.success && json.summary) {
+          outputEl.innerHTML = `
+            <div style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px 16px;position:relative;">
+              <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Discord-ready summary</p>
+              <pre id="summary-text" style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:0.88rem;line-height:1.6;margin:0;color:#e8e8e8;">${json.summary.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+              <button onclick="
+                navigator.clipboard.writeText(document.getElementById('summary-text').innerText);
+                this.textContent='Copied!';
+                setTimeout(()=>this.textContent='Copy',2000);
+              " style="margin-top:12px;background:#1e1e1e;border:1px solid #333;color:#ccc;padding:6px 14px;border-radius:6px;font-size:0.8rem;cursor:pointer;">Copy</button>
+            </div>
+          `;
+        } else {
+          outputEl.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">${json.error || 'Failed to generate summary.'}</p>`;
+        }
+      } catch {
+        outputEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Network error. Try again.</p>';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── AI SUSPECT MATCHER ── */
+    document.getElementById('ai-suspect-btn').addEventListener('click', async function () {
+      const description = document.getElementById('suspect-description').value.trim();
+      const resultsEl = document.getElementById('suspect-match-results');
+      const btnIcon = document.getElementById('ai-suspect-icon');
+
+      if (!description) {
+        resultsEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Enter a physical description first.</p>';
+        return;
+      }
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      resultsEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Searching civilian registry…</p>';
+
+      let civilians = [];
+
+      try {
+        const civRes = await fetch('/api/civilians');
+        const civJson = await civRes.json();
+        civilians = civJson.success ? (civJson.civilians || []) : [];
+        const res = await fetch('/api/ai/suspect-match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, civilians })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          if (json.note) {
+            resultsEl.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;">⚠️ ${json.note}</p>`;
+          } else if (!json.matches || json.matches.length === 0) {
+            resultsEl.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No civilian records matched this description.</p>';
+          } else {
+            const confColor = { High: '#4caf82', Medium: '#f5a623', Low: '#888' };
+            resultsEl.innerHTML = `
+              <p style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Top Matches</p>
+              ${json.matches.map(m => `
+                <div style="background:#111;border:1px solid #222;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                    <strong style="font-size:0.95rem;">${m.name}</strong>
+                    <span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:${confColor[m.confidence]}22;color:${confColor[m.confidence]};border:1px solid ${confColor[m.confidence]}44;">${m.confidence}</span>
+                  </div>
+                  <p style="margin:0;font-size:0.83rem;color:var(--muted);">${m.reason}</p>
+                </div>
+              `).join('')}
+            `;
+          }
+        } else {
+          resultsEl.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">${json.error || 'Search failed.'}</p>`;
+        }
+      } catch {
+        resultsEl.innerHTML = '<p style="color:var(--accent);font-size:0.85rem;">Network error. Try again.</p>';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── AI DISPATCH TRIAGE ── */
+    document.getElementById('ai-dispatch-btn').addEventListener('click', async function () {
+      const statusEl = document.getElementById('ai-dispatch-status');
+      const btnIcon = document.getElementById('ai-dispatch-icon');
+
+      const callerName = document.getElementById('callerName').value.trim();
+      const location = document.getElementById('dispatchLocation').value.trim();
+      const description = document.getElementById('dispatchDescription').value.trim();
+
+      if (!description) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Enter a call description first so AI can triage it.';
+        return;
+      }
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Triaging call…';
+
+      try {
+        const res = await fetch('/api/ai/dispatch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ callerName, location, description })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          const filled = [];
+
+          const typeEl = document.getElementById('dispatchIncidentType');
+          for (let opt of typeEl.options) {
+            if (opt.value === json.incidentType) { typeEl.value = json.incidentType; filled.push('incident type'); break; }
+          }
+
+          const priEl = document.getElementById('dispatchPriority');
+          for (let opt of priEl.options) {
+            if (opt.value === json.priority) { priEl.value = json.priority; filled.push('priority'); break; }
+          }
+
+          const unitEl = document.getElementById('dispatchUnit');
+          if (json.assignedUnit && !unitEl.value) {
+            unitEl.value = json.assignedUnit;
+            filled.push('assigned unit');
+          }
+
+          const statEl = document.getElementById('dispatchStatus');
+          for (let opt of statEl.options) {
+            if (opt.value === json.status) { statEl.value = json.status; filled.push('status'); break; }
+          }
+
+          const triageNote = json.triage ? ` — "${json.triage}"` : '';
+          statusEl.style.color = '#4caf82';
+          statusEl.textContent = `✓ Auto-filled: ${filled.join(', ')}${triageNote}`;
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Triage failed. Try again.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Check connection and try again.';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── AI ARREST REPORT ── */
+    document.getElementById('ai-report-btn').addEventListener('click', async function () {
+      const form = document.getElementById('arrest-form');
+      const statusEl = document.getElementById('ai-report-status');
+      const textarea = document.getElementById('reportNotes');
+      const penaltyInput = form.querySelector('[name="penalty"]');
+      const btnIcon = document.getElementById('ai-btn-icon');
+
+      const suspectName = form.querySelector('[name="suspectName"]').value.trim();
+      const charges = form.querySelector('[name="charges"]').value.trim();
+      const arrestingOfficer = form.querySelector('[name="arrestingOfficer"]').value.trim();
+      const arrestLocation = form.querySelector('[name="arrestLocation"]').value.trim();
+      const evidenceAttached = form.querySelector('[name="evidenceAttached"]').value.trim();
+      const penalty = penaltyInput.value.trim();
+
+      if (!suspectName || !charges || !arrestingOfficer) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Fill in suspect name, charges, and arresting officer first.';
+        return;
+      }
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Generating report narrative…';
+
+      try {
+        const res = await fetch('/api/ai/police-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suspectName, charges, arrestingOfficer, arrestLocation, evidenceAttached, penalty, reportNotes: textarea.value.trim() })
+        });
+        const json = await res.json();
+        if (json.success) {
+          textarea.value = json.narrative;
+          const filled = [];
+          filled.push('report notes');
+          if (json.suggestedPenalty && !penalty) {
+            penaltyInput.value = json.suggestedPenalty;
+            filled.push('jail time / fine');
+          }
+          statusEl.style.color = '#4caf82';
+          statusEl.textContent = `✓ Auto-filled: ${filled.join(', ')} — review before submitting.`;
+          if (json.suspectFled && json.autoBolo) {
+            const b = json.autoBolo;
+            statusEl.innerHTML += `<br><span style="color:#f5a623;">⚠️ Suspect fled — Auto-BOLO issued: <strong>${b.suspectName}</strong> · Last seen: ${b.lastLocation} · ID: ${b.id}</span>`;
+            loadBolos();
+          }
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Generation failed. Try again.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Check connection and try again.';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+
+    document.getElementById('find-warrant-civilian-btn')?.addEventListener('click', async function () {
+      const form = document.getElementById('warrant-form');
+      const status = document.getElementById('find-warrant-civilian-status');
+      const subject = form?.subject_name?.value?.trim();
+      if (!subject) { status.textContent = 'Enter a subject name first.'; return; }
+      status.textContent = 'Searching civilian database…';
+      try {
+        const res = await fetch('/api/cad/warrants/find-civilian', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({subject_name: subject}) });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Civilian lookup failed');
+        if (data.multiple && Array.isArray(data.matches) && data.matches.length) {
+          status.innerHTML = `Multiple exact civilians found. Select one before autofill: <select id="warrant-civilian-match-select">${data.matches.map((c, i) => `<option value="${i}">${escapeHtml(c.name || c.civilian_id || 'Civilian')} · DOB ${escapeHtml(c.dob || c.date_of_birth || '—')}</option>`).join('')}</select> <button type="button" id="warrant-civilian-match-apply">Use Selected</button>`;
+          document.getElementById('warrant-civilian-match-apply')?.addEventListener('click', () => {
+            const idx = Number(document.getElementById('warrant-civilian-match-select')?.value || 0);
+            const selected = data.matches[idx];
+            if (!selected) return;
+            fillWarrantField('subject_dob', selected.dob || selected.date_of_birth);
+            fillWarrantField('subject_address', selected.address);
+            status.textContent = `Selected ${selected.name || 'civilian'}; empty DOB/address fields were autofilled.`;
+          });
+          return;
+        }
+        if (!data.civilian) {
+          status.textContent = data.matches?.length ? 'No exact civilian match found. Fuzzy candidates were not auto-filled.' : 'No exact civilian match found.';
+          return;
+        }
+        fillWarrantField('subject_dob', data.civilian.dob || data.civilian.date_of_birth);
+        fillWarrantField('subject_address', data.civilian.address);
+        status.textContent = `Autofilled empty DOB/address fields for ${data.civilian.name || subject}.`;
+      } catch (err) { status.textContent = err.message || 'Civilian lookup failed.'; }
+    });
+
+    /* ── AI WARRANT ── */
+    function fillWarrantField(name, value, options = {}) {
+      const overwrite = options.overwrite === true;
+      const input = document.querySelector(`#warrant-form [name="${name}"]`);
+      if (!input || value === undefined || value === null) return false;
+
+      const nextValue = String(value).trim();
+      if (nextValue === '') return false;
+      if (!overwrite && String(input.value || '').trim() !== '') return false;
+
+      let expectedValue = nextValue;
+      if (input.tagName === 'SELECT') {
+        const matchingOption = Array.from(input.options).find((option) => option.value === nextValue || option.textContent.trim() === nextValue);
+        if (!matchingOption) return false;
+        expectedValue = matchingOption.value;
+        input.value = expectedValue;
+      } else if (input.type === 'date') {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(nextValue)) return false;
+        input.value = nextValue;
+      } else {
+        input.value = nextValue;
+      }
+
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return input.value === expectedValue;
+    }
+
+    document.getElementById('ai-warrant-btn').addEventListener('click', async function () {
+      const form = document.getElementById('warrant-form');
+      const statusEl = document.getElementById('ai-warrant-status');
+      const btnIcon = document.getElementById('ai-warrant-icon');
+      const warrantFields = [
+        'warrant_type',
+        'subject_name',
+        'subject_dob',
+        'subject_address',
+        'charges_or_basis',
+        'issuing_agency',
+        'judge_or_authority',
+        'probable_cause',
+        'search_location',
+        'items_to_seize',
+        'court_case_number',
+        'bench_failure_reason',
+        'administrative_basis',
+        'inspection_scope',
+        'originating_jurisdiction',
+        'extradition_location',
+        'fugitive_last_known_location',
+        'alias_names',
+        'execution_instructions',
+        'expiration_date',
+        'status'
+      ];
+      const payload = {};
+      warrantFields.forEach((name) => {
+        payload[name] = form.querySelector(`[name="${name}"]`)?.value?.trim() || '';
+      });
+      payload.warrantName = payload.subject_name;
+      payload.warrantCharges = payload.charges_or_basis;
+      payload.warrantIssuer = payload.issuing_agency;
+      payload.warrantNotes = payload.probable_cause;
+      payload.warrantExpiration = payload.expiration_date;
+      payload.warrantStatus = payload.status;
+
+      btnIcon.textContent = '⏳';
+      this.disabled = true;
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Drafting warrant and filling blank fields…';
+
+      try {
+        const res = await fetch('/api/ai/warrant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          const filled = [];
+          const fieldLabels = {
+            warrant_type: 'warrant type',
+            subject_name: 'subject name',
+            subject_dob: 'subject DOB',
+            subject_address: 'subject address',
+            charges_or_basis: 'charges / basis',
+            issuing_agency: 'issuing agency',
+            judge_or_authority: 'judge / authority',
+            probable_cause: 'probable cause',
+            search_location: 'search location',
+            items_to_seize: 'items to seize',
+            court_case_number: 'court case number',
+            bench_failure_reason: 'bench failure reason',
+            administrative_basis: 'administrative basis',
+            inspection_scope: 'inspection scope',
+            originating_jurisdiction: 'originating jurisdiction',
+            extradition_location: 'extradition location',
+            fugitive_last_known_location: 'last known location',
+            alias_names: 'alias names',
+            execution_instructions: 'execution instructions',
+            expiration_date: 'expiration date',
+            status: 'status'
+          };
+
+          warrantFields.forEach((name) => {
+            const value = json[name] ?? (name === 'probable_cause' ? json.justification : undefined) ?? (name === 'expiration_date' ? json.suggestedExpiration : undefined) ?? (name === 'status' ? json.suggestedStatus : undefined);
+            if (fillWarrantField(name, value)) filled.push(fieldLabels[name] || name);
+          });
+
+          statusEl.style.color = '#4caf82';
+          statusEl.textContent = filled.length
+            ? `✓ Auto-filled blank fields: ${filled.join(', ')} — user-entered values were preserved. Review before submitting.`
+            : '✓ AI draft complete. Existing user-entered values were preserved; no blank fields needed updating.';
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Generation failed. Try again.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Check connection and try again.';
+      } finally {
+        btnIcon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+  </script>
+
+  <!-- Alert notification banner (fixed top) -->
+  <div id="alert-notification-banner" class="alert-notification-banner" style="display:none;" role="alert" aria-live="assertive">
+    <div class="alert-notification-inner">
+      <div class="alert-notification-left">
+        <span id="alert-notif-icon" class="alert-notif-icon">🚨</span>
+        <div>
+          <div class="alert-notif-type" id="alert-notif-type">PANIC</div>
+          <div class="alert-notif-message" id="alert-notif-message"></div>
+          <div class="alert-notif-meta" id="alert-notif-meta"></div>
+        </div>
+      </div>
+      <button class="alert-notif-dismiss" onclick="dismissAlertBanner()">✕ Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Broadcast alert modal -->
+  <div id="alert-modal-overlay" class="alert-modal-overlay" style="display:none;" onclick="closeAlertModal(event)">
+    <div class="alert-modal-box" onclick="event.stopPropagation()">
+      <div class="alert-modal-header">
+        <h3>🚨 Broadcast Alert</h3>
+        <button class="alert-modal-close" onclick="closeAlertModal()">✕</button>
+      </div>
+      <form id="alert-broadcast-form" class="system-form">
+        <label>
+          Alert Type
+          <select name="alertType" required>
+            <option value="">Select type…</option>
+            <option value="PANIC">🚨 PANIC — Officer needs immediate backup</option>
+            <option value="BOLO">🔍 BOLO — Be on the lookout</option>
+            <option value="ALL UNITS">📢 ALL UNITS — General broadcast to all units</option>
+            <option value="CODE RED">🔴 CODE RED — Critical emergency</option>
+          </select>
+        </label>
+        <label>
+          Your Unit / Name
+          <input type="text" name="issuedBy" placeholder="e.g. LSPD-1A23 or Dispatch" required />
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="3" placeholder="Describe the alert in detail…" required></textarea>
+        </label>
+        <div class="form-status" id="alert-broadcast-status"></div>
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">🚨 Broadcast Now</button>
+          <button type="button" class="button button-ghost" onclick="closeAlertModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Alert modal open/close
+    function openAlertModal() {
+      document.getElementById('alert-modal-overlay').style.display = 'flex';
+      document.getElementById('alert-broadcast-status').textContent = '';
+    }
+    function closeAlertModal(e) {
+      if (e && e.target !== document.getElementById('alert-modal-overlay')) return;
+      document.getElementById('alert-modal-overlay').style.display = 'none';
+      document.getElementById('alert-broadcast-form').reset();
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.getElementById('alert-modal-overlay').style.display = 'none';
+    });
+
+    // Broadcast form submit
+    document.getElementById('alert-broadcast-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById('alert-broadcast-status');
+      const btn = this.querySelector('[type="submit"]');
+      const fd = new FormData(this);
+      statusEl.textContent = 'Broadcasting…';
+      statusEl.style.color = 'var(--muted)';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: fd.get('alertType'),
+            issuedBy: fd.get('issuedBy'),
+            message: fd.get('message')
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          statusEl.style.color = '#4caf82';
+          statusEl.textContent = '✓ Alert broadcast to all active sessions.';
+          setTimeout(() => {
+            document.getElementById('alert-modal-overlay').style.display = 'none';
+            this.reset();
+          }, 1400);
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Broadcast failed.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    /* ── CRIMINAL RECORD CHECK ── */
+    document.getElementById('criminal-record-btn').addEventListener('click', async function () {
+      const query = document.getElementById('criminal-record-input').value.trim();
+      const output = document.getElementById('criminal-record-output');
+      const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+      const fmt = value => escapeHtml(value || '—');
+
+      if (!query || query.length < 2) {
+        output.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Enter at least 2 characters to search.</p>';
+        return;
+      }
+      this.disabled = true;
+      output.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Searching civilian registry and CAD history…</p>';
+      try {
+        const params = new URLSearchParams({ q: query });
+        const res = await fetch(`/api/criminal-records/search?${params.toString()}`);
+        let json;
+        try {
+          json = await res.json();
+        } catch (parseErr) {
+          console.error('Criminal record lookup returned non-JSON response.', { status: res.status, parseErr });
+          if (res.ok) throw parseErr;
+          throw new Error('Server returned a non-JSON error response.');
+        }
+        if (!res.ok) {
+          console.error('Criminal record lookup backend error.', json);
+          throw new Error(json.error || `HTTP ${res.status}`);
+        }
+        if (!json.success) {
+          const backendError = json.error || 'Unknown backend error.';
+          console.error('Criminal record lookup backend returned success:false.', json);
+          output.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">Criminal record lookup failed: ${escapeHtml(backendError)}</p>`;
+          return;
+        }
+
+        const civilians = (json.civilians && json.civilians.length ? json.civilians : (json.civilian && Object.keys(json.civilian).length ? [json.civilian] : (json.results || [])));
+        const warrants = json.warrants || [];
+        const arrests = json.arrests || [];
+        const trafficStops = json.trafficStops || [];
+        const citations = json.citations || [];
+        const jailBookings = json.jailBookings || json.jailRecords || [];
+        const inmates = json.inmates || [];
+        const jailRecords = [...jailBookings, ...inmates];
+        const hearings = json.hearings || [];
+        const evidence = json.evidence || [];
+
+        if (!civilians.length && !warrants.length && !arrests.length && !trafficStops.length && !citations.length && !jailRecords.length && !hearings.length) {
+          output.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No civilian or criminal record found for that search.</p>';
+          return;
+        }
+
+        const normalize = value => String(value || '').trim().toLowerCase();
+        const civilianIds = new Set();
+        const civilianNames = new Set();
+        const civilianPlates = new Set();
+
+        civilians.forEach(civ => {
+          const id = civ.civilian_id || civ.civilianId || civ.id;
+          const first = civ.firstName || civ.first_name || '';
+          const last = civ.lastName || civ.last_name || '';
+          const fullName = civ.name || `${first} ${last}`.trim();
+          const plate = civ.plate || civ.plate_number || civ.plateNumber;
+          if (id) civilianIds.add(normalize(id));
+          if (fullName) civilianNames.add(normalize(fullName));
+          if (first) civilianNames.add(normalize(first));
+          if (last) civilianNames.add(normalize(last));
+          if (plate) civilianPlates.add(normalize(plate));
+        });
+
+        const hasCriminalHistory = Boolean(json.hasCriminalHistory ?? (warrants.length || arrests.length || citations.length || jailRecords.length || hearings.length || trafficStops.length || evidence.length));
+        const section = (title, icon, items, fn) => !items.length ? '' : `
+          <div style="margin-top:16px;">
+            <p style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">${icon} ${title} (${items.length})</p>
+            <div style="display:grid;gap:8px;">${items.map(fn).join('')}</div>
+          </div>`;
+        const detail = (label, value) => `<div><span style="display:block;color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:.06em;">${label}</span><strong style="font-size:0.88rem;">${fmt(value)}</strong></div>`;
+
+        const civHtml = civilians.map(civ => {
+          const vehicle = [civ.vehicleYear, civ.vehicleColor, civ.vehicleMake, civ.vehicleModel].filter(Boolean).join(' ');
+          const plate = civ.plate || civ.plate_number || '';
+          const notes = hasCriminalHistory ? 'Criminal record present. See related records below.' : (civ.background || civ.criminal_background_notes || 'No criminal history on file');
+          return `
+            <div style="background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                <div>
+                  <strong style="font-size:1.05rem;">${fmt(civ.name || `${civ.firstName || civ.first_name || ''} ${civ.lastName || civ.last_name || ''}`.trim())}</strong>
+                  <p style="margin:3px 0 0;color:var(--muted);font-size:0.78rem;">Civilian ID: ${fmt(civ.civilian_id || civ.id)}</p>
+                </div>
+                <span style="height:max-content;border:1px solid #4caf8244;background:#4caf8215;color:#4caf82;border-radius:999px;padding:4px 10px;font-size:0.74rem;">Record found</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px;">
+                ${detail('DOB', civ.dob || civ.date_of_birth)}
+                ${detail('Phone', civ.phone || civ.phone_number)}
+                ${detail('Address', civ.address)}
+                ${detail('Occupation', civ.occupation)}
+                ${detail('Gang/Faction', civ.faction || civ.gang_affiliation)}
+                ${detail('Driver License', civ.driverLicense || civ.driver_license_status)}
+                ${detail('Vehicle/Plate', vehicle || plate ? `${vehicle || 'Vehicle'}${plate ? ` / ${plate}` : ''}` : '')}
+              </div>
+              <div style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px 12px;font-size:0.83rem;color:#bbb;"><strong style="color:#fff;">Criminal Background Notes:</strong> ${fmt(notes)}</div>
+            </div>`;
+        }).join('');
+
+        const wHtml = section('Related Warrants', '📋', warrants, w =>
+          `<div style="background:#0a0a0a;border:1px solid #e0525244;border-left:3px solid #e05252;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(w.warrantName || w.suspectName)}</strong> <span style="color:#e05252;margin-left:8px;font-size:0.75rem;">${fmt(w.warrantStatus || w.status || 'Active')}</span><br><span style="color:#aaa;">${fmt(w.warrantCharges || w.charges)}</span> · Issued by ${fmt(w.warrantIssuer || w.issuer)}<br><button class="button button-secondary" onclick="generateCasePacket({warrant_id:'${escapeHtml(w.warrant_id || w.id || '')}'})">Generate Case Packet</button></div>`);
+        const aHtml = section('Related Arrests', '🔒', arrests, a =>
+          `<div style="background:#0a0a0a;border:1px solid #f5a62344;border-left:3px solid #f5a623;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(a.suspectName)}</strong> <span style="color:#aaa;font-size:0.72rem;">${fmt(a.id)}</span><br><span style="color:#aaa;">${fmt(a.charges)}</span><br>Officer: ${fmt(a.arrestingOfficer)} · Arrest Date: ${fmt(a.createdAt ? new Date(a.createdAt).toLocaleString() : '')} · Penalty: ${fmt(a.penalty)}${a.reportNotes || a.narrative ? `<br><span style="color:#888;font-style:italic;">${fmt(a.reportNotes || a.narrative)}</span>` : ''}<br><button class="button button-secondary" onclick="generateCasePacket({arrest_id:'${escapeHtml(a.id || a.arrest_id || '')}',civilian_id:'${escapeHtml(a.civilianId || '')}'})">Generate Case Packet</button></div>`);
+        const cHtml = section('Related Citations', '🧾', citations, c =>
+          `<div style="background:#0a0a0a;border:1px solid #4c9af544;border-left:3px solid #4c9af5;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(c.violation)}</strong> <span style="color:#aaa;">${fmt(c.status)}</span><br>Fine: ${fmt(c.fineAmount)} · Officer: ${fmt(c.issuingOfficer)} · ${fmt(c.location)}</div>`);
+        const jHtml = section('Related Jail/Custody Records', '🚔', jailRecords, j =>
+          `<div style="background:#0a0a0a;border:1px solid #9b59b644;border-left:3px solid #9b59b6;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(j.charges)}</strong> <span style="color:#aaa;">${fmt(j.status)}</span><br>Booking Officer: ${fmt(j.bookingOfficer || j.bookedBy)} · Cell: ${fmt(j.cellAssignment || j.cell)} · Sentence: ${fmt(j.sentenceLength || j.penalty)} · Fine: ${fmt(j.fineAmount || j.bondAmount)}</div>`);
+        const hHtml = section('Related Hearings', '🏛', hearings, h =>
+          `<div style="background:#0a0a0a;border:1px solid #4c9af544;border-left:3px solid #4c9af5;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(h.hearingType || 'Arraignment')}</strong> <span style="color:#aaa;">${fmt(h.status)}</span><br>${fmt(h.charges)} · Scheduled: ${fmt(h.scheduledAt)} · Outcome: ${fmt(h.outcome || 'Pending')}</div>`);
+        const tHtml = section('Traffic Stops', '🚗', trafficStops, t =>
+          `<div style="background:#0a0a0a;border:1px solid #4c9af544;border-left:3px solid #4c9af5;border-radius:8px;padding:10px 14px;font-size:0.83rem;"><strong>${fmt(t.driverName)}</strong> · ${fmt(t.trafficPlate || t.plate)}<br><span style="color:#aaa;">${fmt(t.trafficReason || t.reason)}</span> → ${fmt(t.trafficOutcome || t.outcome)}</div>`);
+        const eHtml = section('Evidence', '📦', evidence, e =>
+          `<div style="background:#0a0a0a;border:1px solid #4caf8244;border-left:3px solid #4caf82;border-radius:8px;padding:10px 14px;font-size:0.83rem;">Case <strong>${fmt(e.caseNumber)}</strong> · ${fmt(e.evidenceType || e.type)}<br><span style="color:#aaa;">${fmt(e.evidenceDescription || e.description)}</span></div>`);
+
+        const criminalPresenceHtml = hasCriminalHistory ? '<p style="margin:10px 0 0;color:#4caf82;font-size:0.85rem;font-weight:700;">Criminal record present. See related records below.</p>' : '';
+        output.innerHTML = `
+          ${civHtml}
+          ${criminalPresenceHtml}
+          ${hasCriminalHistory ? `${wHtml}${aHtml}${cHtml}${jHtml}${hHtml}${tHtml}${eHtml}` : '<p style="color:var(--muted);font-size:0.85rem;margin-top:12px;">No criminal history on file.</p>'}`;
+      } catch (err) {
+        console.error('Criminal record lookup failed.', err);
+        output.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">Criminal record lookup failed: ${escapeHtml(err.message || 'Search failed.')}</p>`;
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('criminal-record-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('criminal-record-btn').click();
+    });
+
+    /* ── AI SHIFT SUMMARY ── */
+    document.getElementById('ai-shift-btn').addEventListener('click', async function () {
+      const officer = typeof getOfficerSession === 'function' ? getOfficerSession() : null;
+      if (!officer) { typeof showToast === 'function' && showToast('No officer session active.', 'error'); return; }
+      const icon = document.getElementById('ai-shift-icon');
+      icon.textContent = '⏳';
+      this.disabled = true;
+      const cs = officer.callsign.toLowerCase();
+      const nm = officer.name.toLowerCase();
+      function matchesMe(str) { const s = (str || '').toLowerCase(); return s.includes(cs) || s.includes(nm); }
+      const calls        = (NThaCityData.calls911     || []).filter(c => matchesMe(c.assignedUnit));
+      const arrests      = (NThaCityData.arrests      || []).filter(a => matchesMe(a.arrestingOfficer));
+      const warrants     = (NThaCityData.warrants     || []).filter(w => matchesMe(w.warrantIssuer));
+      const trafficStops = (NThaCityData.trafficStops || []).filter(t => matchesMe(t.officerName));
+      try {
+        const res = await fetch('/api/ai/shift-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            officer:    officer.name,
+            callsign:   officer.callsign,
+            department: officer.department,
+            shiftStart: officer.loggedInAt ? new Date(officer.loggedInAt).toLocaleString() : 'Unknown',
+            calls, arrests, warrants, trafficStops
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const wrap = document.getElementById('shift-summary-wrap');
+          document.getElementById('shift-summary-text').value = json.summary;
+          wrap.style.display = 'block';
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          typeof showToast === 'function' && showToast(json.error || 'Shift summary failed.', 'error');
+        }
+      } catch {
+        typeof showToast === 'function' && showToast('Network error generating shift summary.', 'error');
+      } finally {
+        icon.textContent = '✦';
+        this.disabled = false;
+      }
+    });
+
+    /* ── COURT HEARINGS ── */
+    let _courtFilter = 'all';
+    let _courtHearings = [];
+
+    async function loadCourtHearings() {
+      const list = document.getElementById('court-hearings-list');
+      try {
+        const res = await fetch('/api/court/hearings');
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error);
+        _courtHearings = json.hearings || [];
+        renderCourtHearings();
+      } catch (err) {
+        if (list) list.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">Failed to load hearings: ${err.message}</p>`;
+      }
+    }
+
+    function renderCourtHearings() {
+      const list = document.getElementById('court-hearings-list');
+      if (!list) return;
+      const filtered = _courtFilter === 'all' ? _courtHearings : _courtHearings.filter(h => (h.status || 'Scheduled') === _courtFilter);
+      if (!filtered.length) {
+        list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No hearings found.</p>';
+        return;
+      }
+      const sc = { Scheduled:'#4c9af5', Completed:'#4caf82', Continued:'#f5a623', Dismissed:'#aaa', Cancelled:'#e05252' };
+      const oc = { Guilty:'#e05252', 'Not Guilty':'#4caf82', Dismissed:'#aaa', Continued:'#f5a623', 'No Contest':'#f5a623' };
+      list.innerHTML = filtered.map(h => {
+        const col = sc[h.status || 'Scheduled'] || '#4c9af5';
+        const outcol = h.outcome ? (oc[h.outcome] || '#fff') : null;
+        const dt = h.scheduledAt ? new Date(h.scheduledAt).toLocaleString() : '—';
+        const hid = escapeAttr(h.id);
+        const suspectName = escapeHtml(h.suspectName || '—');
+        const status = escapeHtml(h.status || 'Scheduled');
+        const hearingType = escapeHtml(h.hearingType || 'Arraignment');
+        const outcome = escapeHtml(h.outcome || '');
+        const charges = escapeHtml(h.charges || '—');
+        const judge = escapeHtml(h.judge || '');
+        const filingOfficer = escapeHtml(h.filingOfficer || '—');
+        const arrestId = escapeHtml(h.arrestId || '');
+        const notes = escapeHtml(h.notes || '');
+        return `<div data-hearing-id="${hid}" style="background:#0a0a0a;border:1px solid #222;border-left:3px solid ${col};border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                <strong style="font-size:0.95rem;">${suspectName}</strong>
+                <span style="background:${col}20;color:${col};border:1px solid ${col}44;border-radius:4px;font-size:0.68rem;padding:2px 7px;text-transform:uppercase;letter-spacing:.06em;">${status}</span>
+                <span style="background:#1a1a1a;color:#aaa;border:1px solid #2a2a2a;border-radius:4px;font-size:0.68rem;padding:2px 7px;">${hearingType}</span>
+                ${h.outcome ? `<span style="background:${outcol}20;color:${outcol};border:1px solid ${outcol}44;border-radius:4px;font-size:0.68rem;padding:2px 7px;">⚖️ ${outcome}</span>` : ''}
+              </div>
+              <p style="margin:0 0 4px;font-size:0.83rem;color:#ccc;">${charges}</p>
+              <p style="margin:0;font-size:0.78rem;color:#777;">🗓 ${dt}${h.judge ? ` · Judge: ${judge}` : ''} · Filed by ${filingOfficer}${h.arrestId ? ` · Arrest ID: ${arrestId}` : ''}</p>
+              ${h.notes ? `<p style="margin:6px 0 0;font-size:0.78rem;color:#888;font-style:italic;">${notes}</p>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+              <button onclick="toggleOutcomePanel('${hid}')" style="font-size:0.75rem;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#ccc;cursor:pointer;">Update</button>
+              <button onclick="deleteHearing('${hid}')" style="font-size:0.75rem;padding:6px 10px;background:#e0525215;border:1px solid #e0525230;border-radius:6px;color:#e05252;cursor:pointer;">✕</button>
+            </div>
+          </div>
+          <div id="outcome-panel-${hid}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #1a1a1a;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="outcome-select-${hid}" style="background:#111;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.83rem;outline:none;">
+                <option value="">— Select outcome —</option>
+                <option>Guilty</option>
+                <option>Not Guilty</option>
+                <option>Dismissed</option>
+                <option>Continued</option>
+                <option>No Contest</option>
+                <option>Sentenced</option>
+              </select>
+              <input id="sentence-input-${hid}" type="text" placeholder="Sentence length" value="${escapeAttr(h.sentenceLength || '')}" style="background:#111;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.83rem;outline:none;" />
+              <input id="fine-input-${hid}" type="text" placeholder="Fine amount" value="${escapeAttr(h.fineAmount || '')}" style="background:#111;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.83rem;outline:none;" />
+              <input id="outcome-notes-input-${hid}" type="text" placeholder="Outcome notes" value="${escapeAttr(h.outcomeNotes || '')}" style="flex:1;min-width:180px;background:#111;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.83rem;outline:none;" />
+              <select id="status-select-${hid}" style="background:#111;border:1px solid #333;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.83rem;outline:none;">
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Continued">Continued</option>
+                <option value="Dismissed">Dismissed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button onclick="saveOutcome('${hid}')" style="font-size:0.8rem;padding:6px 14px;background:rgba(76,154,245,0.15);border:1px solid rgba(76,154,245,0.4);border-radius:6px;color:#4c9af5;cursor:pointer;">Save</button>
+              <button onclick="toggleOutcomePanel('${hid}')" style="font-size:0.8rem;padding:6px 10px;background:transparent;border:1px solid #2a2a2a;border-radius:6px;color:#888;cursor:pointer;">Cancel</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleOutcomePanel(id) {
+      const panel = document.getElementById(`outcome-panel-${id}`);
+      if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function saveOutcome(id) {
+      const outcome = document.getElementById(`outcome-select-${id}`).value;
+      const status  = document.getElementById(`status-select-${id}`).value;
+      const sentenceLength = document.getElementById(`sentence-input-${id}`).value.trim();
+      const fineAmount = document.getElementById(`fine-input-${id}`).value.trim();
+      const outcomeNotes = document.getElementById(`outcome-notes-input-${id}`).value.trim();
+      try {
+        const res = await fetch(`/api/court/hearings/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outcome, status, sentenceLength, fineAmount, outcomeNotes })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const idx = _courtHearings.findIndex(h => h.id === id);
+          const suspectName = idx !== -1 ? _courtHearings[idx].suspectName : '';
+          if (idx !== -1) Object.assign(_courtHearings[idx], json.hearing);
+          renderCourtHearings();
+          if (['Not Guilty', 'Dismissed'].includes(outcome) && suspectName) {
+            autoReleaseFromHearing(suspectName, outcome);
+          }
+          loadJail();
+          typeof showToast === 'function' && showToast('Hearing updated.', 'success');
+        } else {
+          typeof showToast === 'function' && showToast(json.error || 'Update failed.', 'error');
+        }
+      } catch {
+        typeof showToast === 'function' && showToast('Network error.', 'error');
+      }
+    }
+
+    async function deleteHearing(id) {
+      if (!confirm('Delete this hearing record?')) return;
+      try {
+        const res = await fetch(`/api/court/hearings/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          _courtHearings = _courtHearings.filter(h => h.id !== id);
+          renderCourtHearings();
+          typeof showToast === 'function' && showToast('Hearing deleted.', 'success');
+        }
+      } catch {
+        typeof showToast === 'function' && showToast('Network error.', 'error');
+      }
+    }
+
+    document.querySelectorAll('.court-filter-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.court-filter-btn').forEach(b => b.classList.remove('active-filter'));
+        this.classList.add('active-filter');
+        _courtFilter = this.dataset.status;
+        renderCourtHearings();
+      });
+    });
+
+    document.getElementById('court-schedule-toggle').addEventListener('click', function () {
+      const form = document.getElementById('court-schedule-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      if (form.style.display === 'block') {
+        const officer = typeof getOfficerSession === 'function' ? getOfficerSession() : null;
+        if (officer) document.getElementById('court-officer').value = `${officer.name} (${officer.callsign})`;
+      }
+    });
+
+    document.getElementById('court-cancel-btn').addEventListener('click', function () {
+      document.getElementById('court-schedule-form').style.display = 'none';
+      document.getElementById('court-form-status').textContent = '';
+    });
+
+    document.getElementById('court-submit-btn').addEventListener('click', async function () {
+      const suspect  = document.getElementById('court-suspect').value.trim();
+      const type     = document.getElementById('court-type').value;
+      const datetime = document.getElementById('court-datetime').value;
+      const charges  = document.getElementById('court-charges').value.trim();
+      const judge    = document.getElementById('court-judge').value.trim();
+      const officer  = document.getElementById('court-officer').value.trim();
+      const notes    = document.getElementById('court-notes').value.trim();
+      const statusEl = document.getElementById('court-form-status');
+      if (!suspect || !datetime || !charges || !officer) {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Please fill in all required fields (suspect, date/time, charges, filing officer).';
+        return;
+      }
+      this.disabled = true;
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Scheduling…';
+      try {
+        const res = await fetch('/api/court/hearings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suspectName: suspect, hearingType: type, scheduledAt: datetime, charges, judge, filingOfficer: officer, notes })
+        });
+        const json = await res.json();
+        if (json.success) {
+          _courtHearings.unshift(json.hearing);
+          _courtFilter = 'all';
+          document.querySelectorAll('.court-filter-btn').forEach(b => b.classList.toggle('active-filter', b.dataset.status === 'all'));
+          renderCourtHearings();
+          document.getElementById('court-schedule-form').style.display = 'none';
+          ['court-suspect','court-charges','court-judge','court-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+          document.getElementById('court-datetime').value = '';
+          statusEl.textContent = '';
+          typeof showToast === 'function' && showToast('Hearing scheduled.', 'success');
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Scheduling failed.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Try again.';
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    loadCourtHearings();
+
+    /* ── JAIL / CUSTODY TRACKER ── */
+    let _jailFilter = 'In Custody';
+    let _jailInmates = [];
+    let _jailTimerInterval = null;
+
+    async function loadJail() {
+      try {
+        const res = await fetch('/api/jail/inmates');
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error);
+        _jailInmates = json.inmates || [];
+        renderJail();
+      } catch (err) {
+        const list = document.getElementById('jail-inmates-list');
+        if (list) list.innerHTML = `<p style="color:var(--accent);font-size:0.85rem;">Failed to load custody records: ${err.message}</p>`;
+      }
+    }
+
+    function formatCountdown(isoDatetime) {
+      if (!isoDatetime) return null;
+      const diff = new Date(isoDatetime) - Date.now();
+      if (diff <= 0) return '<span style="color:#e05252;font-weight:600;">OVERDUE</span>';
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const parts = [];
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0 || h > 0) parts.push(`${m}m`);
+      parts.push(`${s}s`);
+      return `<span style="color:#f5a623;font-weight:600;">${parts.join(' ')}</span> remaining`;
+    }
+
+    function renderJail() {
+      const list  = document.getElementById('jail-inmates-list');
+      const badge = document.getElementById('jail-in-custody-badge');
+      if (!list) return;
+      const inCustody = _jailInmates.filter(i => i.status === 'In Custody').length;
+      if (badge) badge.textContent = `${inCustody} In Custody`;
+
+      const filtered = _jailFilter === 'All'
+        ? _jailInmates
+        : _jailInmates.filter(i => i.status === _jailFilter);
+
+      if (!filtered.length) {
+        list.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;">${_jailFilter === 'In Custody' ? 'No suspects currently in custody.' : 'No records found.'}</p>`;
+        return;
+      }
+
+      list.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">
+        ${filtered.map(i => {
+          const inCust = i.status === 'In Custody';
+          const borderCol = inCust ? '#e05252' : '#4caf82';
+          const bookedDt  = i.bookedAt ? new Date(i.bookedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+          const releaseDt = i.estimatedRelease ? new Date(i.estimatedRelease).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+          const countdown = inCust && i.estimatedRelease ? `<div style="font-size:0.78rem;margin-top:4px;" class="jail-countdown" data-release="${i.estimatedRelease}">⏱ ${formatCountdown(i.estimatedRelease)}</div>` : '';
+          const hearing = _courtHearings.find(h => (h.arrestId && h.arrestId === i.arrestId) || ((h.suspectName || '').toLowerCase() === (i.suspectName || '').toLowerCase() && (h.status || 'Scheduled') === 'Scheduled'));
+          const courtStatus = hearing ? (hearing.status || 'Scheduled') : (i.courtHearingStatus || '—');
+          const fine = i.fineAmount || '—';
+          return `<div style="background:#0a0a0a;border:1px solid #222;border-left:3px solid ${borderCol};border-radius:10px;padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+              <strong style="font-size:0.95rem;flex:1;">${i.suspectName || '—'}</strong>
+              <span style="background:${borderCol}20;color:${borderCol};border:1px solid ${borderCol}44;border-radius:4px;font-size:0.68rem;padding:2px 7px;text-transform:uppercase;">${i.status}</span>
+              ${i.cell ? `<span style="background:#1a1a1a;color:#888;border:1px solid #2a2a2a;border-radius:4px;font-size:0.68rem;padding:2px 7px;">📍 ${i.cell}</span>` : ''}
+            </div>
+            <p style="margin:0 0 4px;font-size:0.83rem;color:#ccc;">${i.charges || '—'}</p>
+            ${i.penalty ? `<p style="margin:0 0 4px;font-size:0.78rem;color:#aaa;">⚖️ Sentence: ${i.penalty}</p>` : ''}
+            <p style="margin:0 0 4px;font-size:0.78rem;color:#aaa;">💵 Fine: ${fine}</p>
+            <p style="margin:0 0 4px;font-size:0.78rem;color:#aaa;">🏛 Court Hearing: ${courtStatus}</p>
+            <div style="font-size:0.78rem;color:#666;margin-top:4px;">
+              <div>🔒 Booked: ${bookedDt} · by ${i.bookedBy || '—'}${i.arrestId ? ` · Arrest ID: ${i.arrestId}` : ''}</div>
+              ${i.estimatedRelease ? `<div>🗓 Est. Release: ${releaseDt}</div>` : ''}
+              ${!inCust && i.releasedAt ? `<div>✅ Released: ${new Date(i.releasedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} by ${i.releasedBy || '—'}${i.releaseReason ? ` (${i.releaseReason})` : ''}</div>` : ''}
+              ${i.notes ? `<div style="margin-top:4px;color:#777;font-style:italic;">${i.notes}</div>` : ''}
+            </div>
+            ${countdown}
+            ${inCust ? `<button onclick="releaseInmate('${i.id}')" style="margin-top:12px;background:#4caf8215;border:1px solid #4caf8244;color:#4caf82;padding:5px 14px;border-radius:6px;font-size:0.75rem;cursor:pointer;">✓ Release</button>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+
+      if (_jailTimerInterval) clearInterval(_jailTimerInterval);
+      const hasActive = filtered.some(i => i.status === 'In Custody' && i.estimatedRelease);
+      if (hasActive) {
+        _jailTimerInterval = setInterval(() => {
+          document.querySelectorAll('.jail-countdown').forEach(el => {
+            el.innerHTML = `⏱ ${formatCountdown(el.dataset.release)}`;
+          });
+        }, 1000);
+      }
+    }
+
+    async function releaseInmate(id) {
+      const officer = typeof getOfficerSession === 'function' ? getOfficerSession() : null;
+      const relBy   = officer ? `${officer.name} (${officer.callsign})` : 'Officer';
+      if (!confirm('Release this suspect from custody?')) return;
+      try {
+        const res = await fetch(`/api/jail/inmates/${id}/release`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ releasedBy: relBy, releaseReason: 'Manual release' })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const idx = _jailInmates.findIndex(i => i.id === id);
+          if (idx !== -1) Object.assign(_jailInmates[idx], json.inmate);
+          renderJail();
+          typeof showToast === 'function' && showToast('Suspect released from custody.', 'success');
+        }
+      } catch {
+        typeof showToast === 'function' && showToast('Network error releasing inmate.', 'error');
+      }
+    }
+
+    async function autoReleaseFromHearing(suspectName, outcome) {
+      const nm    = (suspectName || '').toLowerCase();
+      const match = _jailInmates.find(i => i.status === 'In Custody' && (i.suspectName || '').toLowerCase() === nm);
+      if (!match) return;
+      try {
+        const res = await fetch(`/api/jail/inmates/${match.id}/release`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ releasedBy: 'Court System', releaseReason: `Hearing outcome: ${outcome}` })
+        });
+        const json = await res.json();
+        if (json.success) {
+          const idx = _jailInmates.findIndex(i => i.id === match.id);
+          if (idx !== -1) Object.assign(_jailInmates[idx], json.inmate);
+          renderJail();
+          typeof showToast === 'function' && showToast(`${suspectName} auto-released — hearing outcome: ${outcome}.`, 'success');
+        }
+      } catch { /* silent */ }
+    }
+
+    document.querySelectorAll('.jail-filter-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.jail-filter-btn').forEach(b => b.classList.remove('active-filter'));
+        this.classList.add('active-filter');
+        _jailFilter = this.dataset.status;
+        renderJail();
+      });
+    });
+
+    document.getElementById('jail-book-toggle').addEventListener('click', function () {
+      const form = document.getElementById('jail-book-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      if (form.style.display === 'block') {
+        const officer = typeof getOfficerSession === 'function' ? getOfficerSession() : null;
+        if (officer) document.getElementById('jail-officer').value = `${officer.name} (${officer.callsign})`;
+      }
+    });
+
+    document.getElementById('jail-cancel-btn').addEventListener('click', function () {
+      document.getElementById('jail-book-form').style.display = 'none';
+      document.getElementById('jail-form-status').textContent = '';
+    });
+
+    document.getElementById('jail-autofill-btn').addEventListener('click', function () {
+      const name    = document.getElementById('jail-suspect').value.trim().toLowerCase();
+      const arrests = (NThaCityData.arrests || []);
+      const match   = name.length >= 2
+        ? arrests.find(a => (a.suspectName || '').toLowerCase().includes(name))
+        : arrests[0];
+      if (!match) {
+        document.getElementById('jail-form-status').style.color = 'var(--muted)';
+        document.getElementById('jail-form-status').textContent = 'No matching arrest record found.';
+        return;
+      }
+      if (match.suspectName) document.getElementById('jail-suspect').value  = match.suspectName;
+      if (match.charges)     document.getElementById('jail-charges').value  = match.charges;
+      if (match.penalty)     document.getElementById('jail-penalty').value  = match.penalty;
+      document.getElementById('jail-form-status').style.color = '#4caf82';
+      document.getElementById('jail-form-status').textContent = `✓ Filled from arrest record: ${match.suspectName || '—'}`;
+    });
+
+    document.getElementById('jail-submit-btn').addEventListener('click', async function () {
+      const suspect  = document.getElementById('jail-suspect').value.trim();
+      const charges  = document.getElementById('jail-charges').value.trim();
+      const penalty  = document.getElementById('jail-penalty').value.trim();
+      const release  = document.getElementById('jail-release-time').value;
+      const cell     = document.getElementById('jail-cell').value.trim();
+      const officer  = document.getElementById('jail-officer').value.trim();
+      const notes    = document.getElementById('jail-notes').value.trim();
+      const statusEl = document.getElementById('jail-form-status');
+      if (!suspect || !charges || !officer) {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Please fill in suspect name, charges, and booking officer.';
+        return;
+      }
+      this.disabled = true;
+      statusEl.style.color = 'var(--muted)';
+      statusEl.textContent = 'Booking…';
+      try {
+        const res = await fetch('/api/jail/inmates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ suspectName: suspect, charges, penalty, estimatedRelease: release, cell, bookedBy: officer, notes })
+        });
+        const json = await res.json();
+        if (json.success) {
+          _jailInmates.unshift(json.inmate);
+          _jailFilter = 'In Custody';
+          document.querySelectorAll('.jail-filter-btn').forEach(b => b.classList.toggle('active-filter', b.dataset.status === 'In Custody'));
+          renderJail();
+          document.getElementById('jail-book-form').style.display = 'none';
+          ['jail-suspect','jail-charges','jail-penalty','jail-cell','jail-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+          document.getElementById('jail-release-time').value = '';
+          statusEl.textContent = '';
+          typeof showToast === 'function' && showToast('Suspect booked into custody.', 'success');
+        } else {
+          statusEl.style.color = 'var(--accent)';
+          statusEl.textContent = json.error || 'Booking failed.';
+        }
+      } catch {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = 'Network error. Try again.';
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    loadJail();
+  </script>
+
+  <!-- Booking card modal -->
+  <div id="booking-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
+    <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+      <div style="background:#0d0d0d;border-bottom:1px solid #1e1e1e;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;">
+        <div>
+          <p style="margin:0;font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;"><span data-community-name>Community</span> LSPD</p>
+          <h3 style="margin:4px 0 0;font-size:1.05rem;color:#fff;">🔒 Arrest Booking Card</h3>
+        </div>
+        <button onclick="document.getElementById('booking-modal-overlay').style.display='none';" style="background:transparent;border:1px solid #333;color:#888;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="booking-card-content"></div>
+        <div style="margin-top:16px;">
+          <p style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Discord Post Text</p>
+          <textarea id="booking-discord-text" rows="8" readonly style="width:100%;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;padding:10px 12px;color:#d0d0d0;font-size:0.8rem;line-height:1.5;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button id="booking-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('booking-discord-text').value);this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy for Discord',2000);" style="flex:1;background:rgba(255,45,45,0.12);color:var(--accent);border:1px solid rgba(255,45,45,0.3);border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer;font-weight:600;">Copy for Discord</button>
+            <button onclick="document.getElementById('booking-modal-overlay').style.display='none';" style="flex:1;background:#1a1a1a;color:#ccc;border:1px solid #333;border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer;">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Officer login overlay -->
+  <div id="officer-login-overlay" class="officer-login-overlay">
+    <div class="officer-login-box">
+      <div class="officer-login-top">
+        <div class="officer-login-badge">🚔</div>
+        <h2 class="officer-login-title"><span data-community-cad-name>Community CAD</span></h2>
+        <p class="officer-login-sub">Select a preset unit or choose Custom Unit before entering CAD.</p>
+      </div>
+
+      <div id="officer-login-alert" class="officer-login-alert" role="alert" aria-live="polite"></div>
+
+      <div class="officer-login-tabs">
+        <button type="button" class="officer-tab active" id="tab-btn-select" onclick="switchOfficerMode('preset')">Preset Units</button>
+        <button type="button" class="officer-tab" id="tab-btn-custom" onclick="switchOfficerMode('custom')">Custom Unit</button>
+      </div>
+
+      <div class="officer-unit-grid" id="officer-unit-grid"></div>
+
+      <div class="system-form officer-custom-form" id="officer-login-form">
+        <label id="login-callsign-wrap">Callsign / Unit
+          <input id="login-callsign" type="text" placeholder="Select a unit" readonly />
+          <span class="field-error" id="login-callsign-error">Callsign is required.</span>
+        </label>
+        <label id="login-name-wrap">Officer Name
+          <input id="login-officer-name" type="text" placeholder="e.g. J. Martinez" autocomplete="name" />
+          <span class="field-error" id="login-name-error">Officer name is required.</span>
+        </label>
+        <label id="login-dept-wrap">Department
+          <select id="login-dept">
+            <option value="">Select department</option>
+            <option value="LSPD">LSPD</option>
+            <option value="BCSO">BCSO</option>
+            <option value="Gang Enforcement">Gang Enforcement</option>
+            <option value="Traffic Division">Traffic Division</option>
+            <option value="K9 Unit">K9 Unit</option>
+            <option value="SWAT">SWAT</option>
+            <option value="Dispatch">Dispatch</option>
+            <option value="EMS">EMS</option>
+          </select>
+          <span class="field-error" id="login-dept-error">Department is required.</span>
+        </label>
+        <button id="officer-login-btn" class="button button-primary" type="button" style="width:100%;margin-top:4px;" onclick="submitOfficerLogin()" disabled>Log In to CAD</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Officer login overlay ──
+    const OFFICER_SESSION_KEY = `GTAVCADOfficer:${window.GTAVCAD_CONTEXT?.communitySlug || window.location.pathname}`;
+    const PREDEFINED_UNITS = [
+      { callsign: '1L-01',  name: 'Chief Unit',    department: 'LSPD',             icon: '⭐' },
+      { callsign: '2L-12',  name: 'Patrol Unit',   department: 'LSPD',             icon: '👮' },
+      { callsign: '3L-22',  name: 'Traffic Unit',  department: 'Traffic Division', icon: '🚗' },
+      { callsign: 'D-04',   name: 'Dispatch',      department: 'Dispatch',         icon: '📡' },
+      { callsign: 'K9-02',  name: 'K9 Unit',       department: 'K9 Unit',          icon: '🐕' },
+      { callsign: 'GU-01',  name: 'Gang Unit',     department: 'Gang Enforcement', icon: '🔫' },
+      { callsign: 'GU-02',  name: 'Gang Unit 2',   department: 'Gang Enforcement', icon: '🔫' },
+      { callsign: 'BCSO-1', name: 'BCSO Deputy 1', department: 'BCSO',             icon: '🤠' },
+      { callsign: 'BCSO-2', name: 'BCSO Deputy 2', department: 'BCSO',             icon: '🤠' },
+      { callsign: 'SWT-1',  name: 'SWAT Unit',     department: 'SWAT',             icon: '🛡️' },
+    ];
+    let selectedUnit = null;
+    let officerLoginMode = 'preset';
+
+    function officerLoginEls() {
+      return {
+        overlay: document.getElementById('officer-login-overlay'),
+        alert: document.getElementById('officer-login-alert'),
+        callsign: document.getElementById('login-callsign'),
+        name: document.getElementById('login-officer-name'),
+        dept: document.getElementById('login-dept'),
+        loginBtn: document.getElementById('officer-login-btn'),
+      };
+    }
+
+    function buildUnitGrid() {
+      const grid = document.getElementById('officer-unit-grid');
+      grid.innerHTML = PREDEFINED_UNITS.map(u => `
+        <button type="button" class="officer-unit-card" data-callsign="${escapeAttr(u.callsign)}" onclick="selectPresetUnit('${escapeAttr(u.callsign)}')">
+          <span class="unit-icon">${escapeHtml(u.icon)}</span>
+          <span class="unit-callsign">${escapeHtml(u.callsign)}</span>
+          <span class="unit-name">${escapeHtml(u.name)}</span>
+          <span class="unit-dept">${escapeHtml(u.department)}</span>
+        </button>
+      `).join('');
+    }
+
+    function setOfficerLoginAlert(message) {
+      const { alert } = officerLoginEls();
+      alert.textContent = message || '';
+      alert.style.display = message ? 'block' : 'none';
+    }
+
+    function switchOfficerMode(mode) {
+      officerLoginMode = mode;
+      const { callsign, dept } = officerLoginEls();
+      document.getElementById('tab-btn-select').classList.toggle('active', mode === 'preset');
+      document.getElementById('tab-btn-custom').classList.toggle('active', mode === 'custom');
+      document.getElementById('officer-unit-grid').classList.toggle('custom-active', mode === 'custom');
+      if (mode === 'custom') {
+        selectedUnit = null;
+        callsign.value = '';
+        callsign.placeholder = 'e.g. LSPD-4B21';
+        callsign.readOnly = false;
+        document.querySelectorAll('.officer-unit-card').forEach(btn => btn.classList.remove('selected'));
+      } else {
+        callsign.placeholder = 'Select a unit';
+        callsign.readOnly = true;
+      }
+      dept.disabled = false;
+      setOfficerLoginAlert('');
+      validateOfficerLoginForm(true);
+    }
+
+    function selectPresetUnit(callsign) {
+      const unit = PREDEFINED_UNITS.find(u => u.callsign === callsign);
+      if (!unit) return;
+      switchOfficerMode('preset');
+      selectedUnit = unit;
+      const els = officerLoginEls();
+      els.callsign.value = unit.callsign;
+      els.dept.value = unit.department;
+      document.querySelectorAll('.officer-unit-card').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.callsign === unit.callsign);
+      });
+      validateOfficerLoginForm(true);
+    }
+
+    function validateOfficerLoginForm(markTouched = false) {
+      const { callsign, name, dept, loginBtn } = officerLoginEls();
+      const callsignValid = callsign.value.trim().length > 0;
+      const nameValid = name.value.trim().length > 0;
+      const deptValid = dept.value.trim().length > 0;
+      const isValid = callsignValid && nameValid && deptValid;
+      [
+        ['login-callsign-wrap', callsignValid],
+        ['login-name-wrap', nameValid],
+        ['login-dept-wrap', deptValid],
+      ].forEach(([id, valid]) => {
+        const field = document.getElementById(id);
+        if (field) field.classList.toggle('invalid', markTouched && !valid);
+      });
+      loginBtn.disabled = !isValid;
+      return isValid;
+    }
+
+    function normalizeOfficerSession(officer) {
+      if (!officer) return null;
+      const officerName = officer.officerName || officer.officer_name || officer.name || '';
+      return {
+        callsign: officer.callsign || '',
+        officerName,
+        name: officerName,
+        department: officer.department || '',
+        status: officer.status || 'On Duty',
+        loggedInAt: officer.loggedInAt || officer.logged_in_at || new Date().toISOString(),
+      };
+    }
+
+    function renderOfficerHeader(officer) {
+      const dashboard = document.getElementById('my-dashboard-section');
+      const label = document.getElementById('my-officer-label');
+      const chip = document.getElementById('officer-header-chip');
+      if (!officer || !officer.callsign) {
+        if (dashboard) dashboard.style.display = 'none';
+        if (label) label.textContent = '—';
+        if (chip) chip.textContent = '👮 Not signed in';
+        return;
+      }
+      const displayName = officer.officerName || officer.name || '';
+      if (dashboard) dashboard.style.display = 'block';
+      if (label) {
+        label.innerHTML = `<strong>${escapeHtml(officer.callsign)}</strong> · ${escapeHtml(displayName)} · ${escapeHtml(officer.department)} · <span class="badge badge-primary">${escapeHtml(officer.status || 'On Duty')}</span>`;
+      }
+      if (chip) {
+        chip.textContent = `👮 ${officer.callsign} · ${displayName} · ${officer.department}`;
+      }
+    }
+
+    function getOfficerSession() {
+      try {
+        return JSON.parse(localStorage.getItem(OFFICER_SESSION_KEY) || 'null');
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function refreshActiveOfficerSessions() {
+      try {
+        const res = await fetch('/api/officer-sessions/active');
+        const json = await res.json();
+        if (!res.ok || !json.success || !Array.isArray(json.sessions)) return;
+        if (typeof NThaCityData !== 'undefined') {
+          NThaCityData.officers = json.sessions.map(session => ({
+            id: session.callsign,
+            name: session.officerName || session.name || '',
+            department: session.department || '',
+            status: session.status || 'On Duty',
+            lastUpdate: session.updatedAt || session.loggedInAt || new Date().toISOString(),
+          }));
+          if (typeof updateDashboard === 'function') updateDashboard();
+          if (typeof renderOfficersBoard === 'function') renderOfficersBoard();
+        }
+      } catch (_) {}
+    }
+
+    function setOfficerSession(officer) {
+      const normalized = normalizeOfficerSession(officer);
+      localStorage.setItem(OFFICER_SESSION_KEY, JSON.stringify(normalized));
+      officerLoginEls().overlay.style.display = 'none';
+      renderOfficerHeader(normalized);
+      refreshActiveOfficerSessions();
+    }
+
+    function clearOfficerSession() {
+      localStorage.removeItem(OFFICER_SESSION_KEY);
+      renderOfficerHeader(null);
+      officerLoginEls().overlay.style.display = 'flex';
+      validateOfficerLoginForm(true);
+      refreshActiveOfficerSessions();
+    }
+
+    async function submitOfficerLogin() {
+      if (!validateOfficerLoginForm(true)) return;
+      const els = officerLoginEls();
+      const payload = {
+        callsign: els.callsign.value.trim(),
+        officerName: els.name.value.trim(),
+        department: els.dept.value.trim(),
+      };
+      els.loginBtn.disabled = true;
+      setOfficerLoginAlert('');
+      try {
+        const res = await fetch('/api/officer-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.success) {
+          const message = res.status === 409 ? 'Callsign already in use.' : (json.error || 'Unable to start officer session.');
+          throw new Error(message);
+        }
+        const officer = json.session || { ...payload, status: 'On Duty', loggedInAt: new Date().toISOString() };
+        setOfficerSession(officer);
+        if (typeof showToast === 'function') showToast(`${payload.callsign} is On Duty`, 'success');
+      } catch (err) {
+        setOfficerLoginAlert(err.message || 'Unable to start officer session.');
+        validateOfficerLoginForm(true);
+      } finally {
+        els.loginBtn.disabled = !validateOfficerLoginForm(false);
+      }
+    }
+
+    async function officerLogout() {
+      const officer = getOfficerSession();
+      if (officer && officer.callsign) {
+        try {
+          await fetch('/api/officer-sessions/end', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callsign: officer.callsign }),
+          });
+        } catch (_) {}
+      }
+      clearOfficerSession();
+      if (typeof showToast === 'function') showToast('Shift ended. Officer session cleared.', 'info');
+    }
+
+    async function restoreOfficerSession() {
+      const officer = getOfficerSession();
+      if (!officer || !officer.callsign) {
+        clearOfficerSession();
+        return;
+      }
+      try {
+        const res = await fetch('/api/officer-sessions/active');
+        const json = await res.json();
+        const sessions = Array.isArray(json.sessions) ? json.sessions : [];
+        const active = sessions.find(s => s.callsign === officer.callsign);
+        if (active && active.status === 'On Duty') {
+          setOfficerSession({
+            callsign: active.callsign,
+            officerName: active.officerName || active.name || officer.officerName || officer.name,
+            department: active.department || officer.department,
+            status: active.status,
+            loggedInAt: active.loggedInAt || officer.loggedInAt,
+          });
+          return;
+        }
+      } catch (_) {}
+      clearOfficerSession();
+    }
+
+    function waitForCommunityContext() {
+      if (window.GTAVCAD_CONTEXT && window.GTAVCAD_CONTEXT.role) return Promise.resolve();
+      return new Promise(resolve => {
+        window.addEventListener('gtavcad:context-ready', () => resolve(), { once: true });
+        setTimeout(resolve, 2500);
+      });
+    }
+
+    async function initializeOfficerGate() {
+      await waitForCommunityContext();
+      if (typeof enforceCadRoleVisibility === 'function' && !enforceCadRoleVisibility()) return;
+      if (typeof isCadAdminBypass === 'function' && isCadAdminBypass()) {
+        localStorage.removeItem(OFFICER_SESSION_KEY);
+        const overlay = document.getElementById('officer-login-overlay');
+        if (overlay) overlay.style.display = 'none';
+        renderOfficerHeader({
+          callsign: 'ADMIN',
+          officerName: `${window.GTAVCAD_CONTEXT.role} Access`,
+          department: window.GTAVCAD_CONTEXT.department || 'Command',
+          status: 'Unrestricted',
+        });
+        refreshActiveOfficerSessions();
+        return;
+      }
+      buildUnitGrid();
+      ['login-callsign', 'login-officer-name', 'login-dept'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => validateOfficerLoginForm(true));
+        if (el) el.addEventListener('change', () => validateOfficerLoginForm(true));
+      });
+      switchOfficerMode('preset');
+      restoreOfficerSession();
+    }
+
+    initializeOfficerGate();
+  </script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

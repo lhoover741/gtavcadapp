@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | GTAVCAD</title>
+  <meta name="theme-color" content="#cc1f1f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="icon" type="image/png" href="/assets/images/gtavcad-logo.png" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/gtavcad-branding.css" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+  <style>
+    .auth-wrap {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px 80px;
+    }
+    .auth-card {
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .auth-logo-wrap {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .auth-logo-wrap img {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+    }
+    .auth-logo-wrap h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 0 4px;
+      letter-spacing: 0.05em;
+    }
+    .auth-logo-wrap p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      margin: 0;
+    }
+    .auth-card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 20px;
+    }
+    .auth-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
+      font-weight: 500;
+    }
+    .auth-form input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #fff;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .auth-form input:focus {
+      outline: none;
+      border-color: rgba(204,31,31,0.5);
+    }
+    .auth-submit {
+      width: 100%;
+      background: #cc1f1f;
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .auth-submit:hover { background: #e02222; }
+    .auth-submit:active { transform: scale(0.98); }
+    .auth-submit:disabled { background: rgba(204,31,31,0.4); cursor: not-allowed; }
+    .auth-status {
+      margin-top: 14px;
+      font-size: 0.84rem;
+      min-height: 20px;
+      text-align: center;
+      border-radius: 8px;
+      padding: 0;
+      transition: all 0.2s;
+    }
+    .auth-status.error {
+      color: #ff6060;
+      background: rgba(255,60,60,0.1);
+      border: 1px solid rgba(255,60,60,0.2);
+      padding: 10px 14px;
+    }
+    .auth-status.success {
+      color: #2ecc71;
+      background: rgba(46,204,113,0.1);
+      border: 1px solid rgba(46,204,113,0.2);
+      padding: 10px 14px;
+    }
+    .auth-footer-links {
+      margin-top: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .auth-footer-links a, .auth-footer-links button {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.82rem;
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .auth-footer-links a:hover, .auth-footer-links button:hover { color: #fff; }
+    .auth-footer-links a.primary-link {
+      color: #cc1f1f;
+      font-weight: 600;
+    }
+    .auth-footer-links a.primary-link:hover { color: #ff4444; }
+  </style>
+</head>
+<body data-platform-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="gtavcad-brand-lockup" href="/">
+        <img src="/assets/images/gtavcad-logo.png" alt="GTAVCAD" class="brand-logo-img" />
+        <span class="gtavcad-brand-text">
+          <span class="gtavcad-brand-title">GTAVCAD</span>
+          <span class="gtavcad-brand-subtitle">Dispatch System</span>
+        </span>
+      </a>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="/communities">Communities</a>
+        <a href="/login" style="color:#cc1f1f;">Login</a>
+        <a class="button button-primary" href="/create-community">Create Community</a>
+        <a class="button button-ghost" href="/join-community">Join Community</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-logo-wrap">
+          <img src="/assets/images/gtavcad-logo.png" alt="GTAVCAD" />
+          <h1>GTAVCAD</h1>
+          <p>Roleplay Dispatch System</p>
+        </div>
+        <h2>Sign in to your account</h2>
+        <form id="login-form" class="auth-form" autocomplete="on">
+          <label>
+            Username or Email
+            <input name="username" type="text" autocomplete="username" placeholder="Enter username or email" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" placeholder="Enter password" required />
+          </label>
+          <button class="auth-submit" id="login-submit" type="submit">Login</button>
+        </form>
+        <p id="login-status" class="auth-status" role="status"></p>
+        <div class="auth-footer-links">
+          <button id="forgot-password-link">Forgot password?</button>
+          <a href="/register">Don't have an account? <span class="primary-link">Register here</span></a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> GTAVCAD.</p>
+      <p>Create or Join a Community.</p>
+    </div>
+  </footer>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script>
+    const pendingInviteKey = 'gtavcad_pending_invite_code';
+    const loginInvite = new URLSearchParams(window.location.search).get('invite') || new URLSearchParams(window.location.search).get('code');
+    if (loginInvite) {
+      sessionStorage.setItem(pendingInviteKey, loginInvite.toUpperCase());
+      localStorage.setItem(pendingInviteKey, loginInvite.toUpperCase());
+    }
+
+    async function joinPendingInviteAfterAuth() {
+      const code = (sessionStorage.getItem(pendingInviteKey) || localStorage.getItem(pendingInviteKey) || '').trim().toUpperCase();
+      if (!code) return null;
+      const res = await fetch(`/api/invites/${encodeURIComponent(code)}/join`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }, body: '{}'
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        sessionStorage.removeItem(pendingInviteKey);
+        localStorage.removeItem(pendingInviteKey);
+        return data.redirect || (data.community?.slug ? `/c/${data.community.slug}/` : null);
+      }
+      return null;
+    }
+
+    const statusEl = document.getElementById('login-status');
+    function showStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'auth-status ' + (type || '');
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-submit');
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      showStatus('', '');
+      const form = new FormData(e.target);
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(form))
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          const msgs = {
+            INVALID_CREDENTIALS: 'Incorrect username/email or password.',
+            ACCOUNT_NOT_FOUND: 'No account found. Please register first.',
+            ACCOUNT_INACTIVE: 'Account is inactive. Contact support.',
+            AUTH_STATE_INVALID: 'Authentication error. Please contact support.',
+          };
+          showStatus(msgs[data.code] || data.error || 'Login failed.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Login';
+          return;
+        }
+        showStatus('Login successful! Redirecting…', 'success');
+        const inviteRedirect = await joinPendingInviteAfterAuth();
+        window.location.href = inviteRedirect || data.redirect || '/community-setup';
+      } catch (err) {
+        showStatus('Network error. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Login';
+      }
+    });
+
+    document.getElementById('forgot-password-link').addEventListener('click', async () => {
+      const identifier = prompt('Enter your username or email to receive a reset link:');
+      if (!identifier) return;
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier })
+      });
+      await res.json().catch(() => ({}));
+      alert('If an account exists with that identifier, reset instructions will be sent.');
+    });
+  </script>
+</body>
+</html>

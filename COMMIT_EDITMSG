@@ -1,0 +1,10 @@
+Add a comprehensive Use of Force report system with AI generation
+
+Integrates an AI-powered Use of Force report generator into the Police CAD system, adding a new form to `police.html` and a corresponding `/api/ai/use-of-force` endpoint in `server.py`.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 4803576a-7003-415e-b473-4b9ccf294a25
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: 511656c7-9a06-493f-9d8d-be8466a3348d
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/076f7c4c-c9a3-41d1-abc6-4441fce015e0/4803576a-7003-415e-b473-4b9ccf294a25/E1vPPeb
+Replit-Helium-Checkpoint-Created: true

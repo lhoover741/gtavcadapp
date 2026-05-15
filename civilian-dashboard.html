@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Civilian Dashboard | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body data-community-page="true" data-dashboard-page="civilian">
+  <header class="site-header" data-tenant-header>
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+      <nav class="global-nav">
+        <a href="index.html">Home</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="dmv.html">DMV</a>
+        <a href="complaints.html">Complaints</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero page-hero panel">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Civilian records portal</p>
+          <h1 data-keep-title="true">Civilian Dashboard</h1>
+          <p class="intro">View civilian-facing records for your selected character in <span data-community-name>this community</span>. Police-only CAD data, evidence, and unserved warrants are never shown here.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="civilian.html#civilian-form">Edit Civilian Profile</a>
+            <a class="button button-secondary" href="dmv.html">Register Vehicle</a>
+            <a class="button button-secondary" href="#tickets-fines">View Tickets/Fines</a>
+            <a class="button button-secondary" href="#court-dates">View Court Dates</a>
+            <a class="button button-secondary" href="index.html">Back to Community</a>
+          </div>
+        </div>
+        <div class="hero-panel card">
+          <h2>Privacy boundary</h2>
+          <p>This dashboard only returns records owned by your authenticated account and active community. The warrant section is limited to <strong>Served Warrants</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="container section" id="civilian-dashboard-root">
+      <div class="card" id="civilian-dashboard-status">Loading Civilian Dashboard…</div>
+
+      <div class="card hidden" id="civilian-profile-selector-card">
+        <h2>Select Civilian Profile</h2>
+        <p>Choose which civilian character dashboard to open.</p>
+        <div class="form-actions">
+          <select id="civilian-profile-selector" aria-label="Select civilian profile"></select>
+          <button class="button button-primary" id="civilian-profile-open" type="button">Open Civilian Dashboard</button>
+        </div>
+      </div>
+
+      <div id="civilian-dashboard-content" class="hidden">
+        <section class="card dashboard-profile-card" id="profile">
+          <div class="section-header"><h2>Profile</h2><span class="status-badge" id="civilian-license-badge">License</span></div>
+          <div class="record-grid" id="civilian-profile-card"></div>
+        </section>
+
+        <section class="stats-grid" id="civilian-quick-stats" aria-label="Quick stats"></section>
+
+        <section class="card dashboard-section" id="vehicles"><h2>Vehicles</h2><div id="civilian-vehicles"></div></section>
+        <section class="card dashboard-section" id="licenses"><h2>Licenses</h2><div id="civilian-licenses"></div></section>
+        <section class="card dashboard-section" id="tickets-fines"><h2>Tickets &amp; Fines</h2><div id="civilian-tickets-fines"></div></section>
+        <section class="card dashboard-section" id="arrest-jail-history"><h2>Arrest / Jail History</h2><div id="civilian-arrest-jail"></div></section>
+        <section class="card dashboard-section" id="served-warrants"><h2>Served Warrants</h2><div id="civilian-served-warrants"></div></section>
+        <section class="card dashboard-section" id="court-dates"><h2>Court Dates</h2><div id="civilian-court-dates"></div></section>
+        <section class="card dashboard-section" id="complaints"><h2>Complaints</h2><div id="civilian-complaints"></div></section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Public-facing civilian records only. No evidence section is available.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

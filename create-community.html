@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Community | GTAVCAD</title>
+  <link rel="icon" type="image/png" href="/assets/images/gtavcad-logo.png" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/gtavcad-branding.css" />
+</head>
+<body data-platform-page="true">
+<header class="site-header"><div class="topbar container"><a class="gtavcad-brand-lockup" href="/"><img class="gtavcad-brand-mark" src="/assets/images/gtavcad-logo.png" alt="GTAVCAD logo"><span class="gtavcad-brand-text"><span class="gtavcad-brand-title">GTAVCAD</span><span class="gtavcad-brand-subtitle">Dispatch System</span></span></a><button class="nav-toggle" aria-label="Open navigation">Menu</button><nav class="global-nav" aria-label="Main navigation"><a href="/communities">Communities</a><a href="/login">Login</a><a class="button button-primary" href="/create-community">Create Community</a><a class="button button-ghost" href="/join-community">Join Community</a></nav></div></header>
+<main>
+  <section class="panel section page-hero"><div class="container"><p class="eyebrow">Welcome to GTAVCAD</p><h1>Create a Community</h1><p class="intro">Start a new tenant with custom community name, CAD name, slug, and colors.</p></div></section>
+  <section class="container section content-grid">
+    <article class="card info-card">
+      <h2>Community setup</h2>
+      <form id="create-community-form" class="system-form">
+        <label>Community name <input name="name" required placeholder="Metro RP" /></label>
+        <label>Slug <input name="slug" required placeholder="metro-rp" pattern="[a-z0-9-]+" /></label>
+        <label>CAD name <input name="cad_name" required placeholder="Metro CAD" /></label>
+        <label>Primary color <input name="primary_color" type="color" value="#1a1a1a" /></label>
+        <label>Secondary color <input name="secondary_color" type="color" value="#0066cc" /></label>
+        <button class="button button-primary" type="submit">Create Community</button>
+      </form>
+      <p id="create-community-status" role="status"></p>
+    </article>
+  </section>
+</main>
+<div id="community-created-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;color:#fff;padding:24px;border-radius:12px;max-width:420px;width:90%;">
+    <h3>Community Created</h3>
+    <p>Invite Code:</p>
+    <p id="created-invite-code" style="font-size:1.5rem;font-weight:700;letter-spacing:2px;"></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button id="enter-cad-btn" class="button button-primary" type="button">Enter CAD</button>
+      <button id="copy-invite-btn" class="button button-ghost" type="button">Copy Invite</button>
+    </div>
+  </div>
+</div>
+<footer class="site-footer"><div class="container footer-grid"><p>&copy; <span class="current-year"></span> GTAVCAD.</p><p>Create or Join a Community.</p></div></footer>
+<script src="/assets/js/main.js"></script>
+<script>
+document.getElementById('create-community-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const status = document.getElementById('create-community-status');
+  const form = new FormData(event.target);
+  const res = await fetch('/api/communities/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.fromEntries(form))});
+  const data = await res.json();
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  if (!res.ok || !data.success) { status.textContent = data.error || 'Community creation failed'; return; }
+  localStorage.setItem('gtavcad_active_community', data.community.slug);
+  const redirectUrl = data.redirect_url || `/c/${data.community.slug}/`;
+  const inviteCode = (data.invite && (data.invite.code || data.invite.invite_code)) || '';
+  document.getElementById('created-invite-code').textContent = inviteCode;
+  document.getElementById('community-created-modal').style.display = 'flex';
+  document.getElementById('copy-invite-btn').onclick = async () => {
+    if (!inviteCode) return;
+    await navigator.clipboard.writeText(inviteCode);
+    status.textContent = 'Invite code copied.';
+  };
+  document.getElementById('enter-cad-btn').onclick = () => {
+    window.location.href = redirectUrl;
+  };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Communities | GTAVCAD</title>
+  <link rel="icon" type="image/png" href="/assets/images/gtavcad-logo.png" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/gtavcad-branding.css" />
+</head>
+<body data-platform-page="true">
+  <header class="site-header"><div class="topbar container"><a class="gtavcad-brand-lockup" href="/"><img class="gtavcad-brand-mark" src="/assets/images/gtavcad-logo.png" alt="GTAVCAD logo"><span class="gtavcad-brand-text"><span class="gtavcad-brand-title">GTAVCAD</span><span class="gtavcad-brand-subtitle">Dispatch System</span></span></a><button class="nav-toggle" aria-label="Open navigation">Menu</button><nav class="global-nav" aria-label="Main navigation"><a href="/communities">Communities</a><a href="/login">Login</a><a class="button button-primary" href="/create-community">Create Community</a><a class="button button-ghost" href="/join-community">Join Community</a></nav></div></header>
+  <main>
+    <section class="panel section page-hero"><div class="container"><p class="eyebrow">Multi-Community RP/CAD Platform</p><h1>Your Communities</h1><p class="intro">Create or join an isolated RP/CAD community, then enter its CAD workspace.</p></div></section>
+    <section class="container section content-grid">
+      <article class="card info-card" id="community-onboarding" hidden>
+        <h2>Start your onboarding</h2>
+        <p>You are not in any communities yet. Create your own tenant or join one with an invite code.</p>
+        <div class="hero-actions"><a class="button button-primary" href="/create-community">Create Community</a><a class="button button-secondary" href="/join-community">Join Community</a></div>
+      </article>
+      <article class="card info-card">
+        <h2>Community actions</h2>
+        <div class="hero-actions"><a class="button button-primary" href="/create-community">Create Community</a><a class="button button-secondary" href="/join-community">Join Community</a></div>
+        <p id="communities-status" role="status">Loading your communities…</p>
+      </article>
+    </section>
+    <section class="container section card-grid" id="communities-list" aria-live="polite"></section>
+  </main>
+  <footer class="site-footer"><div class="container footer-grid"><p>&copy; <span class="current-year"></span> GTAVCAD.</p><p>Communities are tenant-scoped and isolated.</p></div></footer>
+  <script src="/assets/js/main.js"></script>
+  <script>
+  function canManageCommunity(row, sessionUser) {
+    if (row.can_manage_community === true || sessionUser?.is_platform_owner === true) return true;
+    const role = row.membership?.role || '';
+    return ['PlatformOwner', 'CommunityOwner', 'CommunityAdmin', 'Owner', 'Admin'].includes(role);
+  }
+
+  async function loadCommunitiesPage() {
+    const status = document.getElementById('communities-status');
+    const list = document.getElementById('communities-list');
+    const onboarding = document.getElementById('community-onboarding');
+    try {
+      const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
+      if (sessionRes.status === 401) {
+        status.textContent = 'Please login or register to see your communities.';
+        const loginLink = document.createElement('a');
+        loginLink.href = '/login';
+        loginLink.textContent = ' Login';
+        const registerLink = document.createElement('a');
+        registerLink.href = '/register';
+        registerLink.textContent = ' Register';
+        status.append(loginLink, ' or', registerLink, '.');
+        onboarding.hidden = false;
+        return;
+      }
+      const sessionData = await sessionRes.json();
+      const communitiesRes = await fetch('/api/communities', { credentials: 'include' });
+      const communitiesData = await communitiesRes.json();
+      if (!communitiesRes.ok || !communitiesData.success) throw new Error(communitiesData.error || 'Unable to load communities');
+      const communities = communitiesData.communities || [];
+      if (!communities.length) {
+        status.textContent = 'No communities found for your account.';
+        onboarding.hidden = false;
+        return;
+      }
+      status.textContent = `Found ${communities.length} communit${communities.length === 1 ? 'y' : 'ies'}.`;
+      list.replaceChildren();
+      communities.forEach((row) => {
+        const { community, membership } = row;
+        const card = document.createElement('article');
+        card.className = 'card feature-card';
+        const title = document.createElement('h3');
+        title.textContent = community.name || 'Community';
+        const meta = document.createElement('p');
+        meta.textContent = `${community.cad_name || 'Community CAD'} · Slug: ${community.slug || '—'} · Role: ${membership?.role || 'Member'} · Status: ${membership?.status || community.status || 'Active'}`;
+        const actions = document.createElement('div');
+        actions.className = 'hero-actions';
+        const open = document.createElement('a');
+        open.className = 'button button-primary';
+        open.href = `/c/${encodeURIComponent(community.slug)}/`;
+        open.textContent = 'Open';
+        actions.appendChild(open);
+        if (canManageCommunity(row, sessionData.user)) {
+          const manage = document.createElement('a');
+          manage.className = 'button button-secondary';
+          manage.href = `/community-admin?community_slug=${encodeURIComponent(community.slug)}`;
+          manage.textContent = 'Manage';
+          actions.appendChild(manage);
+        }
+        card.append(title, meta, actions);
+        list.appendChild(card);
+      });
+    } catch (error) {
+      status.textContent = error.message || 'Unable to load communities right now.';
+      console.warn(error);
+    }
+  }
+  loadCommunitiesPage();
+  </script>
+</body>
+</html>

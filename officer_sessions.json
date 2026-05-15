@@ -1,0 +1,23 @@
+{
+  "GU-01": {
+    "callsign": "GU-01",
+    "name": "Gang Unit 1",
+    "department": "Gang Enforcement",
+    "loggedInAt": "2026-05-06T01:48:15.757880",
+    "status": "On Duty"
+  },
+  "D-04": {
+    "callsign": "D-04",
+    "name": "Dispatch",
+    "department": "Dispatch",
+    "loggedInAt": "2026-05-06T21:39:04.159741",
+    "status": "On Duty"
+  },
+  "GU-02": {
+    "callsign": "GU-02",
+    "name": "Gang Unit 2",
+    "department": "Gang Enforcement",
+    "loggedInAt": "2026-05-06T21:42:34.778103",
+    "status": "On Duty"
+  }
+}

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTAVCAD CAD/MDT</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#b30000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+    <link rel="stylesheet" href="/assets/css/mobile.css" />
+    <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: radial-gradient(circle at top, #1b0508 0, #07080d 50%, #020203 100%);
+            color: #ff3b3b;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #1a1f3a;
+            border: 2px solid #8b0000;
+            box-shadow: 0 0 18px rgba(180,0,0,.35);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #b40000;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: #16070a;
+            color: #ff3b3b;
+            border: 2px solid #8b0000;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            background: #b40000;
+            color: #ffffff;
+        }
+
+        .tab-button.active {
+            background: #b40000;
+            color: #ffffff;
+        }
+
+        .tab-content {
+            display: none;
+            background: #1a1f3a;
+            border: 2px solid #00ff00;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #0a0e27;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button {
+            background: #00ff00;
+            color: #0a0e27;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #00cc00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .spinner {
+            display: none;
+            border: 3px solid #00ff00;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background: #0a2a0a;
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .alert-error {
+            background: #2a0a0a;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .alert-info {
+            background: #0a0a2a;
+            border-color: #0099ff;
+            color: #0099ff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: #0a0e27;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .card-content {
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .login-panel {
+            max-width: 400px;
+            margin: 40px auto;
+            background: #1a1f3a;
+            border: 2px solid #00ff00;
+            padding: 30px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #0099ff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .back-link:hover {
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body data-community-page="true">
+    <div class="container">
+        <header>
+            <h1>🚔 <span data-community-cad-name>GTAVCAD CAD/MDT</span> System</h1>
+            <p>Police Computer Aided Dispatch &amp; Mobile Data Terminal</p>
+            <a href="index.html" class="back-link" style="display:inline-block;margin-top:10px;">← Back to Hub</a>
+        </header>
+
+        <!-- Login Panel (shown when not authenticated) -->
+        <div id="login-panel" class="login-panel" style="display:none;">
+            <h2 style="margin-bottom:20px;">🔐 Admin Login Required</h2>
+            <div id="login-alert"></div>
+            <div class="form-group">
+                <label>Admin Password</label>
+                <input type="password" id="admin-password" placeholder="Enter admin password...">
+            </div>
+            <button onclick="adminLogin()">Login</button>
+        </div>
+
+        <!-- Main CAD UI (shown when authenticated) -->
+        <div id="cad-panel" style="display:none;">
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('dispatch', event)">Dispatch</button>
+                <button class="tab-button" onclick="switchTab('active-calls', event); loadDispatchCalls();">Active Calls</button>
+                <button class="tab-button" onclick="switchTab('cases', event); loadCases();">Cases</button>
+                <button class="tab-button" onclick="switchTab('arrests', event)">Arrests</button>
+                <button class="tab-button" onclick="switchTab('warrants', event)">Warrants</button>
+                <button class="tab-button" onclick="switchTab('evidence', event)">Evidence</button>
+                <button class="tab-button" onclick="switchTab('court-packets', event)">Court Packets</button>
+                <button class="tab-button" onclick="switchTab('civilian-search', event)">Civilian Lookup</button>
+                <button class="tab-button" onclick="switchTab('vehicle-lookup', event)">Vehicle Lookup</button>
+                <button onclick="adminLogout()" style="margin-left:auto;background:#2a0a0a;color:#ff4444;border:1px solid #ff4444;">Logout</button>
+            </div>
+
+            <!-- Civilian Generation Tab -->
+            <div id="civilian-gen" class="tab-content">
+                <h2>🤖 AI Civilian Generator</h2>
+                <p style="margin-bottom: 20px; color: #0099ff;">Generate realistic civilians with complete backgrounds, employment history, and profiles.</p>
+
+                <div id="gen-alert"></div>
+
+                <div class="button-group">
+                    <button onclick="generateCivilian()" id="gen-btn">Generate AI Civilian</button>
+                    <button onclick="clearForm()">Clear Form</button>
+                </div>
+
+                <div class="spinner" id="spinner"></div>
+
+                <div class="grid">
+                    <div>
+                        <h3 style="color: #00ff00; margin-bottom: 15px;">Basic Information</h3>
+
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="first_name" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="last_name" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="age" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <input type="text" id="gender" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Race/Ethnicity</label>
+                            <input type="text" id="race" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="date_of_birth" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="phone_number" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea id="address" readonly rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #00ff00; margin-bottom: 15px;">Profile Information</h3>
+
+                        <div class="form-group">
+                            <label>Occupation</label>
+                            <input type="text" id="occupation" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gang Affiliation</label>
+                            <input type="text" id="gang_affiliation" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Risk Level</label>
+                            <input type="text" id="risk_level" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Addiction Status</label>
+                            <input type="text" id="addiction_status" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Weapon Permit</label>
+                            <input type="text" id="weapon_permit" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Insurance Status</label>
+                            <input type="text" id="insurance_status" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Emergency Contact</label>
+                            <input type="text" id="emergency_contact_name" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Emergency Contact Phone</label>
+                            <input type="tel" id="emergency_contact_phone" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #00ff00; margin-bottom: 15px;">Biography</h3>
+                    <textarea id="biography" readonly rows="4" style="width: 100%;"></textarea>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <p id="civilian-id-display" style="color:#0099ff;font-size:0.85em;margin-bottom:10px;"></p>
+                </div>
+            </div>
+
+            <!-- Search Tab -->
+            <div id="civilian-search" class="tab-content">
+                <h2>🔍 Search Civilians</h2>
+                <div class="form-group">
+                    <label>Search Type</label>
+                    <select id="search-type" onchange="updateSearchPlaceholder()">
+                        <option value="name">Name</option>
+                        <option value="dob">Date of Birth</option>
+                        <option value="plate">License Plate</option>
+                        <option value="phone">Phone Number</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Search Query</label>
+                    <input type="text" id="search-query" placeholder="Enter first and last name..." onkeydown="if(event.key==='Enter') searchCivilians()">
+                </div>
+                <button onclick="searchCivilians()">Search</button>
+                <div id="search-results" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- Dispatch Tab -->
+            <div id="dispatch" class="tab-content active">
+                <h2>📞 Dispatch Calls</h2>
+                <p style="color: #0099ff; margin-bottom: 20px;">Active dispatch calls and incident management.</p>
+                <button onclick="loadDispatchCalls()">Load Active Calls</button>
+                <div id="dispatch-list" style="margin-top: 20px;"></div>
+            </div>
+
+            <div id="active-calls" class="tab-content">
+                <h2>☎️ Active 911 Calls</h2>
+                <p style="color:#ff7777;">Assign units, update status, and convert 911 calls into incident case files.</p>
+                <button onclick="loadDispatchCalls()">Refresh Calls</button>
+                <div id="active-calls-list" style="margin-top:20px;"></div>
+            </div>
+
+            <div id="cases" class="tab-content">
+                <h2>📁 Case Files</h2>
+                <div class="grid">
+                    <div>
+                        <h3>Create Case</h3>
+                        <input id="case-title" placeholder="Case title">
+                        <select id="case-type"><option>incident</option><option>arrest</option><option>warrant</option><option>use_of_force</option><option>court</option></select>
+                        <input id="case-priority" placeholder="Priority" value="medium">
+                        <input id="case-location" placeholder="Location">
+                        <textarea id="case-notes" placeholder="Officer narrative / report notes"></textarea>
+                        <button onclick="createCase()">Create Case</button>
+                    </div>
+                    <div>
+                        <h3>Case List</h3>
+                        <button onclick="loadCases()">Refresh Cases</button>
+                        <div id="case-list"></div>
+                    </div>
+                </div>
+                <div id="case-detail" class="card" style="display:none;margin-top:20px;"></div>
+            </div>
+
+            <div id="arrests" class="tab-content"><h2>🚓 Arrests</h2><p>Create or link arrests from the Case detail panel.</p><div id="arrest-panel"></div></div>
+            <div id="warrants" class="tab-content"><h2>📜 Warrants</h2><p>Create or link warrants from the Case detail panel.</p><div id="warrant-panel"></div></div>
+            <div id="evidence" class="tab-content"><h2>🧾 Evidence</h2><p>Add and review evidence from the Case detail panel.</p><div id="evidence-panel"></div></div>
+            <div id="court-packets" class="tab-content"><h2>⚖️ Court Packets</h2><p>Generate printable packets from the Case detail panel.</p><div id="court-packet-output" class="card"></div></div>
+            <div id="vehicle-lookup" class="tab-content"><h2>🚗 Vehicle Lookup</h2><p>Use Civilian Lookup by plate while full vehicle lookup is connected.</p></div>
+
+            <!-- Alerts Tab -->
+            <div id="alerts" class="tab-content">
+                <h2>⚠️ MDT Alerts</h2>
+                <p style="color: #0099ff; margin-bottom: 20px;">Real-time alerts and notifications.</p>
+                <button onclick="loadAlerts()">Load Alerts</button>
+                <div id="alerts-list" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <script>
+        let cadSocket = null;
+        let dispatchPollTimer = null;
+
+        function startDispatchPollingFallback() {
+            if (dispatchPollTimer) return;
+            dispatchPollTimer = setInterval(loadDispatchCalls, 10000);
+        }
+
+        function stopDispatchPollingFallback() {
+            if (!dispatchPollTimer) return;
+            clearInterval(dispatchPollTimer);
+            dispatchPollTimer = null;
+        }
+
+        function initRealtimeDispatch() {
+            try {
+                cadSocket = io({
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionAttempts: 20,
+                    reconnectionDelay: 1000,
+                });
+                cadSocket.on('connect', stopDispatchPollingFallback);
+                cadSocket.on('disconnect', startDispatchPollingFallback);
+                cadSocket.on('dispatch:call_created', loadDispatchCalls);
+                cadSocket.on('dispatch:units_assigned', loadDispatchCalls);
+                cadSocket.on('dispatch:call_closed', loadDispatchCalls);
+                cadSocket.on('dispatch:panic', (payload) => {
+                    loadDispatchCalls();
+                    alert(`PANIC: ${payload.callsign || 'Unknown'} at ${payload.location || 'Unknown'}`);
+                });
+            } catch (error) {
+                startDispatchPollingFallback();
+            }
+        }
+
+        const NATIVE_INNERHTML_DESCRIPTOR = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+
+        function sanitizeHTML(html) {
+            const template = document.createElement('template');
+            NATIVE_INNERHTML_DESCRIPTOR.set.call(template, String(html ?? ''));
+            const blockedTags = new Set(['script', 'iframe', 'object', 'embed', 'svg', 'math', 'link', 'meta']);
+            const walk = (node) => {
+                Array.from(node.childNodes).forEach((child) => {
+                    if (child.nodeType !== Node.ELEMENT_NODE) return;
+                    let unsafe = blockedTags.has(child.tagName.toLowerCase());
+                    Array.from(child.attributes).forEach((attr) => {
+                        const name = attr.name.toLowerCase();
+                        const value = String(attr.value || '').trim().toLowerCase();
+                        if (name.startsWith('on') || ((name === 'href' || name === 'src' || name === 'xlink:href') && value.startsWith('javascript:'))) unsafe = true;
+                    });
+                    if (unsafe) child.replaceWith(document.createTextNode(child.outerHTML));
+                    else walk(child);
+                });
+            };
+            walk(template.content);
+            return template.innerHTML;
+        }
+
+        (function installSafeInnerHTML() {
+            const descriptor = NATIVE_INNERHTML_DESCRIPTOR;
+            if (!descriptor || !descriptor.set || Element.prototype.__gtavcadSafeInnerHTML) return;
+            Object.defineProperty(Element.prototype, 'innerHTML', {
+                get: descriptor.get,
+                set(value) { descriptor.set.call(this, sanitizeHTML(value)); },
+                configurable: true,
+                enumerable: descriptor.enumerable,
+            });
+            Element.prototype.__gtavcadSafeInnerHTML = true;
+        })();
+
+        // ---------------------------------------------------------------------------
+        // Auth
+        // ---------------------------------------------------------------------------
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/api/admin/session');
+                const data = await res.json();
+                if (data.loggedIn) {
+                    showCAD();
+                } else {
+                    showLogin();
+                }
+            } catch {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-panel').style.display = 'block';
+            document.getElementById('cad-panel').style.display = 'none';
+        }
+
+        function showCAD() {
+            document.getElementById('login-panel').style.display = 'none';
+            document.getElementById('cad-panel').style.display = 'block';
+        }
+
+        async function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            const alertDiv = document.getElementById('login-alert');
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showCAD();
+                } else {
+                    alertDiv.innerHTML = '<div class="alert alert-error">❌ Invalid password</div>';
+                }
+            } catch (err) {
+                alertDiv.innerHTML = '<div class="alert alert-error">❌ Login failed</div>';
+            }
+        }
+
+        async function adminLogout() {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            showLogin();
+        }
+
+        // Allow Enter key on password field
+        document.addEventListener('DOMContentLoaded', () => {
+            const pwField = document.getElementById('admin-password');
+            if (pwField) {
+                pwField.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') adminLogin();
+                });
+            }
+            checkSession();
+        });
+
+        // ---------------------------------------------------------------------------
+        // Tab switching
+        // ---------------------------------------------------------------------------
+
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
+        }
+
+        // ---------------------------------------------------------------------------
+        // Alerts
+        // ---------------------------------------------------------------------------
+
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.getElementById('gen-alert');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => { alertDiv.innerHTML = ''; }, 5000);
+        }
+
+        function showSpinner(show = true) {
+            document.getElementById('spinner').style.display = show ? 'block' : 'none';
+            document.getElementById('gen-btn').disabled = show;
+        }
+
+        // ---------------------------------------------------------------------------
+        // Generate Civilian
+        // ---------------------------------------------------------------------------
+
+        async function generateCivilian() {
+            showSpinner(true);
+            showAlert('Generating civilian...', 'info');
+
+            try {
+                const response = await fetch('/api/ai/civilian', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to generate civilian');
+                }
+
+                const civilian = data.civilian;
+
+                document.getElementById('first_name').value = civilian.first_name || '';
+                document.getElementById('last_name').value = civilian.last_name || '';
+                document.getElementById('age').value = civilian.age || '';
+                document.getElementById('gender').value = civilian.gender || '';
+                document.getElementById('race').value = civilian.race || '';
+                document.getElementById('date_of_birth').value = civilian.date_of_birth || '';
+                document.getElementById('phone_number').value = civilian.phone_number || '';
+                document.getElementById('address').value = civilian.address || '';
+                document.getElementById('occupation').value = civilian.occupation || '';
+                document.getElementById('gang_affiliation').value = civilian.gang_affiliation || '';
+                document.getElementById('risk_level').value = civilian.risk_level || '';
+                document.getElementById('addiction_status').value = civilian.addiction_status || '';
+                document.getElementById('weapon_permit').value = civilian.weapon_permit
+                    ? (civilian.weapon_permit_type || 'Yes')
+                    : 'None';
+                document.getElementById('insurance_status').value = civilian.insurance_status || '';
+                document.getElementById('emergency_contact_name').value = civilian.emergency_contact_name || '';
+                document.getElementById('emergency_contact_phone').value = civilian.emergency_contact_phone || '';
+                document.getElementById('biography').value = civilian.biography || '';
+
+                document.getElementById('civilian-id-display').textContent =
+                    `✅ Saved to registry — ID: ${civilian.civilian_id}`;
+
+                showAlert(`✅ Generated &amp; saved: ${civilian.full_name}`, 'success');
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+                console.error('Generation error:', error);
+            } finally {
+                showSpinner(false);
+            }
+        }
+
+        function clearForm() {
+            document.querySelectorAll('#civilian-gen input[readonly], #civilian-gen textarea[readonly]').forEach(field => {
+                field.value = '';
+            });
+            document.getElementById('civilian-id-display').textContent = '';
+            document.getElementById('gen-alert').innerHTML = '';
+        }
+
+        // ---------------------------------------------------------------------------
+        // Search Civilians
+        // ---------------------------------------------------------------------------
+
+        function updateSearchPlaceholder() {
+            const searchType = document.getElementById('search-type').value;
+            const searchInput = document.getElementById('search-query');
+            const placeholders = {
+                'name': 'Enter first and last name...',
+                'dob': 'Enter date (YYYY-MM-DD)...',
+                'plate': 'Enter license plate...',
+                'phone': 'Enter phone number...',
+            };
+            searchInput.placeholder = placeholders[searchType] || 'Search...';
+        }
+
+        async function searchCivilians() {
+            const searchType = document.getElementById('search-type') ? document.getElementById('search-type').value : 'name';
+            const query = document.getElementById('search-query').value.trim();
+            const resultsDiv = document.getElementById('search-results');
+
+            if (!query || query.length < 2) {
+                resultsDiv.innerHTML = '<p style="color:#ff4444;">Enter at least 2 characters to search.</p>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<p style="color:#0099ff;">Searching database...</p>';
+
+            try {
+                const response = await fetch('/api/cad/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: searchType, query })
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Search failed');
+                }
+
+                const results = data.results || [];
+                if (results.length > 0) {
+                    resultsDiv.innerHTML = `<p style="color:#00ff00;">Found ${results.length} civilian record(s)</p>` + results.map(civ => `
+                        <div class="card">
+                            <div class="card-title">${civ.name || '—'}</div>
+                            <div class="card-content">
+                                <p><strong>ID:</strong> ${civ.civilian_id}</p>
+                                <p><strong>DOB:</strong> ${civ.date_of_birth || '—'}</p>
+                                <p><strong>Gender:</strong> ${civ.gender || '—'}</p>
+                                <p><strong>Phone:</strong> ${civ.phone_number || '—'}</p>
+                                <p><strong>Address:</strong> ${civ.address || '—'}</p>
+                                <p><strong>Occupation:</strong> ${civ.occupation || '—'}</p>
+                                <p><strong>Gang Affiliation:</strong> ${civ.gang_affiliation || 'None'}</p>
+                                <p><strong>Driver License:</strong> ${civ.driver_license_status || '—'}</p>
+                                <p><strong>Insurance:</strong> ${civ.insurance_status || '—'}</p>
+                                ${civ.plate_number ? `<p><strong>Plate:</strong> ${civ.plate_number}</p>` : ''}
+                                ${civ.vehicle_make ? `<p><strong>Vehicle:</strong> ${civ.vehicle_year || ''} ${civ.vehicle_make} ${civ.vehicle_model || ''} (${civ.vehicle_color || ''})</p>` : ''}
+                                ${civ.criminal_background_notes ? `<p><strong>Criminal Background:</strong> ${civ.criminal_background_notes}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultsDiv.innerHTML = '<p style="color:#ff4444;">Found 0 civilian record(s)</p>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color:#ff4444;">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // ---------------------------------------------------------------------------
+        // Dispatch Calls
+        // ---------------------------------------------------------------------------
+
+        async function loadDispatchCalls() {
+            const listDiv = document.getElementById('dispatch-list');
+            listDiv.innerHTML = '<p style="color:#0099ff;">Loading...</p>';
+
+            try {
+                const response = await fetch('/api/dispatch/calls');
+                const data = await response.json();
+
+                const calls = data.calls || [];
+                const html = calls.length > 0 ? calls.map(call => {
+                    const callId = call.call_id || call.id;
+                    return `
+                        <div class="card">
+                            <div class="card-title">${call.location || 'Unknown Location'} <span style="color:#ff7777;">${callId || ''}</span></div>
+                            <div class="card-content">
+                                <p><strong>Priority:</strong> ${call.priority || '—'}</p>
+                                <p><strong>Status:</strong> ${call.status || '—'}</p>
+                                <p><strong>Units:</strong> ${(call.assigned_units || []).join(', ') || call.assigned_unit || 'Unassigned'}</p>
+                                <p><strong>Description:</strong> ${call.description || '—'}</p>
+                                <input id="unit-${callId}" placeholder="Assign unit/callsign">
+                                <button onclick="updateCall('${callId}')">Assign / Update</button>
+                                <button onclick="convertCallToCase('${callId}')">Convert to Case</button>
+                                <button onclick="resolveCall('${callId}')">Mark Resolved</button>
+                            </div>
+                        </div>`;
+                }).join('') : '<p style="color:#0099ff;">No active calls.</p>';
+                listDiv.innerHTML = html;
+                const activeList = document.getElementById('active-calls-list');
+                if (activeList) activeList.innerHTML = html;
+            } catch (error) {
+                listDiv.innerHTML = `<p style="color:#ff4444;">❌ Error loading calls: ${error.message}</p>`;
+            }
+        }
+
+
+        async function apiJson(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.error || 'Request failed');
+            return data;
+        }
+
+        async function updateCall(callId) {
+            const unit = document.getElementById(`unit-${callId}`)?.value || '';
+            await apiJson(`/api/cad/911-calls/${callId}`, { method: 'PATCH', body: JSON.stringify({ assigned_unit: unit, status: unit ? 'Assigned' : 'New' }) });
+            loadDispatchCalls();
+        }
+
+        async function resolveCall(callId) {
+            await apiJson(`/api/cad/911-calls/${callId}`, { method: 'PATCH', body: JSON.stringify({ resolved: true, status: 'Resolved' }) });
+            loadDispatchCalls();
+        }
+
+        async function convertCallToCase(callId) {
+            const data = await apiJson(`/api/cad/911-calls/${callId}/convert-to-case`, { method: 'POST', body: JSON.stringify({}) });
+            await loadCases();
+            switchTab('cases');
+            if (data.case_number) openCase(data.case_number);
+        }
+
+        async function loadCases() {
+            const data = await apiJson('/api/cad/cases');
+            const cases = data.cases || [];
+            const target = document.getElementById('case-list');
+            target.innerHTML = cases.length ? cases.map(c => `
+                <div class="card">
+                    <div class="card-title">${c.case_number} — ${c.title || 'Untitled'}</div>
+                    <p><strong>Status:</strong> ${c.status} <strong>Type:</strong> ${c.type}</p>
+                    <p><strong>Location:</strong> ${c.location || '—'}</p>
+                    <button onclick="openCase('${c.case_number}')">Open Detail</button>
+                </div>`).join('') : '<p>No cases yet.</p>';
+        }
+
+        async function createCase() {
+            const payload = {
+                title: document.getElementById('case-title').value,
+                type: document.getElementById('case-type').value,
+                priority: document.getElementById('case-priority').value,
+                location: document.getElementById('case-location').value,
+                report_notes: document.getElementById('case-notes').value
+            };
+            const data = await apiJson('/api/cad/cases', { method: 'POST', body: JSON.stringify(payload) });
+            await loadCases();
+            openCase(data.case_number);
+        }
+
+        async function openCase(caseNumber) {
+            const data = await apiJson(`/api/cad/cases/${caseNumber}`);
+            const c = data.case;
+            const detail = document.getElementById('case-detail');
+            detail.style.display = 'block';
+            detail.innerHTML = `
+                <h3>${c.case_number} — ${c.title}</h3>
+                <p><strong>Status:</strong> ${c.status} | <strong>Priority:</strong> ${c.priority} | <strong>Location:</strong> ${c.location || '—'}</p>
+                <p><strong>Narrative:</strong> ${c.report_notes || '—'}</p>
+                <div class="grid">
+                    <div><h4>Add Charge</h4><input id="charge-name" placeholder="Charge name"><input id="penal-code" placeholder="Penal code"><select id="severity"><option>infraction</option><option>misdemeanor</option><option>felony</option></select><input id="counts" type="number" value="1"><input id="fine" placeholder="Recommended fine"><input id="jail" placeholder="Recommended jail time"><button onclick="addCharge('${c.case_number}')">Add Charge</button></div>
+                    <div><h4>Add Evidence</h4><input id="evidence-type" placeholder="Evidence type"><textarea id="evidence-desc" placeholder="Description"></textarea><input id="clip-link" placeholder="Clip link"><input id="screenshot-link" placeholder="Screenshot link"><button onclick="addEvidence('${c.case_number}')">Add Evidence</button></div>
+                </div>
+                <h4>Charges</h4><div>${(c.charges || []).map(ch => `<p>${ch.counts}x ${ch.penal_code} ${ch.charge_name} (${ch.severity})</p>`).join('') || 'No charges.'}</div>
+                <h4>Evidence</h4><div>${(c.evidence || []).map(ev => `<p>${ev.evidence_id}: ${ev.description} ${ev.clip_link ? `<a href="${ev.clip_link}" target="_blank">clip</a>` : ''}</p>`).join('') || 'No evidence.'}</div>
+                <button onclick="createWarrant('${c.case_number}')">Create Warrant</button>
+                <button onclick="createArrest('${c.case_number}')">Create Arrest</button>
+                <button onclick="courtPacket('${c.case_number}')">Generate Court Packet</button>
+                <button onclick="closeCase('${c.case_number}')">Close Case</button>`;
+        }
+
+        async function addCharge(caseNumber) {
+            await apiJson(`/api/cad/cases/${caseNumber}/charges`, { method: 'POST', body: JSON.stringify({ charge_name: document.getElementById('charge-name').value, penal_code: document.getElementById('penal-code').value, severity: document.getElementById('severity').value, counts: document.getElementById('counts').value, recommended_fine: document.getElementById('fine').value, recommended_jail_time: document.getElementById('jail').value }) });
+            openCase(caseNumber);
+        }
+
+        async function addEvidence(caseNumber) {
+            await apiJson(`/api/cad/cases/${caseNumber}/evidence`, { method: 'POST', body: JSON.stringify({ evidence_type: document.getElementById('evidence-type').value, description: document.getElementById('evidence-desc').value, clip_link: document.getElementById('clip-link').value, screenshot_link: document.getElementById('screenshot-link').value }) });
+            openCase(caseNumber);
+        }
+
+        async function createWarrant(caseNumber) { await apiJson(`/api/cad/cases/${caseNumber}/create-warrant`, { method: 'POST', body: JSON.stringify({}) }); openCase(caseNumber); }
+        async function createArrest(caseNumber) { await apiJson(`/api/cad/cases/${caseNumber}/create-arrest`, { method: 'POST', body: JSON.stringify({}) }); openCase(caseNumber); }
+        async function closeCase(caseNumber) { await apiJson(`/api/cad/cases/${caseNumber}/close`, { method: 'POST', body: JSON.stringify({ outcome: 'Closed from CAD terminal' }) }); openCase(caseNumber); }
+        async function courtPacket(caseNumber) {
+            const data = await apiJson(`/api/cad/cases/${caseNumber}/court-packet`);
+            switchTab('court-packets');
+            const packet = data.court_packet;
+            const text = JSON.stringify(packet, null, 2);
+            document.getElementById('court-packet-output').innerHTML = `<h3>Printable Court Packet — ${packet.case_summary.case_number}</h3><button onclick="navigator.clipboard.writeText(document.getElementById('packet-text').textContent)">Copy Summary</button><pre id="packet-text" style="white-space:pre-wrap;color:#fff;background:#050505;padding:16px;">${text}</pre>`;
+        }
+
+        // ---------------------------------------------------------------------------
+        // MDT Alerts
+        // ---------------------------------------------------------------------------
+
+        async function loadAlerts() {
+            const listDiv = document.getElementById('alerts-list');
+            listDiv.innerHTML = '<p style="color:#0099ff;">Loading...</p>';
+
+            try {
+                const response = await fetch('/api/immersion/alerts');
+                const data = await response.json();
+
+                const alerts = data.alerts || [];
+                if (alerts.length > 0) {
+                    listDiv.innerHTML = alerts.map(alert => `
+                        <div class="card">
+                            <div class="card-title">${alert.icon || '⚠️'} ${alert.title || alert.alert_type || 'Alert'}</div>
+                            <div class="card-content">
+                                <p>${alert.message || '—'}</p>
+                                <p style="font-size:0.8em;color:#666;">${alert.timestamp || alert.issuedAt ? new Date(alert.timestamp || alert.issuedAt).toLocaleString() : ''}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = '<p style="color:#0099ff;">No active alerts.</p>';
+                }
+            } catch (error) {
+                listDiv.innerHTML = `<p style="color:#ff4444;">❌ Error loading alerts: ${error.message}</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRealtimeDispatch();
+            startDispatchPollingFallback();
+        });
+    </script>
+    <script src="/assets/js/mobile.js" defer></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

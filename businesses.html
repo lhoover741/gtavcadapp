@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Businesses | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <strong>GTAVCAD</strong>
+      <span>Community: <strong data-context-community>Loading…</strong></span>
+      <span>CAD: <strong data-context-cad>Loading…</strong></span>
+      <span>Role: <strong data-context-role>Loading…</strong></span>
+      <span>Invite: <strong data-context-invite>Loading…</strong></span>
+    </div>
+  </section>
+
+
+  <main>
+    <section class="panel section page-hero">
+      <div class="container">
+        <p class="eyebrow">Business and faction hub</p>
+        <h1>Businesses & Factions</h1>
+        <p class="intro">Support business ownership, employee rosters, faction territory, and roleplay ventures across Los Santos.</p>
+      </div>
+    </section>
+
+    <section class="container section content-grid">
+      <article class="card info-card">
+        <h2>Business overview</h2>
+        <p>Businesses in <span data-community-name>this community</span> exist to elevate faction RP, provide services, and anchor community scenes across the city.</p>
+      </article>
+      <article class="card info-card">
+        <h2>Featured businesses</h2>
+        <ul>
+          <li>Legacy Motors dealership</li>
+          <li>Pacific Bank operations</li>
+          <li>Downtown nightclub and hospitality</li>
+          <li>Street food vendors and towing services</li>
+          <li>Security companies and custom faction shops</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="panel section forms-full">
+      <div class="container">
+        <h2>Business application</h2>
+        <form id="business-form" class="system-form">
+          <div class="form-grid">
+            <label><span>Applicant Discord username</span><input name="applicantDiscord" type="text" required /></label>
+            <label><span>Character name</span><input name="characterName" type="text" required /></label>
+            <label><span>Business name</span><input name="businessName" type="text" required /></label>
+            <label><span>Business type</span><select name="businessType" required><option value="">Select</option><option>Dealership</option><option>Bank</option><option>Club</option><option>Shop</option><option>Food spot</option><option>Towing</option><option>Security</option><option>Custom</option></select></label>
+            <label><span>Desired location</span><input name="desiredLocation" type="text" placeholder="Sandy Shores / Vinewood" required /></label>
+            <label><span>Ownership plan</span><textarea name="ownershipPlan" rows="3" required></textarea></label>
+            <label><span>Employee list</span><textarea name="employeeList" rows="2"></textarea></label>
+            <label><span>RP activity plan</span><textarea name="activityPlan" rows="3" required></textarea></label>
+            <label><span>Illegal activity disclosure</span><textarea name="illegalDisclosure" rows="3" placeholder="If applicable, outline how this business handles risky RP."></textarea></label>
+            <label class="full-width"><span>Agreement to server business rules</span><select name="rulesAgreement" required><option value="">Select</option><option>I agree to follow business and faction rules.</option><option>I do not agree.</option></select></label>
+          </div>
+          <div class="form-actions">
+            <button class="button button-primary" type="submit">Submit Business Request</button>
+          </div>
+          <div class="form-status" id="business-status"></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="container section data-summary">
+      <div class="card summary-card">
+        <h2>Employee roster mockup</h2>
+        <p>Business owners can maintain a roster of trusted staff for operations, security patrols, and faction events.</p>
+      </div>
+      <div class="card summary-card">
+        <h2>Faction / gang territory</h2>
+        <p>Territory notices show where clubs, gangs, and security businesses operate in Los Santos.</p>
+      </div>
+      <div class="card summary-card">
+        <h2>Business rules</h2>
+        <ul>
+          <li>Business RP must conform to server rules and not bypass staff or system enforcement.</li>
+          <li>Do not claim pay-to-win or official advantage from donations or ownership.</li>
+          <li>Keep commercial activity grounded in Los Santos roleplay culture.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Use this system to solidify in-character operations and territory ownership.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

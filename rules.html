@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rules | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#b30000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTAVCAD" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/mobile.css" />
+  <link rel="stylesheet" href="/assets/css/push-notifications.css" />
+  <style>
+    .rules-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .rules-toc {
+      position: sticky;
+      top: 80px;
+      background: var(--surface);
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .rules-toc h3 {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .toc-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    .toc-list a:hover, .toc-list a.active {
+      background: rgba(255,45,45,0.1);
+      color: var(--accent);
+    }
+    .toc-count {
+      font-size: 0.72rem;
+      background: #1e1e1e;
+      padding: 2px 7px;
+      border-radius: 20px;
+      color: #555;
+    }
+    .rules-search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .rules-search-bar input {
+      flex: 1;
+      padding: 12px 18px;
+      background: var(--surface);
+      border: 1px solid #222;
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .rules-search-bar input:focus { border-color: var(--accent); }
+    .rules-search-bar input::placeholder { color: #444; }
+    .rule-section {
+      margin-bottom: 48px;
+      scroll-margin-top: 90px;
+    }
+    .rule-section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .rule-section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .rule-section-header h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      flex: 1;
+    }
+    .rule-section-count {
+      font-size: 0.75rem;
+      background: #1a1a1a;
+      padding: 4px 10px;
+      border-radius: 20px;
+      color: var(--muted);
+    }
+    .rule-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rule-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid #161616;
+      border-radius: 10px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .rule-item:hover {
+      border-color: #2a2a2a;
+      background: #141414;
+    }
+    .rule-item.hidden { display: none; }
+    .rule-num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(255,45,45,0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-family: monospace;
+      letter-spacing: 0.05em;
+    }
+    .rule-text { font-size: 0.9rem; color: var(--muted); line-height: 1.55; }
+    .rule-text strong { color: var(--text); }
+    .rules-notice {
+      background: rgba(255,45,45,0.06);
+      border: 1px solid rgba(255,45,45,0.2);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .rules-notice p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+    .rules-notice strong { color: var(--text); }
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      display: none;
+    }
+    .no-results .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    @media (max-width: 768px) {
+      .rules-layout { grid-template-columns: 1fr; }
+      .rules-toc { position: static; }
+    }
+  </style>
+</head>
+<body data-community-page="true">
+  <header class="site-header">
+    <div class="topbar container">
+      <a class="brand" href="/">GTAVCAD</a>
+      <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+      <nav class="global-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="civilian.html">Civilian Registration</a>
+        <a href="police.html">Police / CAD</a>
+        <a href="dmv.html">DMV</a>
+        <a href="businesses.html">Businesses</a>
+        <a href="applications.html">Applications</a>
+        <a href="donations.html">Donations</a>
+        <a href="complaints.html">Complaints</a>
+        <a class="button button-ghost" href="join.html">Join Discord</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container" style="padding-top:12px;">
+    <div class="card" data-tenant-header style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <strong>GTAVCAD</strong>
+      <span>Community: <strong data-context-community>Loading…</strong></span>
+      <span>CAD: <strong data-context-cad>Loading…</strong></span>
+      <span>Role: <strong data-context-role>Loading…</strong></span>
+      <span>Invite: <strong data-context-invite>Loading…</strong></span>
+    </div>
+  </section>
+
+
+  <main>
+    <section class="panel section page-hero">
+      <div class="container">
+        <p class="eyebrow">Server conduct guide</p>
+        <h1>Official <span data-community-name>Community</span> Rules</h1>
+        <p class="intro">These rules keep Los Santos RP sharp, fair, and immersive for every member. All players are expected to know and follow every section before participating.</p>
+      </div>
+    </section>
+
+    <section class="container section">
+      <div class="rules-search-bar">
+        <input type="text" id="rules-search" placeholder="Search rules… (e.g. VDM, warrant, business)" />
+      </div>
+
+      <div class="rules-layout">
+        <!-- TOC sidebar -->
+        <aside class="rules-toc">
+          <h3>Sections</h3>
+          <ul class="toc-list" id="toc-list">
+            <li><a href="#general">General RP <span class="toc-count">8</span></a></li>
+            <li><a href="#character">Character <span class="toc-count">5</span></a></li>
+            <li><a href="#police">Police <span class="toc-count">8</span></a></li>
+            <li><a href="#vehicle">Vehicle <span class="toc-count">5</span></a></li>
+            <li><a href="#combat">Combat <span class="toc-count">5</span></a></li>
+            <li><a href="#business">Business <span class="toc-count">5</span></a></li>
+            <li><a href="#gang">Gang / Faction <span class="toc-count">5</span></a></li>
+            <li><a href="#ems">EMS <span class="toc-count">4</span></a></li>
+            <li><a href="#discord">Discord <span class="toc-count">5</span></a></li>
+            <li><a href="#staff">Staff &amp; Enforcement <span class="toc-count">4</span></a></li>
+          </ul>
+        </aside>
+
+        <!-- Rules content -->
+        <div id="rules-content">
+          <div class="rules-notice">
+            <p><strong>By joining <span data-community-name>this community</span> you agree to all rules below.</strong> Ignorance of a rule is not an excuse. Rules are enforced by staff at all times. Repeat violations result in permanent removal from the community.</p>
+          </div>
+
+          <!-- GENERAL RP -->
+          <div class="rule-section" id="general">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(255,45,45,0.1);">🎭</div>
+              <h2>General RP Rules</h2>
+              <span class="rule-section-count">8 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">G-01</span><span class="rule-text"><strong>Stay in character</strong> during all roleplay interactions unless there is a genuine out-of-character emergency.</span></li>
+              <li class="rule-item"><span class="rule-num">G-02</span><span class="rule-text"><strong>No Fail RP.</strong> All actions must be realistic and believable in the context of Los Santos street life.</span></li>
+              <li class="rule-item"><span class="rule-num">G-03</span><span class="rule-text"><strong>No RDM (Random Deathmatch).</strong> You may not attack or kill another player without a valid, escalating RP reason.</span></li>
+              <li class="rule-item"><span class="rule-num">G-04</span><span class="rule-text"><strong>No VDM (Vehicle Deathmatch).</strong> Using a vehicle as a weapon to kill or injure players requires prior RP justification and consent.</span></li>
+              <li class="rule-item"><span class="rule-num">G-05</span><span class="rule-text"><strong>No metagaming.</strong> Keep Discord knowledge, out-of-character information, and OOC voice separate from your character's in-game knowledge.</span></li>
+              <li class="rule-item"><span class="rule-num">G-06</span><span class="rule-text"><strong>No powergaming.</strong> Avoid forcing outcomes on other players or taking actions that remove their ability to respond and react.</span></li>
+              <li class="rule-item"><span class="rule-num">G-07</span><span class="rule-text"><strong>No cop baiting.</strong> Deliberately provoking law enforcement purely to start a chase or conflict with no RP substance is prohibited.</span></li>
+              <li class="rule-item"><span class="rule-num">G-08</span><span class="rule-text"><strong>Respect new players.</strong> Do not exploit inexperience. Mentor where possible and keep a healthy server environment.</span></li>
+            </ul>
+          </div>
+
+          <!-- CHARACTER -->
+          <div class="rule-section" id="character">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(74,158,255,0.1);">🪪</div>
+              <h2>Character Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">C-01</span><span class="rule-text"><strong>Characters must have a believable background</strong> and consistent motivation that fits the Los Santos setting.</span></li>
+              <li class="rule-item"><span class="rule-num">C-02</span><span class="rule-text"><strong>Do not impersonate</strong> existing staff members, real people, or other registered players as your character name.</span></li>
+              <li class="rule-item"><span class="rule-num">C-03</span><span class="rule-text"><strong>Character names must be appropriate</strong> for the server culture. Joke names, slurs, or names designed to troll will be rejected.</span></li>
+              <li class="rule-item"><span class="rule-num">C-04</span><span class="rule-text"><strong>Respect NPC interactions</strong> and server-managed storyline scenes. Do not sabotage host-run events.</span></li>
+              <li class="rule-item"><span class="rule-num">C-05</span><span class="rule-text"><strong>Character switching</strong> mid-scene to gain an advantage (e.g. switching to a cop character after committing a crime) is prohibited.</span></li>
+            </ul>
+          </div>
+
+          <!-- POLICE -->
+          <div class="rule-section" id="police">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(100,160,255,0.1);">👮</div>
+              <h2>Police Interaction Rules</h2>
+              <span class="rule-section-count">8 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">P-01</span><span class="rule-text"><strong>Comply with the first lawful police command</strong> unless it directly violates written server rules or your character's safety RP.</span></li>
+              <li class="rule-item"><span class="rule-num">P-02</span><span class="rule-text"><strong>Police cannot be killed</strong> unless the scene is explicitly approved in advance by the host or server owner.</span></li>
+              <li class="rule-item"><span class="rule-num">P-03</span><span class="rule-text"><strong>Arrests must be documented</strong> in the CAD system with suspect name, charges, evidence, and arresting officer logged.</span></li>
+              <li class="rule-item"><span class="rule-num">P-04</span><span class="rule-text"><strong>Evidence must be preserved</strong> and logged in #police-evidence-lock-up immediately after any arrest or major scene.</span></li>
+              <li class="rule-item"><span class="rule-num">P-05</span><span class="rule-text"><strong>Officers must stay in character</strong> at all times during enforcement and use proper RP procedure for stops, searches, and detentions.</span></li>
+              <li class="rule-item"><span class="rule-num">P-06</span><span class="rule-text"><strong>No abuse of police powers.</strong> Arbitrary enforcement, corruption RP without approval, or harassment using a police character is prohibited.</span></li>
+              <li class="rule-item"><span class="rule-num">P-07</span><span class="rule-text"><strong>Complaints against officers</strong> must be submitted through the formal complaint system, not raised in public channels.</span></li>
+              <li class="rule-item"><span class="rule-num">P-08</span><span class="rule-text"><strong>Jail time and fines</strong> issued in RP must be proportional to the charges and documented in the arrest report.</span></li>
+            </ul>
+          </div>
+
+          <!-- VEHICLE -->
+          <div class="rule-section" id="vehicle">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(245,166,35,0.1);">🚗</div>
+              <h2>Vehicle Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">V-01</span><span class="rule-text"><strong>Follow traffic RP</strong> and stop when signalled by law enforcement unless you are in an active, justified RP chase scenario.</span></li>
+              <li class="rule-item"><span class="rule-num">V-02</span><span class="rule-text"><strong>Plate checks, registrations, and insurance</strong> must be accurately roleplayed through the DMV system.</span></li>
+              <li class="rule-item"><span class="rule-num">V-03</span><span class="rule-text"><strong>Unregistered or stolen vehicles</strong> must be handled through the DMV channel or police evidence procedure, not ignored.</span></li>
+              <li class="rule-item"><span class="rule-num">V-04</span><span class="rule-text"><strong>Do not use vehicles to escape scenes</strong> without a valid, escalating RP reason — hit and run with no prior conflict is VDM.</span></li>
+              <li class="rule-item"><span class="rule-num">V-05</span><span class="rule-text"><strong>Modded or supercars</strong> require host approval and must be registered in the DMV system before use in any enforcement scene.</span></li>
+            </ul>
+          </div>
+
+          <!-- COMBAT -->
+          <div class="rule-section" id="combat">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(255,45,45,0.1);">⚔️</div>
+              <h2>Combat Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">B-01</span><span class="rule-text"><strong>Engage in combat only with appropriate RP justification.</strong> Conflict must be escalated, not sudden and unprovoked.</span></li>
+              <li class="rule-item"><span class="rule-num">B-02</span><span class="rule-text"><strong>Use safe zones and host-approved scenes</strong> for high-risk conflict. Certain areas are off-limits for combat without event approval.</span></li>
+              <li class="rule-item"><span class="rule-num">B-03</span><span class="rule-text"><strong>No spawn camping</strong> or attacking players who are not actively engaged in a scene or conflict.</span></li>
+              <li class="rule-item"><span class="rule-num">B-04</span><span class="rule-text"><strong>Respect wounds and arrest outcomes</strong> after combat. You cannot immediately re-engage after being downed or arrested.</span></li>
+              <li class="rule-item"><span class="rule-num">B-05</span><span class="rule-text"><strong>No revenge killing.</strong> Being eliminated in a scene ends your involvement — you cannot return to the same scene for retribution.</span></li>
+            </ul>
+          </div>
+
+          <!-- BUSINESS -->
+          <div class="rule-section" id="business">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(76,200,120,0.1);">🏢</div>
+              <h2>Business Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">BZ-01</span><span class="rule-text"><strong>All businesses must be registered</strong> and approved through the business system before operating in any RP scene.</span></li>
+              <li class="rule-item"><span class="rule-num">BZ-02</span><span class="rule-text"><strong>Business owners are responsible</strong> for their employees' conduct during work-related RP. Staff violations reflect on the owner.</span></li>
+              <li class="rule-item"><span class="rule-num">BZ-03</span><span class="rule-text"><strong>No fake businesses</strong> used as fronts for unapproved criminal activity unless cleared as part of a host-approved storyline.</span></li>
+              <li class="rule-item"><span class="rule-num">BZ-04</span><span class="rule-text"><strong>Pricing and services</strong> offered in RP must be realistic. Price gouging or exploitative pricing during emergencies is prohibited.</span></li>
+              <li class="rule-item"><span class="rule-num">BZ-05</span><span class="rule-text"><strong>Business disputes</strong> must be settled through RP (negotiation, legal channels, or city hall) — not by RDM or harassment.</span></li>
+            </ul>
+          </div>
+
+          <!-- GANG / FACTION -->
+          <div class="rule-section" id="gang">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(180,80,220,0.1);">🔱</div>
+              <h2>Gang / Faction Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">F-01</span><span class="rule-text"><strong>Factions must be registered</strong> with a name, leader, and territory before taking any hostile action against another group or law enforcement.</span></li>
+              <li class="rule-item"><span class="rule-num">F-02</span><span class="rule-text"><strong>Gang wars require prior RP escalation</strong> — at least one warning or confrontational scene must occur before open hostilities begin.</span></li>
+              <li class="rule-item"><span class="rule-num">F-03</span><span class="rule-text"><strong>Turf disputes</strong> must follow the city's RP territory system. Claiming turf by mass killing is prohibited without host approval.</span></li>
+              <li class="rule-item"><span class="rule-num">F-04</span><span class="rule-text"><strong>No targeting uninvolved civilians</strong> during gang conflicts. Crossfire that kills neutral players repeatedly is treated as RDM.</span></li>
+              <li class="rule-item"><span class="rule-num">F-05</span><span class="rule-text"><strong>Criminal RP must be balanced</strong> with risk. High-value criminal operations (heists, trafficking) require staff notification in advance.</span></li>
+            </ul>
+          </div>
+
+          <!-- EMS -->
+          <div class="rule-section" id="ems">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(76,200,120,0.1);">🏥</div>
+              <h2>EMS Rules</h2>
+              <span class="rule-section-count">4 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">E-01</span><span class="rule-text"><strong>EMS must remain neutral</strong> and respond to all downed players regardless of faction, unless the scene is actively unsafe for responders.</span></li>
+              <li class="rule-item"><span class="rule-num">E-02</span><span class="rule-text"><strong>Attacking or killing EMS</strong> while they are responding to a scene is prohibited unless explicitly part of an approved hostage scenario.</span></li>
+              <li class="rule-item"><span class="rule-num">E-03</span><span class="rule-text"><strong>EMS cannot share scene information</strong> with law enforcement or factions while treating patients — medical confidentiality is enforced in RP.</span></li>
+              <li class="rule-item"><span class="rule-num">E-04</span><span class="rule-text"><strong>All serious injuries and deaths</strong> treated by EMS must be logged in the appropriate Discord channel for record-keeping.</span></li>
+            </ul>
+          </div>
+
+          <!-- DISCORD -->
+          <div class="rule-section" id="discord">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(88,101,242,0.1);">💬</div>
+              <h2>Discord Rules</h2>
+              <span class="rule-section-count">5 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">D-01</span><span class="rule-text"><strong>Be respectful</strong> to staff and other community members in all public and private channels at all times.</span></li>
+              <li class="rule-item"><span class="rule-num">D-02</span><span class="rule-text"><strong>Do not harass, threaten, or insult</strong> other players outside of RP. OOC conflict is handled through tickets, not public channels.</span></li>
+              <li class="rule-item"><span class="rule-num">D-03</span><span class="rule-text"><strong>Keep NSFW content, spoilers, and drama</strong> out of all public channels. Use designated channels or DMs.</span></li>
+              <li class="rule-item"><span class="rule-num">D-04</span><span class="rule-text"><strong>Follow moderator direction</strong> promptly. Arguing with staff in public channels after a decision is made is grounds for a mute or ban.</span></li>
+              <li class="rule-item"><span class="rule-num">D-05</span><span class="rule-text"><strong>No advertising</strong> other Discord servers, RP communities, or social media in any channel without explicit staff approval.</span></li>
+            </ul>
+          </div>
+
+          <!-- STAFF -->
+          <div class="rule-section" id="staff">
+            <div class="rule-section-header">
+              <div class="rule-section-icon" style="background:rgba(255,45,45,0.1);">🛡️</div>
+              <h2>Staff &amp; Enforcement</h2>
+              <span class="rule-section-count">4 rules</span>
+            </div>
+            <ul class="rule-list">
+              <li class="rule-item"><span class="rule-num">S-01</span><span class="rule-text"><strong>Staff decisions are final</strong> in the moment of enforcement. Formal appeals must be submitted via the ticket system, not argued in chat.</span></li>
+              <li class="rule-item"><span class="rule-num">S-02</span><span class="rule-text"><strong>Rule violations are logged</strong> and tracked. Repeat offences result in escalating consequences up to permanent removal.</span></li>
+              <li class="rule-item"><span class="rule-num">S-03</span><span class="rule-text"><strong>Complaints against staff</strong> must be submitted through the formal complaint form with evidence attached. Baseless complaints may result in action against the complainant.</span></li>
+              <li class="rule-item"><span class="rule-num">S-04</span><span class="rule-text"><strong>Staff are empowered</strong> to pause or end any RP scene at any time to protect server integrity, player safety, or resolve a rule dispute.</span></li>
+            </ul>
+          </div>
+
+          <div class="no-results" id="no-results">
+            <div class="icon">🔍</div>
+            <p>No rules matched your search. Try a different keyword.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <p>&copy; <span class="current-year"></span> <span data-community-name>Community</span> — Powered by GTAVCAD.</p>
+      <p>Review all rules before joining police, DMV, or business systems.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script>
+    const searchInput = document.getElementById('rules-search');
+    const noResults = document.getElementById('no-results');
+
+    searchInput.addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+      let visibleSections = 0;
+
+      document.querySelectorAll('.rule-section').forEach(section => {
+        let visibleItems = 0;
+        section.querySelectorAll('.rule-item').forEach(item => {
+          const text = item.textContent.toLowerCase();
+          const match = !q || text.includes(q);
+          item.classList.toggle('hidden', !match);
+          if (match) visibleItems++;
+        });
+        const show = !q || visibleItems > 0;
+        section.style.display = show ? '' : 'none';
+        if (show) visibleSections++;
+      });
+
+      noResults.style.display = visibleSections === 0 ? 'block' : 'none';
+    });
+
+    // Highlight active TOC item on scroll
+    const sections = document.querySelectorAll('.rule-section');
+    const tocLinks = document.querySelectorAll('.toc-list a');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          tocLinks.forEach(l => l.classList.remove('active'));
+          const link = document.querySelector(`.toc-list a[href="#${e.target.id}"]`);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => observer.observe(s));
+  </script>
+  <script src="/assets/js/mobile.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/push-notifications.js" defer></script>
+</body>
+</html>

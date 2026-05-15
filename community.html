@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Home | GTAVCAD</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body data-community-page="true">
+<header class="site-header">
+  <div class="topbar container">
+    <a class="brand" href="/">GTAVCAD</a>
+    <button class="nav-toggle" aria-label="Open navigation">Menu</button>
+    <nav class="global-nav" aria-label="Community navigation">
+      <a href="/communities">Communities</a>
+      <a data-community-link="civilian-portal" href="#">Civilian Portal</a>
+      <a data-community-link="dmv" href="#">DMV</a>
+      <a data-community-link="businesses" href="#">Businesses</a>
+      <a data-community-link="applications" href="#">Applications</a>
+      <a data-community-link="complaints" href="#">Complaints</a>
+      <a data-community-link="police" href="#">Police / CAD</a>
+      <a data-community-link="join" href="#">Dispatch</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="panel section page-hero">
+    <div class="container">
+      <p class="eyebrow">Community Home</p>
+      <h1 data-community-name>Community Dashboard</h1>
+      <p class="intro">CAD Status: <strong data-community-cad-name>Loading...</strong></p>
+      <p class="intro">User: <strong data-context-username>Loading...</strong></p>
+      <p class="intro">Role: <strong data-context-role>Member</strong></p>
+      <p class="intro">Community Role: <strong data-context-community-role>Member</strong></p>
+    </div>
+  </section>
+
+  <section class="container section content-grid">
+    <article class="card"><h3>System Status</h3><p data-status-system>Online</p></article>
+    <article class="card"><h3>Community Access</h3><p data-status-access>Checking permissions...</p></article>
+    <article class="card"><h3>CAD Access</h3><p data-status-cad>Checking...</p></article>
+  </section>
+
+  <section class="container section content-grid">
+    <article class="card"><h3>Civilian Portal</h3><p>Open your civilian dashboard/profile selector.</p><a class="button" data-community-link="civilian-portal" href="#">Civilian Portal</a></article><article class="card"><h3>Civilian Registration</h3><p>Create a new identity if needed.</p><a class="button" data-community-link="civilian" href="#">Create Civilian Profile</a></article>
+    <article class="card"><h3>DMV</h3><p>Licenses and vehicle data.</p><a class="button" data-community-link="dmv" href="#">Open</a></article>
+    <article class="card"><h3>Businesses</h3><p>Business registrations.</p><a class="button" data-community-link="businesses" href="#">Open</a></article>
+    <article class="card"><h3>Applications</h3><p>Submit role applications.</p><a class="button" data-community-link="applications" href="#">Open</a></article>
+    <article class="card"><h3>Complaints</h3><p>File community complaints.</p><a class="button" data-community-link="complaints" href="#">Open</a></article>
+    <article class="card"><h3>Police / CAD</h3><p>Police tools and MDT.</p><a class="button" data-community-link="cad" data-cad-link="true" href="#">Open</a></article>
+    <article class="card"><h3>Court</h3><p>Court and hearing workflow.</p><a class="button" data-community-link="complaints" href="#">Open</a></article>
+    <article class="card"><h3>Dispatch</h3><p>Dispatch operations if allowed.</p><a class="button" data-community-link="cad" href="#">Open</a></article>
+  </section>
+</main>
+<footer class="site-footer"><div class="container footer-grid"><p>&copy; <span class="current-year"></span> GTAVCAD.</p><p>Community dashboard</p></div></footer>
+<script src="/assets/js/main.js"></script>
+</body>
+</html>
