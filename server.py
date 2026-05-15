@@ -1314,6 +1314,22 @@ def ensure_arrest_automation_schema():
     db.session.commit()
 
 
+
+
+def ensure_notification_schema():
+    """Safely ensure backend notification tables exist for additive rollout."""
+    try:
+        db.create_all()
+        inspector = sa_inspect(db.engine)
+        tables = set(inspector.get_table_names())
+        if 'notifications' not in tables or 'notification_recipients' not in tables:
+            logger.warning('Notification tables still missing after create_all; check migration permissions.')
+            return False
+        return True
+    except Exception as exc:
+        logger.warning('Notification schema verification skipped: %s', exc)
+        return False
+
 def ensure_evidence_attachment_schema():
     """Safely create/sync additive evidence attachment storage table."""
     db.create_all()
@@ -1458,6 +1474,7 @@ with app.app_context():
         ensure_civilians_user_id_schema()
         ensure_evidence_attachment_schema()
         ensure_arrest_automation_schema()
+        ensure_notification_schema()
         backfill_criminal_record_links()
         logger.info('✓ Database tables verified on startup')
     except Exception as e:
