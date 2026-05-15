@@ -465,6 +465,30 @@ def _run_platform_owner_migration():
         admin_user = cursor.fetchone()
 
         if not admin_user:
+            # No user found by email — check if username is already taken
+            cursor.execute("""
+                SELECT id FROM users WHERE LOWER(username) = LOWER(%s)
+            """, (platform_owner_username,))
+            username_conflict = cursor.fetchone()
+
+            if username_conflict:
+                # Username exists under a different email — update that user instead
+                conflict_id = username_conflict[0]
+                logger.warning(
+                    '⚠️  Username "%s" already exists (id=%s) under a different email — '
+                    'updating that user to PlatformOwner role instead of inserting a duplicate',
+                    platform_owner_username, conflict_id,
+                )
+                cursor.execute("""
+                    UPDATE users
+                    SET role = 'PlatformOwner', platform_role = 'PlatformOwner', active = true
+                    WHERE id = %s
+                """, (conflict_id,))
+                connection.commit()
+                logger.info('✅ PlatformOwner role assigned to existing user id=%s', conflict_id)
+                cursor.close()
+                return
+
             # No user found — only create one if we have a password to set
             if not initial_password:
                 logger.warning(
@@ -11454,6 +11478,7 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    logger.info(f"🚀 GTAVCAD server running on 0.0.0.0:{port}")
     socketio.run(
         app,
         host="0.0.0.0",
@@ -11461,3 +11486,6 @@ if __name__ == "__main__":
         debug=False,
         allow_unsafe_werkzeug=True
     )
+
+# For production with gunicorn + eventlet:
+# gunicorn --worker-class eventlet -w 1 server:app --bind 0.0.0.0:$PORT

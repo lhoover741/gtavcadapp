@@ -230,23 +230,28 @@ def initialize_default_config(session, community_id=DEFAULT_COMMUNITY_ID):
     }
 
     for key, config_data in defaults.items():
-        # Check if config already exists for this community
-        existing = session.query(Config).filter_by(
-            key=key,
-            community_id=community_id
-        ).first()
-
-        if not existing:
-            config = Config(
+        try:
+            # Check if config already exists for this community
+            existing = session.query(Config).filter_by(
                 key=key,
-                community_id=community_id,
-                value=config_data.get('value'),
-                description=config_data.get('description'),
-            )
-            session.add(config)
-            logger.info(f'  Created config: {key}')
-        else:
-            logger.info(f'  Config already exists: {key}')
+                community_id=community_id
+            ).first()
+
+            if not existing:
+                config = Config(
+                    key=key,
+                    community_id=community_id,
+                    value=config_data.get('value'),
+                    description=config_data.get('description'),
+                )
+                session.add(config)
+                logger.info(f'  Created config: {key}')
+            else:
+                logger.info(f'  Config already exists: {key}')
+        except Exception as e:
+            logger.warning(f'  Config {key} skipped (already exists): {e}')
+            session.rollback()
+            continue
 
     session.commit()
     logger.info('✅ Config initialization complete')

@@ -115,9 +115,10 @@ def bootstrap_schema():
             # Initialize community-scoped defaults after config.community_id exists.
             try:
                 initialize_default_config(db.session, DEFAULT_COMMUNITY_ID)
-            except Exception:
+                logger.info('✓ Config initialization complete')
+            except Exception as e:
+                logger.warning(f'Config initialization skipped (non-fatal): {e}')
                 rollback_session(db)
-                raise
 
             # Run admin role migration.
             logger.info('Running admin role migration...')

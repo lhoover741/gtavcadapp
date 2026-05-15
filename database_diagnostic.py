@@ -23,9 +23,9 @@ def diagnose_database():
         from database import db
         
         with app.app_context():
-            # Get database URL
+            # Get database URL (redacted to avoid leaking credentials)
             db_url = app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT SET')
-            logger.info(f'Database URL: {db_url[:50]}...')
+            logger.info('Database URL: configured' if db_url and db_url != 'NOT SET' else 'Database URL: NOT SET')
             
             # Get connection
             connection = db.engine.raw_connection()
