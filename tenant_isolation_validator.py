@@ -13,6 +13,7 @@ import logging
 import sys
 from flask import Flask
 from database import db, configure_database
+from platform_config import DEFAULT_COMMUNITY_SLUG
 from models import (
     Community, CommunityMember, User, Civilian, Arrest,
     DispatchCall, Inmate, AuditLog, Config,
@@ -86,10 +87,10 @@ def test_community_count():
 
 
 def test_default_community():
-    """Verify default nthacityrp community exists."""
-    default = Community.query.filter_by(slug='nthacityrp').first()
+    """Verify default community exists."""
+    default = Community.query.filter_by(slug=DEFAULT_COMMUNITY_SLUG).first()
     passed = default is not None
-    print_test('Default community (nthacityrp) exists', passed)
+    print_test(f'Default community ({DEFAULT_COMMUNITY_SLUG}) exists', passed)
     return passed
 
 

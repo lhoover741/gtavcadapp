@@ -28,6 +28,7 @@ def bootstrap_schema():
                 ensure_tenant_community_columns,
                 ensure_tenant_indexes,
             )
+            from platform_config import DEFAULT_COMMUNITY_ID
             from schema_sync import ensure_application_schema, rollback_connection, rollback_session
 
             # 1. Create all tables, including Community.
@@ -113,7 +114,7 @@ def bootstrap_schema():
 
             # Initialize community-scoped defaults after config.community_id exists.
             try:
-                initialize_default_config(db.session, 'nthacityrp')
+                initialize_default_config(db.session, DEFAULT_COMMUNITY_ID)
             except Exception:
                 rollback_session(db)
                 raise
