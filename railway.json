@@ -5,7 +5,7 @@
   },
   "deploy": {
     "preDeployCommand": "python schema_bootstrap.py",
-    "startCommand": "python server.py",
+    "startCommand": "psh -c 'gunicorn server:app --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT',
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
