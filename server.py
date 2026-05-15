@@ -20,7 +20,7 @@ from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from sqlalchemy import text, or_, func
+from sqlalchemy import text, or_, and_, func
 from security_service import (
     admin_required,
     police_required,
@@ -8216,9 +8216,6 @@ def serve_static(path):
     return frontend_page('index.html')
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
-
 
 def configured_platform_owner_matches_user(user):
     owner_email = (os.getenv('PLATFORM_OWNER_EMAIL') or '').strip().lower()
@@ -11504,19 +11501,6 @@ def cad_ai_charge_suggestions():
         return ai_result
     out = ai_result[0]
     return jsonify({'success': True, 'suggestions': out.get('suggestions', []), 'warnings': out.get('warnings', [])})
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"GTAVCAD server running on 0.0.0.0:{port}")
-    socketio.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        debug=False,
-        allow_unsafe_werkzeug=True
-    )
-
 # For production with gunicorn + eventlet:
 # gunicorn --worker-class eventlet -w 1 server:app --bind 0.0.0.0:$PORT
 
@@ -11540,18 +11524,49 @@ def _serialize_notification(n, recipient=None):
     }
 
 
-def _query_notifications_for_user(user_id, community_id, role):
+def get_active_community_auth_context(user_id, community_id):
+    context = {
+        'is_platform_owner': False,
+        'community_role': None,
+        'department': None,
+        'membership': None,
+    }
+    if not isinstance(user_id, int):
+        return context
+    user = User.query.get(user_id)
+    context['is_platform_owner'] = bool(user and (getattr(user, 'role', None) == 'PlatformOwner' or getattr(user, 'platform_role', None) == 'PlatformOwner'))
+    if not community_id:
+        return context
+    membership = CommunityMember.query.filter_by(user_id=user_id, community_id=community_id, status='Active').first()
+    if membership:
+        context['membership'] = membership
+        context['community_role'] = normalize_community_role(getattr(membership, 'role', None))
+        context['department'] = (getattr(membership, 'department', None) or '').strip() or None
+    return context
+
+
+def _notification_visibility_filter(user_id, community_id, auth_context):
+    role = auth_context.get('community_role')
+    department = auth_context.get('department')
+    filters = [
+        and_(Notification.target_scope == 'user', Notification.target_user_id == user_id),
+    ]
+    if community_id and auth_context.get('membership'):
+        filters.append(and_(Notification.target_scope == 'community', Notification.community_id == community_id))
+        if role:
+            filters.append(and_(Notification.target_scope == 'role', Notification.community_id == community_id, Notification.target_role == role))
+        if department:
+            filters.append(and_(Notification.target_scope == 'department', Notification.community_id == community_id, Notification.target_department == department))
+    if auth_context.get('is_platform_owner'):
+        filters.append(and_(Notification.target_scope.in_(['platform_owner', 'global'])))
+    return or_(*filters)
+
+
+def _query_notifications_for_user(user_id, community_id, auth_context):
     q = Notification.query.filter(
         (Notification.expires_at.is_(None)) | (Notification.expires_at > datetime.utcnow())
     )
-    if role == 'PlatformOwner':
-        return q
-    return q.filter(
-        (Notification.target_scope == 'user') & (Notification.target_user_id == user_id)
-        | (Notification.target_scope == 'community') & (Notification.community_id == community_id)
-        | (Notification.target_scope == 'role') & (Notification.community_id == community_id) & (Notification.target_role == role)
-        | (Notification.target_scope == 'department') & (Notification.community_id == community_id) & (Notification.target_department == role)
-    )
+    return q.filter(_notification_visibility_filter(user_id, community_id, auth_context))
 
 
 @app.route('/api/notifications', methods=['GET'])
@@ -11559,11 +11574,11 @@ def _query_notifications_for_user(user_id, community_id, role):
 def get_notifications():
     user_id = session.get('user_id')
     community_id = get_current_community_id()
-    role = session.get('role')
+    auth_context = get_active_community_auth_context(user_id, community_id)
     category = (request.args.get('category') or '').strip()
     unread_only = parse_bool(request.args.get('unread'), default=False)
 
-    rows = _query_notifications_for_user(user_id, community_id, role).order_by(Notification.created_at.desc()).limit(100).all()
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).order_by(Notification.created_at.desc()).limit(100).all()
     notif_ids = [n.id for n in rows]
     rec_map = {}
     if notif_ids:
@@ -11585,8 +11600,8 @@ def get_notifications():
 def notifications_unread_count():
     user_id = session.get('user_id')
     community_id = get_current_community_id()
-    role = session.get('role')
-    rows = _query_notifications_for_user(user_id, community_id, role).all()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
     notif_ids = [n.id for n in rows]
     read_ids = set()
     if notif_ids:
@@ -11599,6 +11614,11 @@ def notifications_unread_count():
 @require_auth
 def mark_notification_read(notification_id):
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    visible = _query_notifications_for_user(user_id, community_id, auth_context).filter(Notification.id == notification_id).first()
+    if not visible:
+        return jsonify({'success': False, 'error': 'Notification not found'}), 404
     rec = NotificationRecipient.query.filter_by(notification_id=notification_id, user_id=user_id).first()
     if not rec:
         rec = NotificationRecipient(notification_id=notification_id, user_id=user_id)
@@ -11614,9 +11634,9 @@ def mark_notification_read(notification_id):
 def mark_all_notifications_read():
     user_id = session.get('user_id')
     community_id = get_current_community_id()
-    role = session.get('role')
+    auth_context = get_active_community_auth_context(user_id, community_id)
     now = datetime.utcnow()
-    rows = _query_notifications_for_user(user_id, community_id, role).all()
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
     for n in rows:
         rec = NotificationRecipient.query.filter_by(notification_id=n.id, user_id=user_id).first()
         if not rec:
@@ -11626,3 +11646,16 @@ def mark_all_notifications_read():
     db.session.commit()
     socketio.emit('notification:count', {'unread_count': 0}, room=f'user:{user_id}')
     return jsonify({'success': True})
+
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    print(f"GTAVCAD server running on 0.0.0.0:{port}")
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        debug=False,
+        allow_unsafe_werkzeug=True
+    )
