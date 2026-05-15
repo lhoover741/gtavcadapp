@@ -78,7 +78,7 @@ from models import (
     UseOfForceReport, OfficerNote, CaseFile, CaseCharge, CadAuditLog,
     AIGenerationLog, AuditLog, EvidenceAttachment,
     Community, CommunityMember, CommunityInvite,
-    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession
+    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession, Notification, NotificationRecipient
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -861,6 +861,19 @@ def socket_connect(auth=None):
     if sid:
         ACTIVE_SOCKET_CONNECTIONS[user_id] = sid
     join_room(room_name)
+    join_room(f'user:{user_id}')
+    join_room(f'community:{community_id}')
+    normalized_role = normalize_community_role(membership.role)
+    if normalized_role in ('Police', 'LEO', 'Officer'):
+        join_room(f'community:{community_id}:police')
+    if normalized_role in ('Dispatch',):
+        join_room(f'community:{community_id}:dispatch')
+    if normalized_role in ('DMV',):
+        join_room(f'community:{community_id}:dmv')
+    if normalized_role in ('Admin', 'Owner', 'CommunityAdmin', 'CommunityOwner'):
+        join_room(f'community:{community_id}:admin')
+    if session.get('is_platform_owner'):
+        join_room('platform:owners')
     from cad_helpers import log_audit
     log_audit(str(user_id), 'websocket_join', 'Socket', sid or 'unknown', actor_role=session.get('role'), ip_address=request.remote_addr)
     emit('socket:ready', {'success': True, 'room': room_name, 'community_id': community_id})
@@ -11489,3 +11502,110 @@ if __name__ == "__main__":
 
 # For production with gunicorn + eventlet:
 # gunicorn --worker-class eventlet -w 1 server:app --bind 0.0.0.0:$PORT
+
+
+def _serialize_notification(n, recipient=None):
+    return {
+        'id': n.id,
+        'community_id': n.community_id,
+        'target_scope': n.target_scope,
+        'target_role': n.target_role,
+        'target_department': n.target_department,
+        'target_user_id': n.target_user_id,
+        'title': n.title,
+        'message': n.message,
+        'category': n.category,
+        'priority': n.priority,
+        'action_url': n.action_url,
+        'created_at': n.created_at.isoformat() if n.created_at else None,
+        'read': bool(recipient and recipient.read_at),
+        'dismissed': bool(recipient and recipient.dismissed_at),
+    }
+
+
+def _query_notifications_for_user(user_id, community_id, role):
+    q = Notification.query.filter(
+        (Notification.expires_at.is_(None)) | (Notification.expires_at > datetime.utcnow())
+    )
+    if role == 'PlatformOwner':
+        return q
+    return q.filter(
+        (Notification.target_scope == 'user') & (Notification.target_user_id == user_id)
+        | (Notification.target_scope == 'community') & (Notification.community_id == community_id)
+        | (Notification.target_scope == 'role') & (Notification.community_id == community_id) & (Notification.target_role == role)
+        | (Notification.target_scope == 'department') & (Notification.community_id == community_id) & (Notification.target_department == role)
+    )
+
+
+@app.route('/api/notifications', methods=['GET'])
+@require_auth
+def get_notifications():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    role = session.get('role')
+    category = (request.args.get('category') or '').strip()
+    unread_only = parse_bool(request.args.get('unread'), default=False)
+
+    rows = _query_notifications_for_user(user_id, community_id, role).order_by(Notification.created_at.desc()).limit(100).all()
+    notif_ids = [n.id for n in rows]
+    rec_map = {}
+    if notif_ids:
+        recipients = NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids)).all()
+        rec_map = {r.notification_id: r for r in recipients}
+    results = []
+    for n in rows:
+        item = _serialize_notification(n, rec_map.get(n.id))
+        if category and item['category'].lower() != category.lower():
+            continue
+        if unread_only and item['read']:
+            continue
+        results.append(item)
+    return jsonify({'success': True, 'notifications': results})
+
+
+@app.route('/api/notifications/unread-count', methods=['GET'])
+@require_auth
+def notifications_unread_count():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    role = session.get('role')
+    rows = _query_notifications_for_user(user_id, community_id, role).all()
+    notif_ids = [n.id for n in rows]
+    read_ids = set()
+    if notif_ids:
+        read_ids = {r.notification_id for r in NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids), NotificationRecipient.read_at.isnot(None)).all()}
+    unread = len([nid for nid in notif_ids if nid not in read_ids])
+    return jsonify({'success': True, 'unread_count': unread})
+
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['POST'])
+@require_auth
+def mark_notification_read(notification_id):
+    user_id = session.get('user_id')
+    rec = NotificationRecipient.query.filter_by(notification_id=notification_id, user_id=user_id).first()
+    if not rec:
+        rec = NotificationRecipient(notification_id=notification_id, user_id=user_id)
+        db.session.add(rec)
+    rec.read_at = datetime.utcnow()
+    db.session.commit()
+    socketio.emit('notification:read', {'notification_id': notification_id}, room=f'user:{user_id}')
+    return jsonify({'success': True})
+
+
+@app.route('/api/notifications/read-all', methods=['POST'])
+@require_auth
+def mark_all_notifications_read():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    role = session.get('role')
+    now = datetime.utcnow()
+    rows = _query_notifications_for_user(user_id, community_id, role).all()
+    for n in rows:
+        rec = NotificationRecipient.query.filter_by(notification_id=n.id, user_id=user_id).first()
+        if not rec:
+            rec = NotificationRecipient(notification_id=n.id, user_id=user_id)
+            db.session.add(rec)
+        rec.read_at = now
+    db.session.commit()
+    socketio.emit('notification:count', {'unread_count': 0}, room=f'user:{user_id}')
+    return jsonify({'success': True})
