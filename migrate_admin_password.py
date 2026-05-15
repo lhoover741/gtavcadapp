@@ -58,6 +58,21 @@ def ensure_platform_owner():
             initial_password = os.getenv('PLATFORM_OWNER_INITIAL_PASSWORD')
             force_reset = _env_true(os.environ.get('FORCE_ADMIN_PASSWORD_RESET', 'false'))
 
+            # 1b. Ensure platform_role column exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'users'
+                    AND column_name = 'platform_role'
+                )
+            """)
+            has_platform_role = cursor.fetchone()[0]
+            if not has_platform_role:
+                logger.info('   Adding platform_role column to users table...')
+                cursor.execute("ALTER TABLE users ADD COLUMN platform_role VARCHAR(64)")
+                connection.commit()
+                logger.info('   ✓ platform_role column added')
+
             # 2. Check if configured PlatformOwner exists
             logger.info('\n2. Checking for configured PlatformOwner...')
             cursor.execute("""
