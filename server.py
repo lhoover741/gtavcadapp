@@ -11478,7 +11478,7 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    logger.info(f"🚀 GTAVCAD server running on 0.0.0.0:{port}")
+    print(f"GTAVCAD server running on 0.0.0.0:{port}")
     socketio.run(
         app,
         host="0.0.0.0",
