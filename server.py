@@ -5327,9 +5327,12 @@ def get_active_officer_sessions():
 
 @app.route('/api/officer-session', methods=['POST'])
 def post_officer_session():
-    denied = require_police_cad_access()
-    if denied:
-        return denied
+    community_id = get_current_community_id()
+    if not community_id:
+        return jsonify({'success': False, 'error': 'Unable to start officer session: no active community.'}), 400
+    decision = _current_police_cad_access_decision(request.path)
+    if decision.get('final_can_access_police_cad') is not True:
+        return jsonify({'success': False, 'error': 'Unable to start officer session: no Police/Dispatch permission.'}), 403
     data = request.get_json(silent=True) or {}
     callsign = (data.get('callsign') or '').strip()
     name = (data.get('officer_name') or data.get('officerName') or data.get('name') or '').strip()
@@ -5339,7 +5342,7 @@ def post_officer_session():
     if not name:
         return jsonify({'success': False, 'error': 'Officer name is required.'}), 400
     if not department:
-        return jsonify({'success': False, 'error': 'Department is required.'}), 400
+        return jsonify({'success': False, 'error': 'Unable to start officer session: missing unit.'}), 400
 
     try:
         ensure_officer_sessions_schema()
@@ -5359,7 +5362,7 @@ def post_officer_session():
     except Exception as e:
         db.session.rollback()
         logger.error(f'post_officer_session error: {e}')
-        return jsonify({'success': False, 'error': 'Unable to start officer session.'}), 500
+        return jsonify({'success': False, 'error': 'Unable to start officer session: endpoint failure.'}), 500
 
     logger.info(f"Officer login: {callsign} ({name}) — {department}")
     return jsonify({'success': True, 'session': officer_session_response(s)})
