@@ -8717,6 +8717,8 @@ def platform_admin_overview():
         except Exception as e:
             _section_failed('communities', e, 'Community hydration failed')
 
+        community_map = {row.get('community_id'): row for row in community_rows if row.get('community_id')}
+
         logger.info('[platform_overview] request_id=%s section=users started', request_id)
         user_rows = []
         try:
@@ -8739,13 +8741,18 @@ def platform_admin_overview():
                         logger.warning(f'Could not count sessions for user {u.id}: {e}')
 
                     member = CommunityMember.query.filter_by(user_id=u.id, status='Active').first()
+                    community_id = getattr(member, 'community_id', None)
+                    community_label = community_map.get(community_id) if community_id else None
                     user_rows.append({
                         'id': u.id,
                         'username': u.username or 'Unknown',
                         'email': u.email or 'Unknown',
                         'platform_role': getattr(u, 'platform_role', None) or getattr(u, 'role', None) or 'User',
                         'role': getattr(u, 'role', None) or 'User',
-                        'community': getattr(member, 'community_id', None),
+                        'community': community_id,
+                        'community_id': community_id,
+                        'community_name': community_label.get('name') if community_label else None,
+                        'community_slug': community_label.get('slug') if community_label else None,
                         'community_role': normalize_community_role(getattr(member, 'role', None)) or 'Unknown',
                         'last_login': last_login_iso,
                         'sessions': session_count,
@@ -8932,8 +8939,11 @@ def platform_admin_community_logs(community_id):
     if auth_error:
         return auth_error
     limit = min(max(int(request.args.get('limit', 50)), 1), 200)
+    community = Community.query.filter_by(community_id=community_id).first()
+    if not community:
+        return jsonify({'success': False, 'error': 'Community not found'}), 404
     logs = PlatformAdminLog.query.filter_by(tenant=community_id).order_by(PlatformAdminLog.created_at.desc()).limit(limit).all()
-    return jsonify({'success': True, 'logs': [{
+    return jsonify({'success': True, 'community': {'community_id': community.community_id, 'name': community.name, 'slug': community.slug}, 'logs': [{
         'id': row.id,
         'action': row.action,
         'target_user_id': row.target_user_id,
@@ -9058,12 +9068,17 @@ def platform_admin_promote_user(user_id):
         return jsonify({'success': False, 'error': 'User not found'}), 404
     data = request.get_json(silent=True) or {}
     role = (data.get('role') or '').strip()
-    community_id = data.get('community_id')
+    community_id = (data.get('community_id') or '').strip() or None
     if role == 'PlatformOwner':
         user.role = 'PlatformOwner'
+        if hasattr(user, 'platform_role'):
+            user.platform_role = 'PlatformOwner'
     elif role in ('Admin', 'CommunityAdmin', 'CommunityOwner'):
         if not community_id:
             return jsonify({'success': False, 'error': 'community_id is required for community role promotion'}), 400
+        community = Community.query.filter_by(community_id=community_id).first()
+        if not community:
+            return jsonify({'success': False, 'error': 'Community not found'}), 404
         membership = CommunityMember.query.filter_by(user_id=user_id, community_id=community_id).first()
         if not membership:
             membership = CommunityMember(user_id=user_id, community_id=community_id, role=role, status='Active')
