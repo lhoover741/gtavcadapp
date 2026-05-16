@@ -36,6 +36,20 @@
       'join.html': 'dispatch'
     };
     return map[leaf] || 'home';
+    var parts = path.split('/').filter(Boolean);
+    var leaf = parts[parts.length - 1] || '';
+    if (!leaf || leaf === 'index.html' || leaf === '') return 'home';
+    if (leaf === 'police.html' || leaf === 'police' || leaf === 'cad.html' || leaf === 'cad') return 'cad';
+    if (leaf === 'dmv.html' || leaf === 'dmv') return 'dmv';
+    if (leaf === 'businesses.html' || leaf === 'businesses') return 'businesses';
+    if (leaf === 'rules.html' || leaf === 'rules') return 'rules';
+    if (leaf === 'applications.html' || leaf === 'applications') return 'applications';
+    if (leaf === 'donations.html' || leaf === 'donations') return 'donations';
+    if (leaf === 'complaints.html' || leaf === 'complaints') return 'complaints';
+    if (leaf === 'communities.html' || leaf === 'communities') return 'communities';
+    if (leaf === 'community-admin.html' || leaf === 'admin' || leaf==='admin.html') return 'admin';
+    if (leaf === 'civilian.html' || leaf==='dispatch') return 'dispatch';
+    return 'home';
   }
 
   function buildCommunityHref(page) {
@@ -89,6 +103,7 @@
       tab('tab-home', '🏠', 'Home', 'home') +
       tab('tab-cad', '🚓', 'CAD', 'cad') +
       tab('tab-police', '👮', 'Police', 'police') +
+      tab('tab-police', '👮', 'Police', 'cad') +
       tab('tab-dmv', '🪪', 'DMV', 'dmv') +
       tab('tab-more', '☰', 'More', 'more');
 
@@ -371,6 +386,7 @@
       });
       var links = menu.querySelectorAll('.more-menu-link:not([target])');
       var menuPages = ['home', 'cad', 'police', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'maps', 'communities', 'admin'];
+      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'rules', 'communities', 'admin'];
       links.forEach(function(link, i) {
         if (menuPages[i]) link.href = buildCommunityHref(menuPages[i]);
       });
@@ -423,6 +439,8 @@
 
   async function init() {
     await injectTopMobileShell();
+  function init() {
+    injectTopMobileShell();
     injectMobileNav();
     tableToCards();
     injectPanicFab();
