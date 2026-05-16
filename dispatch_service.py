@@ -166,6 +166,8 @@ def get_active_calls():
         'location': c.location,
         'description': c.description,
         'call_type': c.call_type,
+        'caller_user_id': c.caller_user_id,
+        'created_by_user_id': c.created_by_user_id,
         'priority': c.priority,
         'status': c.status,
         'assigned_units': c.assigned_unit.split(',') if c.assigned_unit else [],
