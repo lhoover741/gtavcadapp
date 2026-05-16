@@ -5,6 +5,37 @@
 
   function getCurrentPage() {
     var path = window.location.pathname.toLowerCase();
+    var leaf = path.split('/').filter(Boolean).pop() || '';
+    if (!leaf || leaf === 'index.html') return 'home';
+    var map = {
+      'cad': 'cad',
+      'police': 'police',
+      'police.html': 'police',
+      'dmv': 'dmv',
+      'dmv.html': 'dmv',
+      'businesses': 'businesses',
+      'businesses.html': 'businesses',
+      'applications': 'applications',
+      'applications.html': 'applications',
+      'complaints': 'complaints',
+      'complaints.html': 'complaints',
+      'donations': 'donations',
+      'donations.html': 'donations',
+      'rules': 'maps',
+      'rules.html': 'maps',
+      'communities': 'communities',
+      'communities.html': 'communities',
+      'community-admin': 'admin',
+      'community-admin.html': 'admin',
+      'admin': 'admin',
+      'login': 'login',
+      'register': 'register',
+      'civilian': 'dispatch',
+      'civilian.html': 'dispatch',
+      'join': 'dispatch',
+      'join.html': 'dispatch'
+    };
+    return map[leaf] || 'home';
     var parts = path.split('/').filter(Boolean);
     var leaf = parts[parts.length - 1] || '';
     if (!leaf || leaf === 'index.html' || leaf === '') return 'home';
@@ -71,6 +102,7 @@
     nav.innerHTML =
       tab('tab-home', '🏠', 'Home', 'home') +
       tab('tab-cad', '🚓', 'CAD', 'cad') +
+      tab('tab-police', '👮', 'Police', 'police') +
       tab('tab-police', '👮', 'Police', 'cad') +
       tab('tab-dmv', '🪪', 'DMV', 'dmv') +
       tab('tab-more', '☰', 'More', 'more');
@@ -109,7 +141,8 @@
       '</div>' +
       '<div class="more-menu-links">' +
         menuLink('🏠', 'Home', 'home') +
-        menuLink('🚔', 'Police / CAD', 'cad') +
+        menuLink('🚔', 'CAD', 'cad') +
+        menuLink('👮', 'Police', 'police') +
         menuLink('🪪', 'DMV', 'dmv') +
         menuLink('🏢', 'Businesses', 'businesses') +
         menuLink('📋', 'Applications', 'applications') +
@@ -347,11 +380,12 @@
       var menu = document.getElementById('mobile-more-menu');
       if (!nav || !menu || !slug) return;
       var tabs = nav.querySelectorAll('.mobile-tab:not(#tab-more)');
-      var pages = ['home', 'cad', 'dmv', 'businesses'];
+      var pages = ['home', 'cad', 'police', 'dmv'];
       tabs.forEach(function(tab, i) {
         if (pages[i]) tab.href = buildCommunityHref(pages[i]);
       });
       var links = menu.querySelectorAll('.more-menu-link:not([target])');
+      var menuPages = ['home', 'cad', 'police', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'maps', 'communities', 'admin'];
       var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'rules', 'communities', 'admin'];
       links.forEach(function(link, i) {
         if (menuPages[i]) link.href = buildCommunityHref(menuPages[i]);
@@ -403,6 +437,8 @@
     });
   }
 
+  async function init() {
+    await injectTopMobileShell();
   function init() {
     injectTopMobileShell();
     injectMobileNav();
