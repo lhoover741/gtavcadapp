@@ -1614,11 +1614,11 @@ function handle911Form() {
       form.reset();
     } catch (error) {
       if (statusEl) {
-        statusEl.textContent = `Error: ${error.message}`;
+        statusEl.textContent = 'Unable to submit call right now. Please try again.';
         statusEl.style.color = '#ff6b6b';
         statusEl.style.display = 'block';
       }
-      showToast(`911 call failed: ${error.message}`, 'error');
+      showToast('911 call failed. Please try again.', 'error');
     } finally {
       submitButton.disabled = false;
     }
