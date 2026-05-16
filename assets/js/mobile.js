@@ -104,6 +104,21 @@
     document.body.appendChild(menu);
   }
 
+
+  function refreshMobileNavigation() {
+    window.mobileMoreMenuClose();
+    var existingNav = document.getElementById('mobile-bottom-nav');
+    if (existingNav) existingNav.remove();
+    var existingMenu = document.getElementById('mobile-more-menu');
+    if (existingMenu) existingMenu.remove();
+    injectMobileNav();
+    var topTitle = document.querySelector('.mobile-shell-title');
+    if (topTitle) {
+      var slug = (window.GTAVCAD_CONTEXT && window.GTAVCAD_CONTEXT.communitySlug) || '';
+      topTitle.textContent = 'GTAVCAD · ' + (slug || 'No active community');
+    }
+  }
+
   window.mobileMoreMenuOpen = function() { var m=document.getElementById('mobile-more-menu'); if (m) { m.classList.add('open'); document.body.style.overflow='hidden'; } };
   window.mobileMoreMenuClose = function() { var m=document.getElementById('mobile-more-menu'); if (m) { m.classList.remove('open'); document.body.style.overflow=''; } };
 
@@ -144,6 +159,10 @@
     await injectTopMobileShell();
     injectMobileNav();
     tableToCards();
+    if (!window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__) {
+      window.addEventListener('gtavcad:context-ready', refreshMobileNavigation);
+      window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__ = true;
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
