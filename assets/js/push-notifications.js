@@ -1,8 +1,7 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'gtavcad_notifications';
-  var MAX_STORED = 50;
+  var notifications = [];
   var unreadCount = 0;
   var socket = null;
   var connected = false;
@@ -11,38 +10,30 @@
 
   // ── Storage helpers ──────────────────────────────────────────────────────
 
-  function loadNotifications() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-    catch (e) { return []; }
+  function loadNotifications(){ return notifications; }
+
+  function addNotification(notif){ notifications.unshift(notif); unreadCount++; updateBadge(); renderNotifList(); }
+
+  async function fetchNotifications(){
+    try {
+      var res = await fetch('/api/notifications', {credentials:'include'});
+      var data = await res.json();
+      if (data && data.success) {
+        notifications = data.notifications.map(function(n){return {id:n.id,type:(n.category||'system').toLowerCase(),icon:'📢',title:n.title,detail:n.message,badgeLabel:n.category||'System',badgeClass:'badge-system',ts:Date.parse(n.created_at||new Date().toISOString()),read:n.read};});
+        unreadCount = notifications.filter(function(n){return !n.read;}).length;
+        updateBadge();
+        renderNotifList();
+      }
+    } catch(e){}
   }
 
-  function saveNotifications(list) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, MAX_STORED))); }
-    catch (e) {}
+  async function markAllRead(){
+    try { await fetch('/api/notifications/read-all', {method:'POST', credentials:'include'}); } catch(e){}
+    notifications = notifications.map(function(n){ n.read=true; return n;});
+    unreadCount = 0; updateBadge(); renderNotifList();
   }
 
-  function addNotification(notif) {
-    var list = loadNotifications();
-    list.unshift(notif);
-    saveNotifications(list);
-    unreadCount++;
-    updateBadge();
-    renderNotifList();
-  }
-
-  function markAllRead() {
-    unreadCount = 0;
-    updateBadge();
-    var items = document.querySelectorAll('.notif-item.unread');
-    items.forEach(function(el) { el.classList.remove('unread'); });
-  }
-
-  function clearAll() {
-    saveNotifications([]);
-    unreadCount = 0;
-    updateBadge();
-    renderNotifList();
-  }
+  function clearAll() { notifications = []; unreadCount = 0; updateBadge(); renderNotifList(); }
 
   // ── Badge ────────────────────────────────────────────────────────────────
 
@@ -121,7 +112,7 @@
     }
     listEl.innerHTML = list.map(function(n, idx) {
       var ageStr = formatAge(n.ts);
-      var unreadClass = idx < unreadCount ? ' unread' : '';
+      var unreadClass = n.read ? '' : ' unread';
       return [
         '<div class="notif-item' + unreadClass + ' notif-type-' + n.type + '">',
           '<div class="notif-icon">' + (n.icon || '📢') + '</div>',
@@ -326,6 +317,8 @@
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
+
+  fetchNotifications();
 
   window.pushNotif = {
     togglePanel: function() { panelOpen ? window.pushNotif.closePanel() : window.pushNotif.openPanel(); },

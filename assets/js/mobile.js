@@ -5,18 +5,37 @@
 
   function getCurrentPage() {
     var path = window.location.pathname.toLowerCase();
-    var parts = path.split('/').filter(Boolean);
-    var leaf = parts[parts.length - 1] || '';
-    if (!leaf || leaf === 'index.html' || leaf === '') return 'home';
-    if (leaf === 'police.html' || leaf === 'police' || leaf === 'cad.html' || leaf === 'cad') return 'cad';
-    if (leaf === 'dmv.html' || leaf === 'dmv') return 'dmv';
-    if (leaf === 'businesses.html' || leaf === 'businesses') return 'businesses';
-    if (leaf === 'rules.html' || leaf === 'rules') return 'rules';
-    if (leaf === 'applications.html' || leaf === 'applications') return 'applications';
-    if (leaf === 'donations.html' || leaf === 'donations') return 'donations';
-    if (leaf === 'complaints.html' || leaf === 'complaints') return 'complaints';
-    if (leaf === 'communities.html' || leaf === 'communities') return 'home';
-    return 'home';
+    var leaf = path.split('/').filter(Boolean).pop() || '';
+    if (!leaf || leaf === 'index.html') return 'home';
+    var map = {
+      'cad': 'cad',
+      'police': 'police',
+      'police.html': 'police',
+      'dmv': 'dmv',
+      'dmv.html': 'dmv',
+      'businesses': 'businesses',
+      'businesses.html': 'businesses',
+      'applications': 'applications',
+      'applications.html': 'applications',
+      'complaints': 'complaints',
+      'complaints.html': 'complaints',
+      'donations': 'donations',
+      'donations.html': 'donations',
+      'rules': 'maps',
+      'rules.html': 'maps',
+      'communities': 'communities',
+      'communities.html': 'communities',
+      'community-admin': 'admin',
+      'community-admin.html': 'admin',
+      'admin': 'admin',
+      'login': 'login',
+      'register': 'register',
+      'civilian': 'dispatch',
+      'civilian.html': 'dispatch',
+      'join': 'dispatch',
+      'join.html': 'dispatch'
+    };
+    return map[leaf] || 'home';
   }
 
   function buildCommunityHref(page) {
@@ -68,9 +87,9 @@
     nav.setAttribute('aria-label', 'Mobile bottom navigation');
     nav.innerHTML =
       tab('tab-home', '🏠', 'Home', 'home') +
-      tab('tab-cad', '🚔', 'CAD', 'cad') +
+      tab('tab-cad', '🚓', 'CAD', 'cad') +
+      tab('tab-police', '👮', 'Police', 'police') +
       tab('tab-dmv', '🪪', 'DMV', 'dmv') +
-      tab('tab-biz', '🏢', 'Business', 'businesses') +
       tab('tab-more', '☰', 'More', 'more');
 
     document.body.appendChild(nav);
@@ -107,19 +126,24 @@
       '</div>' +
       '<div class="more-menu-links">' +
         menuLink('🏠', 'Home', 'home') +
-        menuLink('🚔', 'Police / CAD', 'cad') +
+        menuLink('🚔', 'CAD', 'cad') +
+        menuLink('👮', 'Police', 'police') +
         menuLink('🪪', 'DMV', 'dmv') +
         menuLink('🏢', 'Businesses', 'businesses') +
         menuLink('📋', 'Applications', 'applications') +
         menuLink('💬', 'Complaints', 'complaints') +
         menuLink('💰', 'Donations', 'donations') +
+        menuLink('🚨', 'Dispatch', 'dispatch') +
+        menuLink('🗺️', 'Maps', 'rules') +
+        menuLink('🌐', 'Communities', 'communities') +
+        menuLink('🛡️', 'Admin', 'admin') +
         menuLink('📖', 'Rules', 'rules') +
         '<a class="more-menu-link" href="https://discord.gg/" target="_blank" rel="noopener noreferrer">' +
           '<span class="link-icon">💬</span>' +
           '<span class="link-text">Join Discord</span>' +
           '<span class="link-arrow">↗</span>' +
         '</a>' +
-      '</div>';
+      (window.__MOBILE_AUTH_LINKS__ || '') + '</div>';
 
     document.body.appendChild(menu);
   }
@@ -341,12 +365,12 @@
       var menu = document.getElementById('mobile-more-menu');
       if (!nav || !menu || !slug) return;
       var tabs = nav.querySelectorAll('.mobile-tab:not(#tab-more)');
-      var pages = ['home', 'cad', 'dmv', 'businesses'];
+      var pages = ['home', 'cad', 'police', 'dmv'];
       tabs.forEach(function(tab, i) {
         if (pages[i]) tab.href = buildCommunityHref(pages[i]);
       });
       var links = menu.querySelectorAll('.more-menu-link:not([target])');
-      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'rules'];
+      var menuPages = ['home', 'cad', 'police', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'maps', 'communities', 'admin'];
       links.forEach(function(link, i) {
         if (menuPages[i]) link.href = buildCommunityHref(menuPages[i]);
       });
@@ -372,8 +396,35 @@
       .catch(function() {});
   }
 
-  function init() {
+  
+  async function injectTopMobileShell(){
+    document.body.classList.add('mobile-only-app');
+    var topbar = document.querySelector('.site-header .topbar');
+    if (!topbar) return;
+    var user='Guest', role='Logged out', community='No community';
+    try {
+      var r=await fetch('/api/auth/session',{credentials:'include'}); var d=await r.json();
+      if(d && d.authenticated && d.user){ user=d.user.username||'User'; role=d.user.role||'Member'; }
+    } catch(e){}
+    var slug=(window.GTAVCAD_CONTEXT&&window.GTAVCAD_CONTEXT.communitySlug)||'';
+    if(slug) community=slug;
+    window.__MOBILE_AUTH_LINKS__ = user==='Guest'
+      ? '<a class="more-menu-link" href="/login"><span class="link-icon">🔐</span><span class="link-text">Login</span><span class="link-arrow">›</span></a><a class="more-menu-link" href="/register"><span class="link-icon">📝</span><span class="link-text">Register</span><span class="link-arrow">›</span></a>'
+      : '<button class="more-menu-link" type="button" data-auth-logout><span class="link-icon">🚪</span><span class="link-text">Logout</span><span class="link-arrow">›</span></button>';
+    topbar.innerHTML = '<img class="mobile-shell-logo" src="/assets/images/gtavcad-logo.png" alt="logo"><div class="mobile-shell-meta"><div class="mobile-shell-title">GTAVCAD · '+community+'</div><div class="mobile-shell-sub">'+user+' · '+role+'</div></div><div class="mobile-shell-bell-wrap" id="mobile-shell-bell"></div>';
+  }
+
+  function tableToCards(){
+    document.querySelectorAll('table').forEach(function(t){ t.classList.add('mobile-table-cards');
+      var heads=[...t.querySelectorAll('thead th')].map(function(th){return (th.textContent||'').trim();});
+      t.querySelectorAll('tbody tr').forEach(function(tr){ [...tr.children].forEach(function(td,i){ if(!td.getAttribute('data-label')) td.setAttribute('data-label', heads[i]||('Field '+(i+1)));});});
+    });
+  }
+
+  async function init() {
+    await injectTopMobileShell();
     injectMobileNav();
+    tableToCards();
     injectPanicFab();
     initAccordions();
     document.addEventListener('keydown', closeMoreMenuOnEscape);

@@ -219,6 +219,28 @@ function bindAuthenticatedControls() {
 window.gtavcadLogout = gtavcadLogout;
 window.gtavcadExitImpersonation = gtavcadExitImpersonation;
 
+
+function setCommunityContextState(state = 'empty', details = {}) {
+  const map = {
+    loading: {community:'Loading…', cad:'Loading…', role:'Loading…', invite:'Loading…'},
+    empty: {community:'No active community selected.', cad:'—', role:'Member', invite:'—'},
+    logged_out: {community:'Logged out', cad:'Sign in to access community data', role:'Guest', invite:'—'},
+    error: {community:'Community unavailable', cad:'Unable to load context', role:'—', invite:'Try again'},
+  };
+  const payload = Object.assign({}, map[state] || map.empty, details || {});
+  document.querySelectorAll('[data-context-community]').forEach((el)=> el.textContent = payload.community);
+  document.querySelectorAll('[data-context-cad]').forEach((el)=> el.textContent = payload.cad);
+  document.querySelectorAll('[data-context-role]').forEach((el)=> el.textContent = payload.role);
+  document.querySelectorAll('[data-context-invite]').forEach((el)=> el.textContent = payload.invite);
+}
+
+setCommunityContextState('loading');
+setTimeout(() => {
+  const stillLoading = [...document.querySelectorAll('[data-context-community],[data-context-cad],[data-context-role],[data-context-invite]')]
+    .some(el => /Loading/.test(el.textContent || ''));
+  if (stillLoading) setCommunityContextState('error');
+}, 7000);
+
 if (CURRENT_COMMUNITY_SLUG && window.fetch) {
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
@@ -340,7 +362,7 @@ async function applyCommunityBranding() {
   try {
     const res = await fetch('/api/communities/context', { credentials: 'include' });
     const data = await res.json();
-    if (!res.ok || !data.success) return null;
+    if (!res.ok || !data.success) { setCommunityContextState('error'); return null; }
     const community = data.community || {};
     const membership = data.membership || null;
     window.GTAVCAD_CONTEXT = {
@@ -394,6 +416,7 @@ async function applyCommunityBranding() {
     const communityCtxCad = document.querySelector('[data-context-cad]');
     if (communityCtxCad) communityCtxCad.textContent = window.GTAVCAD_CONTEXT.cadName || 'CAD';
     const resolvedRole = window.GTAVCAD_CONTEXT.community_role || window.GTAVCAD_CONTEXT.platform_role || window.GTAVCAD_CONTEXT.role || (membership ? membership.role : 'No membership');
+    setCommunityContextState('empty', {community: window.GTAVCAD_CONTEXT.communityName || 'No active community selected.', cad: window.GTAVCAD_CONTEXT.cadName || '—', role: resolvedRole || 'Member', invite: membership ? 'Active' : 'Not joined'});
     document.querySelectorAll('[data-context-role]').forEach((el) => { el.textContent = resolvedRole; });
     const resolvedUsername = data.user?.username || 'Unknown';
     document.querySelectorAll('[data-context-username]').forEach((el) => { el.textContent = resolvedUsername; });
@@ -455,6 +478,7 @@ async function applyCommunityBranding() {
     return community;
   } catch (error) {
     console.warn('Community branding load failed:', error);
+    setCommunityContextState(window.GTAVCAD_CURRENT_USER ? 'error' : 'logged_out');
     return null;
   }
 }
