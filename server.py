@@ -8142,10 +8142,27 @@ def community_page(community_slug, page):
         'join': 'join.html',
     }
     page = extensionless_aliases.get(page, page)
-    if page in {'police.html', 'cad.html'}:
+    if page in {'police.html', 'cad.html', 'civilian.html', 'dmv.html', 'applications.html', 'complaints.html', 'businesses.html', 'donations.html'}:
         if not session.get('user_id'):
             return redirect('/login', code=302)
-        if not current_role_allows_police_cad():
+        user_id = session.get('user_id')
+        community_id = get_current_community_id()
+        auth_context = get_active_community_auth_context(user_id, community_id)
+        allowed_modules = _module_policy_for_auth_context(getattr(g, 'current_user', None), None, auth_context.get('membership'), auth_context)
+        page_to_module = {
+            'police.html': 'police',
+            'cad.html': 'cad',
+            'civilian.html': 'civilian_portal',
+            'dmv.html': 'dmv',
+            'applications.html': 'applications',
+            'complaints.html': 'complaints',
+            'businesses.html': 'businesses',
+            'donations.html': 'donations',
+        }
+        module = page_to_module.get(page)
+        if module in {'police', 'cad'} and not current_role_allows_police_cad():
+            return frontend_page('community-cad-forbidden.html'), 403
+        if module and not _can_access_module(module, allowed_modules):
             return frontend_page('community-cad-forbidden.html'), 403
     if page in allowed_pages:
         return frontend_page(page)
@@ -8251,6 +8268,39 @@ def has_community_owner_access(user_id, community=None, membership=None):
         return True
     return False
 
+
+
+
+def _module_policy_for_auth_context(user, community, membership, auth_context):
+    role = (auth_context.get('community_role') or '').strip()
+    department = (auth_context.get('department') or '').strip()
+    is_owner = bool(auth_context.get('is_platform_owner'))
+    allowed = {'home', 'rules', 'communities', 'notifications', 'logout'}
+    if not membership and not is_owner:
+        allowed.update({'login', 'register'})
+    if role in ('Civilian', 'Resident', 'Member'):
+        allowed.update({'civilian_portal', 'dmv_self', 'applications', 'complaints', 'report_911', 'my_reports'})
+    if role in ('Police', 'LEO', 'Sheriff', 'StateTrooper'):
+        allowed.update({'police', 'cad', 'police_records', 'unit_status', 'reports'})
+    if role in ('Dispatch',):
+        allowed.update({'dispatch', 'cad', 'unit_status', 'call_logs'})
+    if role in ('DMV',):
+        allowed.update({'dmv', 'dmv_lookup'})
+    if role in ('Business', 'BusinessOwner'):
+        allowed.update({'businesses'})
+    if role in ('Admin', 'Owner', 'CommunityAdmin', 'CommunityOwner'):
+        allowed.update({'community_admin', 'member_management', 'role_permissions', 'applications', 'complaints', 'businesses', 'donations'})
+    if is_owner:
+        allowed.update({'platform_admin', 'community_admin', 'cad', 'police', 'dispatch', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'civilian_portal'})
+    if department.lower() == 'dispatch':
+        allowed.update({'dispatch', 'cad', 'unit_status', 'call_logs'})
+    if department.lower() == 'dmv':
+        allowed.update({'dmv', 'dmv_lookup'})
+    return sorted(allowed)
+
+
+def _can_access_module(module, allowed_modules):
+    return module in set(allowed_modules or [])
 
 def is_platform_owner():
     user_id = session.get('user_id')
@@ -11571,6 +11621,52 @@ def _query_notifications_for_user(user_id, community_id, auth_context):
     )
     return q.filter(_notification_visibility_filter(user_id, community_id, auth_context))
 
+
+
+
+@app.route('/api/mobile/context', methods=['GET'])
+@require_auth
+def mobile_context():
+    user_id = session.get('user_id')
+    user = User.query.get(user_id) if isinstance(user_id, int) else None
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    membership = auth_context.get('membership')
+    community = Community.query.filter_by(community_id=community_id).first() if community_id else None
+    community_slug = None
+    if community:
+        community_slug = getattr(community, 'slug', None) or getattr(community, 'community_slug', None)
+    allowed_modules = _module_policy_for_auth_context(user, community, membership, auth_context)
+    unread_count = 0
+    notif_context = get_active_community_auth_context(user_id, community_id)
+    rows = _query_notifications_for_user(user_id, community_id, notif_context).all() if isinstance(user_id, int) else []
+    notif_ids = [n.id for n in rows]
+    read_ids = set()
+    if notif_ids and isinstance(user_id, int):
+        read_ids = {r.notification_id for r in NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids), NotificationRecipient.read_at.isnot(None)).all()}
+    unread_count = len([nid for nid in notif_ids if nid not in read_ids])
+    return jsonify({
+        'success': True,
+        'user': {
+            'id': user.id if user else None,
+            'username': getattr(user, 'username', None),
+            'display_name': getattr(user, 'username', None),
+        },
+        'active_community': {
+            'id': community_id,
+            'slug': community_slug,
+            'name': getattr(community, 'name', None) or getattr(community, 'community_name', None) if community else None,
+        },
+        'community_role': auth_context.get('community_role'),
+        'department': auth_context.get('department'),
+        'allowed_modules': allowed_modules,
+        'platform_owner': bool(auth_context.get('is_platform_owner')),
+        'notification_count': unread_count,
+        'branding': {
+            'cad_name': getattr(community, 'cad_name', None) if community else None,
+            'logo_url': '/assets/images/gtavcad-logo.png',
+        },
+    })
 
 @app.route('/api/notifications', methods=['GET'])
 @require_auth
