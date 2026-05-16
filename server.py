@@ -5911,9 +5911,12 @@ def ai_civilian_assist():
 def create_civilian():
     """Persist a Civilian Registration payload directly to PostgreSQL."""
     try:
+        authz, denied = _require_modules('civilian_portal', 'dmv_self')
+        if denied:
+            return denied
         community = resolve_active_community()
         if not community:
-            return jsonify({'success': False, 'error': 'Community context required'}), 400
+            return jsonify({'success': False, 'error': 'Active community is required'}), 400
         community_id = community['community_id']
         data = request.get_json(silent=True) or {}
         mapped = _civilian_from_payload(data)
@@ -5921,9 +5924,7 @@ def create_civilian():
         if not mapped['first_name'] or not mapped['last_name']:
             return jsonify({'success': False, 'error': 'firstName and lastName are required'}), 400
 
-        current_user_id = session.get('user_id')
-        if not isinstance(current_user_id, int):
-            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        current_user_id = authz['user_id']
 
         ensure_civilians_user_id_schema()
         civilian_id = f"CIV-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
@@ -5955,19 +5956,26 @@ def create_civilian():
 @app.route('/api/civilians', methods=['GET'])
 def get_civilians():
     """Read civilian records directly from PostgreSQL with q/name/dob filters."""
+    authz, denied = _require_modules('civilian_portal', 'dmv_lookup', 'cad', 'police', 'community_admin')
+    if denied:
+        return denied
     q = request.args.get('q', '').strip()
     name = request.args.get('name', '').strip()
     dob = request.args.get('dob', '').strip()
     community = resolve_active_community()
     if not community:
-        return jsonify({'success': False, 'error': 'Community context required'}), 400
+        return jsonify({'success': False, 'error': 'Active community is required'}), 400
 
     try:
         logger.info('Civilian lookup query: q="%s" name="%s" dob="%s"', q, name, dob)
-        civilians = (_civilian_search_query(q, name=name, dob=dob, community_id=community['community_id'])
-                     .order_by(Civilian.created_at.desc())
-                     .limit(100)
-                     .all())
+        civilian_query = _civilian_search_query(q, name=name, dob=dob, community_id=community['community_id'])
+        can_read_all = any(
+            _can_access_module(module, authz['allowed_modules'])
+            for module in ('dmv_lookup', 'cad', 'police', 'community_admin')
+        )
+        if not can_read_all:
+            civilian_query = civilian_query.filter(Civilian.user_id == authz['user_id'])
+        civilians = civilian_query.order_by(Civilian.created_at.desc()).limit(100).all()
         result = [_civilian_response(c) for c in civilians]
         logger.info('Civilian lookup result count: %s', len(result))
         return jsonify({'success': True, 'civilians': result, 'results': result, 'total': len(result)})
@@ -5979,6 +5987,9 @@ def get_civilians():
 @app.route('/api/civilian/search', methods=['POST'])
 def search_civilians():
     """Police/CAD civilian lookup backed by PostgreSQL civilians table."""
+    authz, denied = _require_modules('cad', 'police', 'dmv_lookup')
+    if denied:
+        return denied
     data = request.get_json(silent=True) or {}
     query = (data.get('query') or data.get('q') or '').strip()
     name = (data.get('name') or '').strip()
@@ -5988,7 +5999,7 @@ def search_civilians():
         return jsonify({'success': False, 'error': 'Query required'}), 400
     community = resolve_active_community()
     if not community:
-        return jsonify({'success': False, 'error': 'Community context required'}), 400
+        return jsonify({'success': False, 'error': 'Active community is required'}), 400
 
     try:
         logger.info('Civilian lookup query: q="%s" name="%s" dob="%s"', query, name, dob)
@@ -6152,11 +6163,20 @@ def get_all_cad_civilians():
 
 @app.route('/api/civilian/<civilian_id>', methods=['GET'])
 def get_civilian(civilian_id):
+    authz, denied = _require_modules('civilian_portal', 'dmv_lookup', 'cad', 'police', 'community_admin')
+    if denied:
+        return denied
     community = resolve_active_community()
     if not community:
-        return jsonify({'success': False, 'error': 'Community context required'}), 400
+        return jsonify({'success': False, 'error': 'Active community is required'}), 400
     c = scoped_query(Civilian, community['community_id']).filter_by(civilian_id=civilian_id).first()
     if not c:
+        return jsonify({'success': False, 'error': 'Civilian not found'}), 404
+    can_read_all = any(
+        _can_access_module(module, authz['allowed_modules'])
+        for module in ('dmv_lookup', 'cad', 'police', 'community_admin')
+    )
+    if not can_read_all and c.user_id != authz['user_id']:
         return jsonify({'success': False, 'error': 'Civilian not found'}), 404
 
     return jsonify({
