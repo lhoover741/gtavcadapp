@@ -6148,23 +6148,28 @@ def get_civilian(civilian_id):
 
 @app.route('/api/dispatch/calls', methods=['GET'])
 def get_dispatch_calls():
-    denied = require_police_cad_access()
+    authz, denied = _require_modules('cad', 'dispatch', 'call_logs', 'report_911', 'civilian_portal')
     if denied:
         return denied
-    """Get active dispatch calls."""
+    """Get active dispatch calls scoped to active community."""
     from dispatch_service import get_active_calls
-
     calls = get_active_calls()
+    can_cad = _can_access_module('cad', authz['allowed_modules']) or _can_access_module('dispatch', authz['allowed_modules'])
+    if not can_cad:
+        username = (session.get('username') or '').strip().lower()
+        calls = [c for c in calls if username and (c.get('caller_name') or '').strip().lower() == username]
     return jsonify({'success': True, 'calls': calls, 'total': len(calls)})
 
 
-@dispatch_required
 @app.route('/api/dispatch/calls', methods=['POST'])
+@require_auth
 def create_dispatch_call_route():
-    """Create a new dispatch call."""
+    """Create a new dispatch call with server-side tenant scoping."""
+    authz, denied = _require_modules('report_911', 'civilian_portal', 'cad', 'dispatch')
+    if denied:
+        return denied
     data = request.get_json(silent=True) or {}
-
-    required = ['caller_name', 'location', 'call_type', 'description']
+    required = ['location', 'description']
     missing = [f for f in required if not data.get(f)]
     if missing:
         return jsonify({'success': False, 'error': f'Missing fields: {", ".join(missing)}'}), 400
@@ -6173,16 +6178,23 @@ def create_dispatch_call_route():
     from cad_helpers import log_audit
 
     try:
+        caller_name = (data.get('caller_name') or data.get('callerName') or session.get('username') or 'Citizen').strip()
+        call_type = (data.get('call_type') or data.get('incidentType') or 'Emergency').strip()
         call = create_call(
-            data['caller_name'],
-            data['location'],
-            data['call_type'],
-            data['description'],
+            caller_name,
+            (data.get('location') or '').strip(),
+            call_type,
+            (data.get('description') or '').strip(),
             data.get('priority', 'Medium')
         )
+        call.community_id = authz['community_id']
+        call.updated_at = datetime.utcnow()
 
         log_audit('dispatch', 'create_call', 'DispatchCall', call.call_id)
-        emit_community_event('dispatch:call_created', {
+        _cad_audit('911_call_created', authz['community_id'], None, {'call_id': call.call_id, 'call_type': call.call_type})
+        _create_call_notifications(authz['community_id'], call.call_id, call.call_type, call.location)
+        db.session.commit()
+        payload = {
             'call_id': call.call_id,
             'caller_name': call.caller_name,
             'location': call.location,
@@ -6190,7 +6202,11 @@ def create_dispatch_call_route():
             'description': call.description,
             'priority': call.priority,
             'status': call.status,
-        })
+            'community_id': authz['community_id'],
+        }
+        socketio.emit('dispatch:call_created', payload, room=f"community:{authz['community_id']}:dispatch")
+        socketio.emit('dispatch:call_created', payload, room=f"community:{authz['community_id']}:police")
+        socketio.emit('dispatch:call_created', payload, room=f"community:{authz['community_id']}:admin")
 
         return jsonify({
             'success': True,
@@ -6198,14 +6214,17 @@ def create_dispatch_call_route():
             'message': 'Dispatch call created'
         })
     except Exception as e:
+        db.session.rollback()
         logger.error(f'Failed to create dispatch call: {e}')
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-@dispatch_required
 @app.route('/api/dispatch/calls/<call_id>', methods=['PUT'])
 def update_dispatch_call(call_id):
     """Update dispatch call status or assignment."""
+    authz, denied = _require_modules('dispatch', 'cad', 'call_logs')
+    if denied:
+        return denied
     data = request.get_json(silent=True) or {}
 
     from dispatch_service import assign_units_to_call, close_dispatch_call
@@ -6216,21 +6235,31 @@ def update_dispatch_call(call_id):
 
         if 'units' in data:
             call = assign_units_to_call(call_id, data['units'])
+            if not call or call.community_id != authz['community_id']:
+                return jsonify({'success': False, 'error': 'Call not found in active community'}), 404
             log_audit('dispatch', 'assign_units', 'DispatchCall', call_id)
-            emit_community_event('dispatch:units_assigned', {
+            payload = {
                 'call_id': call_id,
                 'units': data['units'],
                 'status': getattr(call, 'status', None),
-            })
+                'community_id': authz['community_id'],
+            }
+            socketio.emit('dispatch:units_assigned', payload, room=f"community:{authz['community_id']}:dispatch")
+            socketio.emit('dispatch:units_assigned', payload, room=f"community:{authz['community_id']}:police")
 
         if 'resolution' in data:
             call = close_dispatch_call(call_id, data['resolution'])
+            if not call or call.community_id != authz['community_id']:
+                return jsonify({'success': False, 'error': 'Call not found in active community'}), 404
             log_audit('dispatch', 'close_call', 'DispatchCall', call_id)
-            emit_community_event('dispatch:call_closed', {
+            payload = {
                 'call_id': call_id,
                 'resolution': data['resolution'],
                 'status': getattr(call, 'status', 'Closed'),
-            })
+                'community_id': authz['community_id'],
+            }
+            socketio.emit('dispatch:call_closed', payload, room=f"community:{authz['community_id']}:dispatch")
+            socketio.emit('dispatch:call_closed', payload, room=f"community:{authz['community_id']}:police")
 
         if not call:
             return jsonify({'success': False, 'error': 'Call not found'}), 404
@@ -8301,6 +8330,63 @@ def _module_policy_for_auth_context(user, community, membership, auth_context):
 
 def _can_access_module(module, allowed_modules):
     return module in set(allowed_modules or [])
+
+
+def _active_authz_context():
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    auth_context = get_active_community_auth_context(user_id, community_id)
+    membership = auth_context.get('membership')
+    allowed_modules = _module_policy_for_auth_context(getattr(g, 'current_user', None), getattr(g, 'community', None), membership, auth_context)
+    return user_id, community_id, auth_context, allowed_modules
+
+
+def _require_modules(*required_modules):
+    user_id, community_id, auth_context, allowed_modules = _active_authz_context()
+    if not isinstance(user_id, int):
+        return None, (jsonify({'success': False, 'error': 'Authentication required'}), 401)
+    if not community_id:
+        return None, (jsonify({'success': False, 'error': 'Active community is required'}), 400)
+    if not auth_context.get('is_platform_owner') and not auth_context.get('membership'):
+        return None, (jsonify({'success': False, 'error': 'Active community membership required'}), 403)
+    if required_modules and not any(_can_access_module(m, allowed_modules) for m in required_modules):
+        return None, (jsonify({'success': False, 'error': 'Insufficient module permission'}), 403)
+    return {
+        'user_id': user_id,
+        'community_id': community_id,
+        'auth_context': auth_context,
+        'allowed_modules': allowed_modules,
+    }, None
+
+
+def _create_call_notifications(community_id, call_id, call_type, location):
+    title = 'New 911 Call'
+    message = f"{call_type or 'Emergency'} at {location or 'Unknown location'}"
+    payload = {'call_id': call_id, 'call_type': call_type, 'location': location}
+    db.session.add(Notification(
+        community_id=community_id,
+        target_scope='department',
+        target_department='Dispatch',
+        title=title,
+        message=message,
+        category='cad',
+        priority='high',
+        action_url='/cad',
+        data_json=json.dumps(payload),
+        created_at=datetime.utcnow(),
+    ))
+    db.session.add(Notification(
+        community_id=community_id,
+        target_scope='role',
+        target_role='Police',
+        title=title,
+        message=message,
+        category='cad',
+        priority='high',
+        action_url='/cad',
+        data_json=json.dumps(payload),
+        created_at=datetime.utcnow(),
+    ))
 
 def is_platform_owner():
     user_id = session.get('user_id')
