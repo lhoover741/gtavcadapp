@@ -151,7 +151,7 @@ def log_ai_request(route_name, success, model, error_message=None):
     try:
         uid = session.get('user_id')
         log_row = AIGenerationLog(
-            community_id=get_current_community_id(),
+            community_id=community_id,
             user_id=uid if isinstance(uid, int) else None,
             generation_type=route_name,
             provider='OpenRouter',
@@ -2968,7 +2968,7 @@ def send_bolo_discord(bolo):
 def create_bolo(suspect_name, description, last_location, charges, officer, threat_level='High', vehicle=''):
     bolo_id = f"BOLO-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
     bolo_obj = Bolo(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         bolo_id=bolo_id,
         suspect_name=suspect_name,
         description=description,
@@ -3035,7 +3035,7 @@ def save_server_status(status_dict):
 
 
 def load_applications():
-    apps = scoped_query(Application).order_by(Application.submitted_at.desc()).all()
+    apps = scoped_query(Application, community_id).order_by(Application.submitted_at.desc()).all()
     return [application_to_dict(a) for a in apps]
 
 
@@ -3043,7 +3043,7 @@ def save_application(data):
     count = scoped_query(Application).count()
     app_id = f"APP-{datetime.now().strftime('%Y%m%d%H%M%S')}-{count+1:04d}"
     app_obj = Application(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         application_id=app_id,
         app_discord=data.get('appDiscord', ''),
         app_character=data.get('appCharacter', ''),
@@ -3197,7 +3197,7 @@ def send_application_discord(app):
 
 
 def load_complaints():
-    complaints = Complaint.query.order_by(Complaint.submitted_at.desc()).all()
+    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).all()
     return [complaint_to_dict(c) for c in complaints]
 
 
@@ -4068,7 +4068,11 @@ def submit_complaint():
 @app.route('/api/complaints', methods=['GET'])
 @admin_required
 def list_complaints():
-    complaints = Complaint.query.order_by(Complaint.submitted_at.desc()).all()
+    authz, denied = _require_modules('complaints', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).all()
     result = [complaint_to_dict(c) for c in complaints]
     return jsonify({'success': True, 'complaints': result, 'total': len(result)})
 
@@ -4083,7 +4087,11 @@ def update_complaint_status(complaint_id):
     if new_status and new_status not in valid_statuses:
         return jsonify({'success': False, 'error': 'Invalid status'}), 400
 
-    c = Complaint.query.filter_by(complaint_id=complaint_id).first()
+    authz, denied = _require_modules('complaints', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    c = scoped_query(Complaint, community_id).filter_by(complaint_id=complaint_id).first()
     if c is None:
         return jsonify({'success': False, 'error': 'Complaint not found'}), 404
     if new_status:
@@ -4103,7 +4111,11 @@ def update_complaint_status(complaint_id):
 @app.route('/api/complaint/<complaint_id>', methods=['DELETE'])
 @admin_required
 def delete_complaint(complaint_id):
-    c = Complaint.query.filter_by(complaint_id=complaint_id).first()
+    authz, denied = _require_modules('complaints', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    c = scoped_query(Complaint, community_id).filter_by(complaint_id=complaint_id).first()
     if c is None:
         return jsonify({'success': False, 'error': 'Complaint not found'}), 404
     try:
@@ -4138,7 +4150,11 @@ def submit_application():
 @app.route('/api/applications', methods=['GET'])
 @admin_required
 def list_applications():
-    apps = scoped_query(Application).order_by(Application.submitted_at.desc()).all()
+    authz, denied = _require_modules('applications', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    apps = scoped_query(Application, community_id).order_by(Application.submitted_at.desc()).all()
     result = [application_to_dict(a) for a in apps]
     return jsonify({'success': True, 'applications': result, 'total': len(result)})
 
@@ -4153,7 +4169,11 @@ def update_application_status(app_id):
     if new_status and new_status not in valid_statuses:
         return jsonify({'success': False, 'error': 'Invalid status'}), 400
 
-    a = scoped_query(Application).filter_by(application_id=app_id).first()
+    authz, denied = _require_modules('applications', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    a = scoped_query(Application, community_id).filter_by(application_id=app_id).first()
     if a is None:
         return jsonify({'success': False, 'error': 'Application not found'}), 404
     if new_status:
@@ -4173,7 +4193,11 @@ def update_application_status(app_id):
 @app.route('/api/application/<app_id>', methods=['DELETE'])
 @admin_required
 def delete_application(app_id):
-    a = scoped_query(Application).filter_by(application_id=app_id).first()
+    authz, denied = _require_modules('applications', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+    a = scoped_query(Application, community_id).filter_by(application_id=app_id).first()
     if a is None:
         return jsonify({'success': False, 'error': 'Application not found'}), 404
     try:
@@ -4303,7 +4327,7 @@ def post_bolo():
         return jsonify({'success': False, 'error': 'Missing required fields.'}), 400
     bolo_id = f"BOLO-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
     bolo_obj = Bolo(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         bolo_id=bolo_id,
         suspect_name=data.get('suspectName', 'Unknown'),
         description=data.get('description', ''),
@@ -4640,7 +4664,7 @@ def post_radio_log():
         return jsonify({'success': False, 'error': 'Unit and message are required.'}), 400
     log_id = f"RADIO-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
     entry_obj = RadioLog(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         log_id=log_id,
         unit=unit,
         channel=channel,
@@ -5439,7 +5463,7 @@ def post_alert():
         return jsonify({'success': False, 'error': f'Invalid type. Must be one of: {", ".join(valid_types)}'}), 400
     alert_id = f"ALERT-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
     alert_obj = Alert(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         alert_id=alert_id,
         alert_type=alert_type,
         message=message,
@@ -5638,7 +5662,7 @@ def create_hearing():
     ts = int(datetime.utcnow().timestamp() * 1000)
     rand = secrets.token_hex(5)
     hearing_obj = Hearing(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         hearing_id=f'hearing-{ts}-{rand}',
         civilian_id=body.get('civilianId', body.get('civilian_id', '')),
         suspect_name=body.get('suspectName', '').strip(),
@@ -5746,7 +5770,7 @@ def book_inmate():
     ts = int(datetime.utcnow().timestamp() * 1000)
     rand = secrets.token_hex(4)
     inmate_obj = Inmate(
-        community_id=get_current_community_id(),
+        community_id=community_id,
         inmate_id=f'inmate-{ts}-{rand}',
         suspect_name=body.get('suspectName', '').strip(),
         charges=body.get('charges', '').strip(),
@@ -6545,6 +6569,10 @@ def release_vehicle_route(plate):
 
 @app.route('/api/dmv/vehicles', methods=['GET'])
 def get_all_vehicles():
+    authz, denied = _require_modules('dmv', 'police', 'cad', 'dispatch')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """List all vehicles in DMV database."""
     try:
         vehicles = scoped_query(Vehicle).order_by(Vehicle.created_at.desc()).all()
@@ -6567,7 +6595,12 @@ def create_vehicle():
         return jsonify({'success': False, 'error': 'plate number is required'}), 400
 
     # Check for duplicates
-    existing = scoped_query(Vehicle).filter_by(plate=plate).first()
+    authz, denied = _require_modules('dmv')
+    if denied:
+        return denied
+    community_id = authz['community_id']
+
+    existing = scoped_query(Vehicle, community_id).filter_by(plate=plate).first()
     if existing:
         return jsonify({'success': False, 'error': f'Vehicle with plate {plate} already exists'}), 409
 
@@ -6610,7 +6643,11 @@ def update_vehicle(plate):
     data = request.get_json(silent=True) or {}
 
     try:
-        vehicle = scoped_query(Vehicle).filter_by(plate=plate).first()
+        authz, denied = _require_modules('dmv')
+        if denied:
+            return denied
+        community_id = authz['community_id']
+        vehicle = scoped_query(Vehicle, community_id).filter_by(plate=plate).first()
         if not vehicle:
             return jsonify({'success': False, 'error': 'Vehicle not found'}), 404
 
@@ -6648,7 +6685,11 @@ def update_vehicle(plate):
 def delete_vehicle(plate):
     """Delete a vehicle registration (admin only)."""
     try:
-        vehicle = scoped_query(Vehicle).filter_by(plate=plate).first()
+        authz, denied = _require_modules('dmv')
+        if denied:
+            return denied
+        community_id = authz['community_id']
+        vehicle = scoped_query(Vehicle, community_id).filter_by(plate=plate).first()
         if not vehicle:
             return jsonify({'success': False, 'error': 'Vehicle not found'}), 404
 
@@ -6669,6 +6710,10 @@ def delete_vehicle(plate):
 
 @app.route('/api/dmv/licenses', methods=['GET'])
 def get_all_licenses():
+    authz, denied = _require_modules('dmv', 'police', 'cad', 'dispatch')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """List all licenses in DMV database."""
     try:
         licenses = scoped_query(License).order_by(License.created_at.desc()).all()
@@ -6693,6 +6738,11 @@ def create_license():
     license_type = (data.get('licenseClass') or data.get('licenseType') or data.get('license_type') or '').strip()
     if not license_type:
         return jsonify({'success': False, 'error': 'license class/type is required'}), 400
+
+    authz, denied = _require_modules('dmv')
+    if denied:
+        return denied
+    community_id = authz['community_id']
 
     try:
         license_id = f"LIC-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
@@ -6729,7 +6779,11 @@ def update_license_route(license_id):
     data = request.get_json(silent=True) or {}
 
     try:
-        license_obj = scoped_query(License).filter_by(license_id=license_id).first()
+        authz, denied = _require_modules('dmv')
+        if denied:
+            return denied
+        community_id = authz['community_id']
+        license_obj = scoped_query(License, community_id).filter_by(license_id=license_id).first()
         if not license_obj:
             return jsonify({'success': False, 'error': 'License not found'}), 404
 
@@ -6767,7 +6821,11 @@ def update_license_route(license_id):
 def delete_license_route(license_id):
     """Delete a driver license (admin only)."""
     try:
-        license_obj = scoped_query(License).filter_by(license_id=license_id).first()
+        authz, denied = _require_modules('dmv')
+        if denied:
+            return denied
+        community_id = authz['community_id']
+        license_obj = scoped_query(License, community_id).filter_by(license_id=license_id).first()
         if not license_obj:
             return jsonify({'success': False, 'error': 'License not found'}), 404
 
@@ -6805,9 +6863,13 @@ def business_to_dict(b):
 
 @app.route('/api/businesses', methods=['GET'])
 def get_all_businesses():
+    authz, denied = _require_modules('businesses', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """List all businesses in the system."""
     try:
-        businesses = scoped_query(Business).order_by(Business.created_at.desc()).all()
+        businesses = scoped_query(Business, community_id).order_by(Business.created_at.desc()).all()
         result = [business_to_dict(b) for b in businesses]
         return jsonify({'success': True, 'businesses': result, 'total': len(result)})
     except Exception as e:
@@ -6817,6 +6879,10 @@ def get_all_businesses():
 
 @app.route('/api/businesses', methods=['POST'])
 def create_business():
+    authz, denied = _require_modules('businesses', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """Create a new business registration."""
     data = request.get_json(silent=True) or {}
 
@@ -6828,7 +6894,7 @@ def create_business():
         business_id = f"BIZ-{datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}"
         business = Business(
             business_id=business_id,
-            community_id=get_current_community_id(),
+            community_id=community_id,
             owner_civilian_id=data.get('ownerCivilianId') or data.get('owner_civilian_id') or '',
             business_name=business_name,
             business_type=(data.get('businessType') or data.get('business_type') or '').strip(),
@@ -6863,9 +6929,13 @@ def create_business():
 
 @app.route('/api/businesses/<business_id>', methods=['GET'])
 def get_business(business_id):
+    authz, denied = _require_modules('businesses', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """Get a specific business by ID."""
     try:
-        business = scoped_query(Business).filter_by(business_id=business_id).first()
+        business = scoped_query(Business, community_id).filter_by(business_id=business_id).first()
         if not business:
             return jsonify({'success': False, 'error': 'Business not found'}), 404
 
@@ -6877,11 +6947,15 @@ def get_business(business_id):
 
 @app.route('/api/businesses/<business_id>', methods=['PUT'])
 def update_business(business_id):
+    authz, denied = _require_modules('businesses', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """Update an existing business."""
     data = request.get_json(silent=True) or {}
 
     try:
-        business = scoped_query(Business).filter_by(business_id=business_id).first()
+        business = scoped_query(Business, community_id).filter_by(business_id=business_id).first()
         if not business:
             return jsonify({'success': False, 'error': 'Business not found'}), 404
 
@@ -6929,9 +7003,13 @@ def update_business(business_id):
 
 @app.route('/api/businesses/<business_id>', methods=['DELETE'])
 def delete_business(business_id):
+    authz, denied = _require_modules('businesses', 'community_admin')
+    if denied:
+        return denied
+    community_id = authz['community_id']
     """Delete a business (admin only)."""
     try:
-        business = scoped_query(Business).filter_by(business_id=business_id).first()
+        business = scoped_query(Business, community_id).filter_by(business_id=business_id).first()
         if not business:
             return jsonify({'success': False, 'error': 'Business not found'}), 404
 
@@ -11235,7 +11313,7 @@ def _log_ai_generation(generation_type, success, input_params, output_summary=''
     try:
         log = AIGenerationLog(
             log_id=f"AI-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(3)}",
-            community_id=get_current_community_id(),
+            community_id=community_id,
             generation_type=generation_type,
             input_params=json.dumps(input_params)[:4000],
             output_summary=(output_summary or '')[:4000],
