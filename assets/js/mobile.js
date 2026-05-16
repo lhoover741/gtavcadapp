@@ -165,9 +165,29 @@
   }
 
   function tableToCards() {
-    document.querySelectorAll('table').forEach(function(t){ t.classList.add('mobile-table-cards');
-      var heads=[].slice.call(t.querySelectorAll('thead th')).map(function(th){return (th.textContent||'').trim();});
-      t.querySelectorAll('tbody tr').forEach(function(tr){ [].slice.call(tr.children).forEach(function(td,i){ if(!td.getAttribute('data-label')) td.setAttribute('data-label', heads[i]||('Field '+(i+1)));});});
+    document.querySelectorAll('table').forEach(function(t){
+      if (t.dataset.mobileCardsReady === '1') return;
+      t.dataset.mobileCardsReady = '1';
+      t.classList.add('mobile-table-cards');
+      var hiddenHeads = ['actions', 'action', '#', 'id'];
+      var heads=[].slice.call(t.querySelectorAll('thead th')).map(function(th){
+        return (th.textContent||'').trim();
+      });
+      t.querySelectorAll('tbody tr').forEach(function(tr){
+        var cells = [].slice.call(tr.children);
+        var titleCell = cells.find(function(td, i){
+          var h = (heads[i] || '').trim().toLowerCase();
+          var value = (td.textContent || '').trim();
+          return value && hiddenHeads.indexOf(h) === -1;
+        });
+        tr.setAttribute('data-mobile-card-title', (titleCell && titleCell.textContent || 'Record').trim());
+        cells.forEach(function(td,i){
+          var label = (heads[i] || ('Field ' + (i+1))).trim();
+          if (!label || /^_+$/.test(label)) label = 'Field ' + (i + 1);
+          td.setAttribute('data-label', label);
+          if (/^actions?$/i.test(label)) td.classList.add('mobile-card-actions');
+        });
+      });
     });
   }
 
@@ -181,7 +201,7 @@
     injectMobileNav();
     tableToCards();
     if (!window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__) {
-      window.addEventListener('gtavcad:context-ready', refreshMobileNavigation);
+      window.addEventListener('gtavcad:context-ready', function(){ refreshMobileNavigation(); tableToCards(); });
       window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__ = true;
     }
   }

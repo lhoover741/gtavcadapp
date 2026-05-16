@@ -766,3 +766,8 @@ button,.button,.btn,input,select,textarea{width:100%;max-width:100%}
 .mobile-table-cards tr{background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:10px;margin-bottom:10px}
 .mobile-table-cards td{padding:6px 0;border:0 !important}
 .mobile-table-cards td::before{content:attr(data-label);display:block;font-size:.72rem;color:var(--muted-text);margin-bottom:3px}
+.mobile-table-cards tr::before{content:attr(data-mobile-card-title);display:block;font-weight:800;font-size:.95rem;color:var(--text-color);margin-bottom:8px;word-break:break-word}
+.mobile-table-cards td{word-break:break-word}
+.mobile-table-cards td.mobile-card-actions{padding-top:10px}
+.mobile-table-cards td.mobile-card-actions .button{width:100%;margin:4px 0}
+
