@@ -2845,6 +2845,15 @@
     async function submitOfficerLogin() {
       if (!validateOfficerLoginForm(true)) return;
       const els = officerLoginEls();
+      const ctx = window.GTAVCAD_CONTEXT || {};
+      if (!ctx.community_id && !ctx.communitySlug) {
+        setOfficerLoginAlert('Select or join a community before entering CAD.');
+        return;
+      }
+      if (window.GTAVCAD_CURRENT_USER && window.GTAVCAD_CURRENT_USER.can_access_police_cad === false) {
+        setOfficerLoginAlert('You need Police or Dispatch access in this community to start an officer session.');
+        return;
+      }
       const payload = {
         callsign: els.callsign.value.trim(),
         officerName: els.name.value.trim(),
@@ -2860,7 +2869,10 @@
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.success) {
-          const message = res.status === 409 ? 'Callsign already in use.' : (json.error || 'Unable to start officer session.');
+          let message = json.error || 'Unable to start officer session.';
+          if (res.status === 403) message = 'You need Police or Dispatch access in this community to start an officer session.';
+          if (res.status === 400 && /community/i.test(message)) message = 'Select or join a community before entering CAD.';
+          if (res.status === 409) message = 'Callsign already in use.';
           throw new Error(message);
         }
         const officer = json.session || { ...payload, status: 'On Duty', loggedInAt: new Date().toISOString() };

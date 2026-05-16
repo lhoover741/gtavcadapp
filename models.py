@@ -912,3 +912,37 @@ class UserSession(db.Model):
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     invalidated_at = db.Column(db.DateTime, nullable=True)
+
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    community_id = db.Column(db.String(64), nullable=True, index=True)
+    target_scope = db.Column(db.String(32), nullable=False, default='community')
+    target_role = db.Column(db.String(64), nullable=True)
+    target_department = db.Column(db.String(64), nullable=True)
+    target_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    title = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(64), nullable=False, default='System')
+    priority = db.Column(db.String(32), nullable=False, default='normal')
+    action_url = db.Column(db.String(512), nullable=True)
+    metadata_json = db.Column(db.Text, nullable=True)
+    event_id = db.Column(db.String(128), nullable=True, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=True)
+    is_global = db.Column(db.Boolean, default=False, nullable=False)
+
+
+class NotificationRecipient(db.Model):
+    __tablename__ = 'notification_recipients'
+
+    id = db.Column(db.Integer, primary_key=True)
+    notification_id = db.Column(db.Integer, db.ForeignKey('notifications.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    read_at = db.Column(db.DateTime, nullable=True)
+    dismissed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+

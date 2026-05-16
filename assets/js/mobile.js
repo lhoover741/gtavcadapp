@@ -15,7 +15,9 @@
     if (leaf === 'applications.html' || leaf === 'applications') return 'applications';
     if (leaf === 'donations.html' || leaf === 'donations') return 'donations';
     if (leaf === 'complaints.html' || leaf === 'complaints') return 'complaints';
-    if (leaf === 'communities.html' || leaf === 'communities') return 'home';
+    if (leaf === 'communities.html' || leaf === 'communities') return 'communities';
+    if (leaf === 'community-admin.html' || leaf === 'admin' || leaf==='admin.html') return 'admin';
+    if (leaf === 'civilian.html' || leaf==='dispatch') return 'dispatch';
     return 'home';
   }
 
@@ -68,9 +70,9 @@
     nav.setAttribute('aria-label', 'Mobile bottom navigation');
     nav.innerHTML =
       tab('tab-home', '🏠', 'Home', 'home') +
-      tab('tab-cad', '🚔', 'CAD', 'cad') +
+      tab('tab-cad', '🚓', 'CAD', 'cad') +
+      tab('tab-police', '👮', 'Police', 'cad') +
       tab('tab-dmv', '🪪', 'DMV', 'dmv') +
-      tab('tab-biz', '🏢', 'Business', 'businesses') +
       tab('tab-more', '☰', 'More', 'more');
 
     document.body.appendChild(nav);
@@ -113,13 +115,17 @@
         menuLink('📋', 'Applications', 'applications') +
         menuLink('💬', 'Complaints', 'complaints') +
         menuLink('💰', 'Donations', 'donations') +
+        menuLink('🚨', 'Dispatch', 'dispatch') +
+        menuLink('🗺️', 'Maps', 'rules') +
+        menuLink('🌐', 'Communities', 'communities') +
+        menuLink('🛡️', 'Admin', 'admin') +
         menuLink('📖', 'Rules', 'rules') +
         '<a class="more-menu-link" href="https://discord.gg/" target="_blank" rel="noopener noreferrer">' +
           '<span class="link-icon">💬</span>' +
           '<span class="link-text">Join Discord</span>' +
           '<span class="link-arrow">↗</span>' +
         '</a>' +
-      '</div>';
+      (window.__MOBILE_AUTH_LINKS__ || '') + '</div>';
 
     document.body.appendChild(menu);
   }
@@ -346,7 +352,7 @@
         if (pages[i]) tab.href = buildCommunityHref(pages[i]);
       });
       var links = menu.querySelectorAll('.more-menu-link:not([target])');
-      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'rules'];
+      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'rules', 'communities', 'admin'];
       links.forEach(function(link, i) {
         if (menuPages[i]) link.href = buildCommunityHref(menuPages[i]);
       });
@@ -372,8 +378,35 @@
       .catch(function() {});
   }
 
+  
+  async function injectTopMobileShell(){
+    document.body.classList.add('mobile-only-app');
+    var topbar = document.querySelector('.site-header .topbar');
+    if (!topbar) return;
+    var user='Guest', role='Logged out', community='No community';
+    try {
+      var r=await fetch('/api/auth/session',{credentials:'include'}); var d=await r.json();
+      if(d && d.authenticated && d.user){ user=d.user.username||'User'; role=d.user.role||'Member'; }
+    } catch(e){}
+    var slug=(window.GTAVCAD_CONTEXT&&window.GTAVCAD_CONTEXT.communitySlug)||'';
+    if(slug) community=slug;
+    window.__MOBILE_AUTH_LINKS__ = user==='Guest'
+      ? '<a class="more-menu-link" href="/login"><span class="link-icon">🔐</span><span class="link-text">Login</span><span class="link-arrow">›</span></a><a class="more-menu-link" href="/register"><span class="link-icon">📝</span><span class="link-text">Register</span><span class="link-arrow">›</span></a>'
+      : '<button class="more-menu-link" type="button" data-auth-logout><span class="link-icon">🚪</span><span class="link-text">Logout</span><span class="link-arrow">›</span></button>';
+    topbar.innerHTML = '<img class="mobile-shell-logo" src="/assets/images/gtavcad-logo.png" alt="logo"><div class="mobile-shell-meta"><div class="mobile-shell-title">GTAVCAD · '+community+'</div><div class="mobile-shell-sub">'+user+' · '+role+'</div></div><div class="mobile-shell-bell-wrap" id="mobile-shell-bell"></div>';
+  }
+
+  function tableToCards(){
+    document.querySelectorAll('table').forEach(function(t){ t.classList.add('mobile-table-cards');
+      var heads=[...t.querySelectorAll('thead th')].map(function(th){return (th.textContent||'').trim();});
+      t.querySelectorAll('tbody tr').forEach(function(tr){ [...tr.children].forEach(function(td,i){ if(!td.getAttribute('data-label')) td.setAttribute('data-label', heads[i]||('Field '+(i+1)));});});
+    });
+  }
+
   function init() {
+    injectTopMobileShell();
     injectMobileNav();
+    tableToCards();
     injectPanicFab();
     initAccordions();
     document.addEventListener('keydown', closeMoreMenuOnEscape);
