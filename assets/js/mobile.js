@@ -208,29 +208,110 @@
       || document.querySelector('main');
   }
 
-  function applyPageStates() {
+  function renderMobileStateCard(pageKey, state, options) {
+    var map = {
+      loading: { title: 'Loading', message: 'Loading community data…' },
+      'no-community': { title: 'No active community selected', message: 'Select or join a community before continuing.', ctaLabel: 'Open Communities', ctaHref: '/communities' },
+      unauthorized: { title: 'Unauthorized', message: 'You do not have permission to access this page in this community.' },
+      empty: { title: 'No records found', message: 'No records found for this community.' },
+      error: { title: 'Backend error', message: 'We could not load this page right now. Please try again.' },
+      success: { title: 'Success', message: 'Action completed successfully.' }
+    };
+    var preset = map[state] || map.error;
+    return pageStateCard(state, options.title || preset.title, options.message || preset.message, options.ctaLabel || preset.ctaLabel, options.ctaHref || preset.ctaHref);
+  }
+
+  function ensureMobileStateHost(pageKey) {
+    var host = document.getElementById('mobile-page-state-host-' + pageKey);
+    if (host) return host;
+    var mount = getPageStateHost();
+    if (!mount) return null;
+    host = document.createElement('div');
+    host.id = 'mobile-page-state-host-' + pageKey;
+    host.className = 'mobile-page-state-host';
+    host.style.display = 'none';
+    mount.insertBefore(host, mount.firstChild);
+    return host;
+  }
+
+  function setMobilePageState(pageKey, state, options) {
+    if (!isMobile()) return;
+    var host = ensureMobileStateHost(pageKey);
+    if (!host) return;
+    host.innerHTML = renderMobileStateCard(pageKey, state, options || {});
+    host.style.display = '';
+  }
+
+  function clearMobilePageState(pageKey) {
+    var host = document.getElementById('mobile-page-state-host-' + pageKey);
+    if (!host) return;
+    host.innerHTML = '';
+    host.style.display = 'none';
+  }
+
+  function setupLifecycleStates() {
     if (!isMobile()) return;
     var page = getCurrentPage();
     if (['cad', 'police', 'dmv', 'dispatch'].indexOf(page) === -1) return;
-    var host = getPageStateHost();
-    if (!host || document.getElementById('mobile-page-state-host')) return;
     var context = window.GTAVCAD_CONTEXT || {};
-    var user = window.GTAVCAD_CURRENT_USER || {};
     var hasCommunity = !!(context.community_id || context.communitySlug);
-    var canUseCad = user.can_access_police_cad !== false;
-    var canUseDmv = hasModule('dmv') || hasModule('dmv_self');
-    var shell = document.createElement('div');
-    shell.id = 'mobile-page-state-host';
+    if (!hasCommunity) {
+      setMobilePageState(page, 'no-community', {});
+      return;
+    }
 
-    shell.innerHTML += pageStateCard('loading', 'Loading', 'Loading community data…');
-    if (!hasCommunity) shell.innerHTML += pageStateCard('community', 'No active community selected', 'Select or join a community before continuing.', 'Open Communities', '/communities');
-    if ((page === 'cad' || page === 'police') && !canUseCad) shell.innerHTML += pageStateCard('unauthorized', 'Unauthorized', 'You need Police or Dispatch access in this community to use CAD.');
-    if (page === 'dmv' && !canUseDmv) shell.innerHTML += pageStateCard('unauthorized', 'Unauthorized', 'You do not have permission to view DMV records in this community.');
-    if (page === 'dispatch') shell.innerHTML += pageStateCard('empty', 'No submitted calls', 'You have not submitted any 911 calls in this community.');
-    if (page === 'dmv') shell.innerHTML += pageStateCard('empty', 'No DMV records', 'No DMV records found for this community.');
-    if (page === 'cad' || page === 'police') shell.innerHTML += pageStateCard('empty', 'No active calls', 'No active calls for this community.');
-    shell.innerHTML += pageStateCard('error', 'Backend error', 'We could not load this page right now. Please try again.');
-    host.insertBefore(shell, host.firstChild);
+    if (page === 'cad' || page === 'police') {
+      var canCad = hasModule('cad') || hasModule('police') || hasModule('dispatch') || hasModule('community_admin');
+      if (!canCad) {
+        setMobilePageState(page, 'unauthorized', { message: 'You need Police or Dispatch access in this community to use CAD.' });
+        return;
+      }
+      setMobilePageState(page, 'loading', {});
+      window.addEventListener('gtavcad:data-loaded', function() {
+        var calls = ((window.GTAVCADData && window.GTAVCADData.calls911) || []).filter(function(c){ return c.status !== 'Closed'; });
+        if (calls.length) clearMobilePageState(page);
+        else setMobilePageState(page, 'empty', { title: 'No active calls', message: 'No active calls for this community.' });
+      });
+      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); });
+    }
+
+    if (page === 'dispatch') {
+      var isDispatchUser = hasModule('dispatch');
+      setMobilePageState(page, 'loading', {});
+      window.addEventListener('gtavcad:data-loaded', function() {
+        var calls = ((window.GTAVCADData && window.GTAVCADData.calls911) || []).filter(function(c){ return c.status !== 'Closed'; });
+        if (calls.length) return clearMobilePageState(page);
+        if (isDispatchUser) setMobilePageState(page, 'empty', { title: 'No active calls', message: 'No active 911/CAD calls for this community.' });
+        else setMobilePageState(page, 'empty', { title: 'No submitted calls', message: 'You have not submitted any 911 calls in this community.' });
+      });
+      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); });
+    }
+
+    if (page === 'dmv') {
+      var canDmv = hasModule('dmv') || hasModule('dmv_self') || hasModule('lookup');
+      if (!canDmv) {
+        setMobilePageState(page, 'unauthorized', {});
+        return;
+      }
+      clearMobilePageState(page);
+      var form = document.getElementById('dmv-plate-form');
+      if (form) {
+        form.addEventListener('submit', function() { setMobilePageState(page, 'loading', {}); });
+      }
+      document.addEventListener('gtavcad:dmv-results', function(e) {
+        var count = e.detail && typeof e.detail.count === 'number' ? e.detail.count : 0;
+        if (count > 0) clearMobilePageState(page);
+        else setMobilePageState(page, 'empty', { title: 'No DMV records', message: 'No DMV records found for this community.' });
+      });
+    }
+
+    document.addEventListener('gtavcad:911-submit-success', function() {
+      setMobilePageState(page, 'success', { title: 'Success', message: 'Call sent to dispatch successfully.' });
+      setTimeout(function(){ clearMobilePageState(page); }, 2200);
+    });
+    document.addEventListener('gtavcad:911-submit-error', function() {
+      setMobilePageState(page, 'error', { message: 'Unable to submit call right now. Please try again.' });
+    });
   }
 
   async function init() {
@@ -242,7 +323,7 @@
     await injectTopMobileShell();
     injectMobileNav();
     tableToCards();
-    applyPageStates();
+    setupLifecycleStates();
     if (!window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__) {
       window.addEventListener('gtavcad:context-ready', function(){ refreshMobileNavigation(); tableToCards(); });
       window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__ = true;
