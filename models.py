@@ -481,6 +481,8 @@ class DispatchCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     call_id = db.Column(db.String(64), unique=True, nullable=False)
     community_id = db.Column(db.String(64), nullable=True)  # Will be backfilled with nthacityrp
+    caller_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     caller_name = db.Column(db.String(255))
     phone = db.Column(db.String(64))
     location = db.Column(db.Text)
@@ -945,4 +947,3 @@ class NotificationRecipient(db.Model):
     read_at = db.Column(db.DateTime, nullable=True)
     dismissed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
