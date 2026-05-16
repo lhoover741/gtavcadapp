@@ -749,6 +749,8 @@ body{margin:0 auto; width:100%; max-width:520px; min-height:100vh; position:rela
 .site-header{position:sticky;top:0;z-index:900;background:rgba(8,8,8,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border-color)}
 .site-header .topbar{min-height:var(--header-height);padding:10px 12px;display:flex;align-items:center;gap:10px}
 .global-nav,.nav-toggle,.cad-sidebar,.desktop-sidebar,.sidebar{display:none !important}
+main{padding:10px 12px calc(var(--bottom-nav-height, 88px) + env(safe-area-inset-bottom) + 48px) !important}
+[data-community-page="true"] .cad-main, [data-community-page="true"] .cad-module, [data-community-page="true"] .container{padding-bottom:calc(var(--bottom-nav-height, 88px) + env(safe-area-inset-bottom) + 32px);} 
 main{padding:10px 12px calc(var(--bottom-nav-height) + 34px) !important}
 .card,.panel,.dashboard-card,.cad-panel,.auth-card{border-radius:var(--radius)!important;background:var(--card-bg)!important;border:1px solid var(--border-color)!important}
 .container,.hero-grid,.content-grid,.card-grid,.system-grid,.cad-grid,.map-panel-inner,.command-dashboard{display:grid !important;grid-template-columns:1fr !important;gap:12px !important}

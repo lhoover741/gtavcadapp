@@ -352,7 +352,7 @@
         if (pages[i]) tab.href = buildCommunityHref(pages[i]);
       });
       var links = menu.querySelectorAll('.more-menu-link:not([target])');
-      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'rules'];
+      var menuPages = ['home', 'cad', 'dmv', 'businesses', 'applications', 'complaints', 'donations', 'dispatch', 'rules', 'communities', 'admin'];
       links.forEach(function(link, i) {
         if (menuPages[i]) link.href = buildCommunityHref(menuPages[i]);
       });
