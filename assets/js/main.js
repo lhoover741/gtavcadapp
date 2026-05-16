@@ -596,11 +596,14 @@ async function loadData() {
       } catch (attachmentError) {
         console.warn('Evidence attachment load failed:', attachmentError);
       }
+      window.dispatchEvent(new CustomEvent('gtavcad:data-loaded'));
       return;
     }
     console.warn('CAD load failed:', res.status);
+    window.dispatchEvent(new CustomEvent('gtavcad:data-error'));
   } catch (error) {
     console.warn('CAD load failed:', error);
+    window.dispatchEvent(new CustomEvent('gtavcad:data-error'));
   }
 }
 
@@ -1611,14 +1614,16 @@ function handle911Form() {
         statusEl.textContent = 'Call sent to dispatch successfully!';
         statusEl.style.color = '#4caf50';
       }
+      document.dispatchEvent(new CustomEvent('gtavcad:911-submit-success'));
       form.reset();
     } catch (error) {
       if (statusEl) {
-        statusEl.textContent = `Error: ${error.message}`;
+        statusEl.textContent = 'Unable to submit call right now. Please try again.';
         statusEl.style.color = '#ff6b6b';
         statusEl.style.display = 'block';
       }
-      showToast(`911 call failed: ${error.message}`, 'error');
+      showToast('911 call failed. Please try again.', 'error');
+      document.dispatchEvent(new CustomEvent('gtavcad:911-submit-error'));
     } finally {
       submitButton.disabled = false;
     }
@@ -2202,6 +2207,7 @@ function handleDMVPlateForm() {
     const plate = form.querySelector('[name="plateSearch"]').value;
     const results = lookupVehiclePlate(plate);
     renderLookupResults(document.getElementById('dmv-plate-results'), results, 'vehicle');
+    document.dispatchEvent(new CustomEvent('gtavcad:dmv-results', { detail: { count: Array.isArray(results) ? results.length : 0 } }));
     showFormMessage(form, `Found ${results.length} vehicle record(s).`);
   });
 }
