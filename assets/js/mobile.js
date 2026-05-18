@@ -251,6 +251,8 @@
 
   function setupLifecycleStates() {
     if (!isMobile()) return;
+    if (window.__GTAVCAD_MOBILE_LIFECYCLE_BOUND__) return;
+    window.__GTAVCAD_MOBILE_LIFECYCLE_BOUND__ = true;
     var page = getCurrentPage();
     if (['cad', 'police', 'dmv', 'dispatch'].indexOf(page) === -1) return;
     var context = window.GTAVCAD_CONTEXT || {};
@@ -271,8 +273,8 @@
         var calls = ((window.GTAVCADData && window.GTAVCADData.calls911) || []).filter(function(c){ return c.status !== 'Closed'; });
         if (calls.length) clearMobilePageState(page);
         else setMobilePageState(page, 'empty', { title: 'No active calls', message: 'No active calls for this community.' });
-      });
-      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); });
+      }, { passive: true });
+      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); }, { passive: true });
     }
 
     if (page === 'dispatch') {
@@ -283,8 +285,8 @@
         if (calls.length) return clearMobilePageState(page);
         if (isDispatchUser) setMobilePageState(page, 'empty', { title: 'No active calls', message: 'No active 911/CAD calls for this community.' });
         else setMobilePageState(page, 'empty', { title: 'No submitted calls', message: 'You have not submitted any 911 calls in this community.' });
-      });
-      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); });
+      }, { passive: true });
+      window.addEventListener('gtavcad:data-error', function(){ setMobilePageState(page, 'error', {}); }, { passive: true });
     }
 
     if (page === 'dmv') {
@@ -296,13 +298,13 @@
       clearMobilePageState(page);
       var form = document.getElementById('dmv-plate-form');
       if (form) {
-        form.addEventListener('submit', function() { setMobilePageState(page, 'loading', {}); });
+        form.addEventListener('submit', function() { setMobilePageState(page, 'loading', {}); }, { passive: true });
       }
       document.addEventListener('gtavcad:dmv-results', function(e) {
         var count = e.detail && typeof e.detail.count === 'number' ? e.detail.count : 0;
         if (count > 0) clearMobilePageState(page);
         else setMobilePageState(page, 'empty', { title: 'No DMV records', message: 'No DMV records found for this community.' });
-      });
+      }, { passive: true });
     }
 
     document.addEventListener('gtavcad:911-submit-success', function() {

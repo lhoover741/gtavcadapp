@@ -983,6 +983,7 @@ def _socket_bearer_context(auth):
 
 @socketio.on('connect')
 def socket_connect(auth=None):
+    started_at = time.perf_counter()
     sid = getattr(request, 'sid', None)
     user_id, community_id, room_name = get_user_room_context()
     if not user_id or not community_id or not room_name:
@@ -1018,10 +1019,12 @@ def socket_connect(auth=None):
     log_audit(str(user_id), 'websocket_join', 'Socket', sid or 'unknown', actor_role=session.get('role'), ip_address=request.remote_addr)
     emit('socket:ready', {'success': True, 'room': room_name, 'community_id': community_id})
     emit_community_event('presence:update', {'user_id': user_id, 'state': 'ONLINE', 'community_id': community_id}, community_id=community_id)
+    logger.info(json.dumps({'event': 'socket_connect', 'sid': sid, 'user_id': user_id, 'community_id': community_id, 'duration_ms': int((time.perf_counter() - started_at) * 1000)}))
 
 
 @socketio.on('disconnect')
 def socket_disconnect():
+    started_at = time.perf_counter()
     sid = getattr(request, 'sid', None)
     user_id, community_id, room_name = get_user_room_context()
     if (not user_id or not community_id or not room_name) and sid in SOCKET_AUTH_CONTEXT:
@@ -1039,10 +1042,12 @@ def socket_disconnect():
         from cad_helpers import log_audit
         log_audit(str(user_id), 'websocket_leave', 'Socket', sid or 'unknown', actor_role=session.get('role'), ip_address=request.remote_addr)
         emit_community_event('presence:update', {'user_id': user_id, 'state': 'OFFLINE', 'community_id': community_id}, community_id=community_id)
+    logger.info(json.dumps({'event': 'socket_disconnect', 'sid': sid, 'user_id': user_id, 'community_id': community_id, 'duration_ms': int((time.perf_counter() - started_at) * 1000)}))
 
 
 @socketio.on('community:join')
 def socket_join_community(data):
+    started_at = time.perf_counter()
     try:
         sid = getattr(request, 'sid', 'unknown')
         rate_key = f'{sid}:community:join'
@@ -1074,6 +1079,7 @@ def socket_join_community(data):
             return emit('socket:error', {'error': 'Invalid tenant room'})
         join_room(room_name)
         emit('community:joined', {'room': room_name, 'community_id': community_id, 'request_id': getattr(g, 'request_id', None)})
+        logger.info(json.dumps({'event': 'socket_event', 'name': 'community:join', 'sid': sid, 'user_id': user_id, 'community_id': community_id, 'duration_ms': int((time.perf_counter() - started_at) * 1000)}))
     except Exception as e:
         logger.exception(f'Websocket join failed: {e}')
         emit('socket:error', {'error': 'Unable to join room right now'})
@@ -1098,13 +1104,19 @@ def enrich_response_metadata(response):
     response.headers['X-Request-ID'] = getattr(g, 'request_id', 'unknown')
     duration_ms = int((time.time() - getattr(g, 'request_started_at', time.time())) * 1000)
     if request.path.startswith('/api/'):
+        major_paths = (
+            '/api/auth/login', '/api/auth/session', '/api/cad', '/api/dmv',
+            '/api/notifications', '/api/mobile/context'
+        )
+        is_major = any(request.path.startswith(p) for p in major_paths)
         logger.info(json.dumps({
-            'event': 'api_request',
+            'event': 'api_request_major' if is_major else 'api_request',
             'request_id': getattr(g, 'request_id', None),
             'path': _safe_log_path(request.path),
             'method': request.method,
             'status': response.status_code,
             'duration_ms': duration_ms,
+            'response_size_bytes': response.calculate_content_length(),
             'ip': getattr(g, 'client_ip', request.remote_addr),
             'user_id': session.get('user_id'),
             'community_id': get_current_community_id(),
@@ -3145,7 +3157,7 @@ def create_bolo(suspect_name, description, last_location, charges, officer, thre
 
 
 def load_radio_log():
-    entries = scoped_query(RadioLog).order_by(RadioLog.created_at.desc()).limit(100).all()
+    entries = scoped_query(RadioLog).order_by(RadioLog.created_at.desc()).limit(_limit_param(default=50, maximum=200)).all()
     return [radio_to_dict(r) for r in reversed(entries)]
 
 
@@ -12246,7 +12258,7 @@ def get_notifications():
     category = (request.args.get('category') or '').strip()
     unread_only = parse_bool(request.args.get('unread'), default=False)
 
-    rows = _query_notifications_for_user(user_id, community_id, auth_context).order_by(Notification.created_at.desc()).limit(100).all()
+    rows = _query_notifications_for_user(user_id, community_id, auth_context).order_by(Notification.created_at.desc()).limit(_limit_param(default=50, maximum=200)).all()
     notif_ids = [n.id for n in rows]
     rec_map = {}
     if notif_ids:
@@ -12269,12 +12281,14 @@ def notifications_unread_count():
     user_id = session.get('user_id')
     community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
-    rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
-    notif_ids = [n.id for n in rows]
-    read_ids = set()
-    if notif_ids:
-        read_ids = {r.notification_id for r in NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids), NotificationRecipient.read_at.isnot(None)).all()}
-    unread = len([nid for nid in notif_ids if nid not in read_ids])
+    total = _query_notifications_for_user(user_id, community_id, auth_context).count()
+    visible_subquery = db.session.query(Notification.id).filter(_notification_visibility_filter(user_id, community_id, auth_context)).subquery()
+    read = db.session.query(NotificationRecipient.notification_id).filter(
+        NotificationRecipient.user_id == user_id,
+        NotificationRecipient.read_at.isnot(None),
+        NotificationRecipient.notification_id.in_(db.session.query(visible_subquery.c.id))
+    ).distinct().count()
+    unread = max(total - read, 0)
     return jsonify({'success': True, 'unread_count': unread})
 
 
