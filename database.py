@@ -9,6 +9,12 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
+
+def is_postgresql_database_url(database_url):
+    """Return True when the configured SQLAlchemy URL uses PostgreSQL."""
+    return database_url.startswith(('postgresql://', 'postgresql+'))
+
+
 db = SQLAlchemy()
 
 
@@ -56,12 +62,16 @@ def configure_database(app):
     if DATABASE_URL:
         app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        engine_options = {
             'pool_pre_ping': True,
             'pool_recycle': int(os.environ.get('SQLALCHEMY_POOL_RECYCLE', '280')),
-            'pool_size': int(os.environ.get('SQLALCHEMY_POOL_SIZE', '5')),
-            'max_overflow': int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', '10')),
         }
+        if is_postgresql_database_url(DATABASE_URL):
+            engine_options.update({
+                'pool_size': int(os.environ.get('SQLALCHEMY_POOL_SIZE', '5')),
+                'max_overflow': int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', '10')),
+            })
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
         db.init_app(app)
 
         with app.app_context():
