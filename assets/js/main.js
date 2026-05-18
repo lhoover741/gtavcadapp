@@ -573,6 +573,13 @@ function saveData() {
 }
 
 async function loadData() {
+  if (loadData._pendingPromise) return loadData._pendingPromise;
+  const now = Date.now();
+  const minIntervalMs = 750;
+  if (!loadData._forceNext && loadData._lastSuccessAt && (now - loadData._lastSuccessAt) < minIntervalMs) {
+    return;
+  }
+  const execute = (async () => {
   try {
     const res = await fetch(CAD_API_URL);
     if (res.ok) {
@@ -597,6 +604,7 @@ async function loadData() {
         console.warn('Evidence attachment load failed:', attachmentError);
       }
       window.dispatchEvent(new CustomEvent('gtavcad:data-loaded'));
+      loadData._lastSuccessAt = Date.now();
       return;
     }
     console.warn('CAD load failed:', res.status);
@@ -605,6 +613,20 @@ async function loadData() {
     console.warn('CAD load failed:', error);
     window.dispatchEvent(new CustomEvent('gtavcad:data-error'));
   }
+  })();
+  loadData._pendingPromise = execute;
+  try {
+    return await execute;
+  } finally {
+    loadData._pendingPromise = null;
+    loadData._forceNext = false;
+  }
+}
+
+function requestDataRefresh(options = {}) {
+  if (options.force) loadData._forceNext = true;
+  clearTimeout(requestDataRefresh._timer);
+  requestDataRefresh._timer = setTimeout(() => { loadData(); }, options.delayMs || 125);
 }
 
 function generateId(prefix) {
@@ -622,7 +644,7 @@ async function addCivilian(record) {
   if (!res.ok || !data.success) {
     throw new Error(data.error || 'Civilian save failed');
   }
-  if (isOfficerCadPage() && canAccessOfficerCad()) await loadData();
+  if (isOfficerCadPage() && canAccessOfficerCad()) requestDataRefresh();
   return data.civilian;
 }
 
@@ -651,7 +673,7 @@ async function addVehicle(record) {
       throw new Error(data.error || 'Vehicle registration failed');
     }
     // Refresh data from backend after success
-    await loadData();
+    requestDataRefresh();
     return data.vehicle;
   } catch (error) {
     console.error('Vehicle registration error:', error);
@@ -681,7 +703,7 @@ async function addLicense(record) {
       throw new Error(data.error || 'License application failed');
     }
     // Refresh data from backend after success
-    await loadData();
+    requestDataRefresh();
     return data.license;
   } catch (error) {
     console.error('License application error:', error);
@@ -714,7 +736,7 @@ async function add911Call(record) {
       throw new Error(data.error || '911 call creation failed');
     }
     // Refresh data from backend after success
-    await loadData();
+    requestDataRefresh();
     return data;
   } catch (error) {
     console.error('911 call error:', error);
@@ -732,7 +754,7 @@ async function addTrafficStop(record) {
   });
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.error || 'Traffic stop save failed');
-  await loadData();
+  requestDataRefresh();
   return data.traffic_stop || { ...payload, id: data.traffic_stop_id, createdAt: new Date().toISOString() };
 }
 
@@ -747,7 +769,7 @@ async function addArrest(record) {
   if (!res.ok || !data.success) {
     throw new Error(data.error || 'Arrest report save failed');
   }
-  await loadData();
+  requestDataRefresh();
   return data.arrest;
 }
 
@@ -768,7 +790,7 @@ async function addEvidence(record, formElement = null) {
       data.attachment.generated_case_number = data.case_number;
       window.dispatchEvent(new CustomEvent('gtavcad:evidence-case-generated', { detail: { case_number: data.case_number, evidence_id: data.evidence_id } }));
     }
-    await loadData();
+    requestDataRefresh();
     return data.attachment;
   }
   record.id = generateId('evd');
@@ -790,7 +812,7 @@ async function addWarrant(record) {
     const details = data.details && Array.isArray(data.details.errors) ? `: ${data.details.errors.join(', ')}` : '';
     throw new Error(`${data.error || 'Warrant save failed'}${details}`);
   }
-  await loadData();
+  requestDataRefresh();
   return data.warrant;
 }
 
@@ -1295,7 +1317,7 @@ async function deleteEvidenceAttachment(attachmentId) {
     const res = await fetch(`/api/cad/evidence/attachments/${encodeURIComponent(attachmentId)}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Evidence attachment delete failed');
-    await loadData();
+    requestDataRefresh();
     renderEvidenceTable();
     showToast('Evidence attachment deleted', 'success');
   } catch (err) {
@@ -1374,7 +1396,7 @@ async function updateWarrantStatus(warrantId, newStatus) {
     });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant status update failed');
-    await loadData();
+    requestDataRefresh();
     updateDashboard();
     renderWarrantsTable();
     addActivity('Warrant Update', `Warrant ${warrantId} marked as ${newStatus}`);
@@ -1402,7 +1424,7 @@ async function generateWarrantPdf(warrantId) {
     const res = await fetch(`/api/cad/warrants/${encodeURIComponent(warrantId)}/generate-pdf`, { method: 'POST', credentials: 'include' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant PDF generation failed');
-    await loadData();
+    requestDataRefresh();
     renderWarrantsTable();
     if (typeof renderEvidenceTable === 'function') renderEvidenceTable();
     showToast('Warrant PDF generated. Added to evidence log.', 'success');
@@ -1636,7 +1658,7 @@ async function generateCasePacket(payload = {}) {
     const res = await fetch('/api/cad/case-packets/generate', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Case packet generation failed');
-    await loadData();
+    requestDataRefresh();
     renderCasePacketsTable();
     renderEvidenceTable();
     showToast(`Case packet generated: ${data.case_id}`, 'success');
@@ -1767,7 +1789,7 @@ window.deleteCasePacket = async (caseId) => {
   const res = await fetch(`/api/cad/case-packets/${encodeURIComponent(caseId)}`, { method: 'DELETE', credentials: 'include' });
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.error || 'Case packet delete failed');
-  await loadData();
+  requestDataRefresh();
   renderCasePacketsTable();
 };
 window.focusEvidenceItem = (itemId) => {
@@ -1891,7 +1913,7 @@ async function createArrestFromTrafficStop() {
     const res = await fetch(`/api/cad/traffic-stops/${encodeURIComponent(id)}/create-arrest`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const out = await res.json();
     if (!res.ok || !out.success) throw new Error(out.error || 'Unable to create arrest report');
-    await loadData();
+    requestDataRefresh();
     renderArrestsTable();
     showToast(`${out.created ? 'Arrest report created' : 'Existing arrest report opened'}: ${out.arrest?.id || out.arrest?.arrest_id}`, 'success');
     return out.arrest;
@@ -2236,7 +2258,7 @@ async function createBusiness(record) {
       throw new Error(data.error || 'Business registration failed');
     }
     // Refresh data from backend after success
-    await loadData();
+    requestDataRefresh();
     return data.business;
   } catch (error) {
     console.error('Business registration error:', error);
@@ -2574,7 +2596,7 @@ async function initApp() {
     return;
   }
   const shouldLoadCadData = isOfficerCadPage() && canAccessOfficerCad();
-  if (shouldLoadCadData) await loadData();
+  if (shouldLoadCadData) requestDataRefresh();
   handleCivilianForm();
   handle911Form();
   handleTrafficForm();

@@ -28,6 +28,21 @@ from community_service import (
 from security_service import require_auth
 
 logger = logging.getLogger(__name__)
+COMMUNITY_CONTEXT_CACHE = {}
+
+
+def _ctx_cache_get(key):
+    row = COMMUNITY_CONTEXT_CACHE.get(key)
+    if not row:
+        return None
+    if row['expires_at'] < datetime.utcnow().timestamp():
+        COMMUNITY_CONTEXT_CACHE.pop(key, None)
+        return None
+    return row['value']
+
+
+def _ctx_cache_put(key, value, ttl_seconds=8):
+    COMMUNITY_CONTEXT_CACHE[key] = {'value': value, 'expires_at': datetime.utcnow().timestamp() + max(int(ttl_seconds), 1)}
 
 # Create blueprint
 community_bp = Blueprint('communities', __name__, url_prefix='/api/communities')
@@ -536,6 +551,10 @@ def get_current_community_context():
         return jsonify({'success': False, 'error': 'Community context not found'}), 404
 
     user_id = session.get('user_id')
+    cache_key = (community.community_id, user_id, bool(session.get('impersonating_community_id')))
+    cached = _ctx_cache_get(cache_key)
+    if cached:
+        return jsonify(cached), 200
     membership = None
     if user_id:
         membership = CommunityMember.query.filter_by(
@@ -543,8 +562,7 @@ def get_current_community_context():
             community_id=community.community_id,
             status='Active',
         ).first()
-        if membership:
-            set_selected_community_session(community, membership)
+        # Avoid rewriting session on read-only context fetches.
 
     community_role = membership.role if membership else None
     is_owner = is_persisted_platform_owner(user_id)
@@ -554,16 +572,21 @@ def get_current_community_context():
         or (user_id and community.owner_user_id == user_id)
     )
 
+    config_rows = Config.query.filter(
+        Config.community_id == community.community_id,
+        Config.key.in_(['accent_color', 'background_color', 'text_color'])
+    ).all()
+    config_map = {row.key: row.value for row in config_rows}
     def config_value(key, default):
-        row = Config.query.filter_by(key=key, community_id=community.community_id).first()
-        if not row or row.value in (None, ''):
+        raw = config_map.get(key)
+        if raw in (None, ''):
             return default
         try:
-            return json.loads(row.value)
+            return json.loads(raw)
         except Exception:
-            return row.value
+            return raw
 
-    return jsonify({
+    payload = {
         'success': True,
         'platform': {'name': 'GTAVCAD', 'domain': 'gtavcad.app'},
         'community': {
@@ -594,7 +617,9 @@ def get_current_community_context():
             'is_community_admin': can_manage,
             'can_access_police_cad': can_access_police_cad(session.get('platform_role'), membership.role if membership else None, user=User.query.get(user_id) if user_id else None, membership=membership),
         } if user_id else None,
-    }), 200
+    }
+    _ctx_cache_put(cache_key, payload, ttl_seconds=8)
+    return jsonify(payload), 200
 
 
 @community_bp.route('/<community_id>', methods=['GET'])

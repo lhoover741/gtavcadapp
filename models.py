@@ -1,5 +1,6 @@
 from datetime import datetime
 from database import db
+from sqlalchemy import Index
 
 
 class User(db.Model):
@@ -77,7 +78,7 @@ class Civilian(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     civilian_id = db.Column(db.String(64), unique=True, nullable=False)
     community_id = db.Column(db.String(64), nullable=True)  # Will be backfilled with nthacityrp
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
 
     # ONLY fields visible on Civilian Registration form
     first_name = db.Column(db.String(255), nullable=False)
@@ -184,6 +185,9 @@ class License(db.Model):
 
 class Warrant(db.Model):
     __tablename__ = 'warrants'
+    __table_args__ = (
+        Index('ix_warrants_community_created_at', 'community_id', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     warrant_id = db.Column(db.String(64), unique=True, nullable=False)
@@ -337,6 +341,9 @@ class ActivityLog(db.Model):
 
 class Bolo(db.Model):
     __tablename__ = 'bolos'
+    __table_args__ = (
+        Index('ix_bolos_community_created_at', 'community_id', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     bolo_id = db.Column(db.String(64), unique=True, nullable=False)
@@ -477,6 +484,9 @@ class Hearing(db.Model):
 
 class DispatchCall(db.Model):
     __tablename__ = 'dispatch_calls'
+    __table_args__ = (
+        Index('ix_dispatch_calls_community_created_at', 'community_id', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     call_id = db.Column(db.String(64), unique=True, nullable=False)
@@ -937,6 +947,9 @@ class MobilePushToken(db.Model):
 
 class Notification(db.Model):
     __tablename__ = 'notifications'
+    __table_args__ = (
+        Index('ix_notifications_user_created_at', 'target_user_id', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     community_id = db.Column(db.String(64), nullable=True, index=True)
