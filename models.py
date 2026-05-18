@@ -916,6 +916,25 @@ class UserSession(db.Model):
     invalidated_at = db.Column(db.DateTime, nullable=True)
 
 
+class MobilePushToken(db.Model):
+    """Device push registration for web/PWA/mobile clients."""
+    __tablename__ = 'mobile_push_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    community_id = db.Column(db.String(64), nullable=True, index=True)
+    provider = db.Column(db.String(32), nullable=False, default='fcm')
+    token = db.Column(db.Text, nullable=False)
+    platform = db.Column(db.String(32), nullable=True)
+    device_name = db.Column(db.String(255), nullable=True)
+    active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'provider', 'token', name='unique_push_token_per_user_provider'),)
+
+
 class Notification(db.Model):
     __tablename__ = 'notifications'
 

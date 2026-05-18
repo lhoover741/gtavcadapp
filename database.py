@@ -56,6 +56,12 @@ def configure_database(app):
     if DATABASE_URL:
         app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': int(os.environ.get('SQLALCHEMY_POOL_RECYCLE', '280')),
+            'pool_size': int(os.environ.get('SQLALCHEMY_POOL_SIZE', '5')),
+            'max_overflow': int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', '10')),
+        }
         db.init_app(app)
 
         with app.app_context():

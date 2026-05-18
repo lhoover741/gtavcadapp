@@ -45,3 +45,8 @@ Run Python syntax checks with:
 ```bash
 python3 -m py_compile server.py community_service.py community_routes.py platform_config.py bootstrap_multi_tenant.py tenant_schema.py
 ```
+
+
+## Shared backend deployment
+
+Both `gtavcad.app` and `gtavcad.com` should point at one shared Flask/Socket.IO backend and one shared PostgreSQL database. Use `.env.example` for placeholders and see `SHARED_BACKEND_SETUP.md` for required production variables, commands, shared API endpoints, realtime setup, and mobile push preparation.
