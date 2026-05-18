@@ -10,6 +10,9 @@ import string
 import uuid
 import time
 import urllib.request
+import base64
+import hashlib
+import hmac
 from urllib.parse import urlsplit, urlunsplit
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -78,7 +81,7 @@ from models import (
     UseOfForceReport, OfficerNote, CaseFile, CaseCharge, CadAuditLog,
     AIGenerationLog, AuditLog, EvidenceAttachment,
     Community, CommunityMember, CommunityInvite,
-    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession, Notification, NotificationRecipient
+    PlatformAdminLog, PlatformActivityLog, PasswordResetToken, CommunityStatus, UserSession, Notification, NotificationRecipient, MobilePushToken
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -104,6 +107,7 @@ def _safe_log_path(path):
 
 
 ACTIVE_SOCKET_CONNECTIONS = {}
+SOCKET_AUTH_CONTEXT = {}
 SOCKET_RATE_LIMITS = {}
 WEBSOCKET_EVENTS_PER_MINUTE = 120
 
@@ -315,10 +319,122 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure secure session cookies
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
-app.config['SESSION_COOKIE_DOMAIN'] = None
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production' or parse_bool(os.environ.get('SESSION_COOKIE_SECURE'), False)
+app.config['SESSION_COOKIE_DOMAIN'] = os.environ.get('SESSION_COOKIE_DOMAIN') or None
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=int(os.environ.get('SESSION_DAYS', '7')))
+JWT_ISSUER = os.environ.get('JWT_ISSUER', 'gtavcad-shared-backend')
+JWT_AUDIENCE = os.environ.get('JWT_AUDIENCE', 'gtavcad-web-clients')
+JWT_MAX_AGE_SECONDS = int(os.environ.get('JWT_MAX_AGE_SECONDS', '604800'))
+JWT_SECRET = f"{app.config['SECRET_KEY']}:{os.environ.get('JWT_SALT', 'gtavcad-api-token')}".encode('utf-8')
+
+
+def _split_csv_env(name):
+    return [item.strip() for item in (os.environ.get(name) or '').split(',') if item.strip()]
+
+
+def _allowed_web_origins():
+    origins = set(_split_csv_env('WEB_ALLOWED_ORIGINS') + _split_csv_env('CORS_ALLOWED_ORIGINS'))
+    for value in (PLATFORM_DOMAIN, os.environ.get('PUBLIC_BASE_URL'), os.environ.get('API_BASE_URL')):
+        if not value:
+            continue
+        value = value.strip()
+        origins.add(value if value.startswith(('http://', 'https://')) else f'https://{value}')
+    origins.update({'https://gtavcad.app', 'https://www.gtavcad.app', 'https://gtavcad.com', 'https://www.gtavcad.com'})
+    return {origin.rstrip('/') for origin in origins}
+
+
+@app.after_request
+def apply_shared_backend_cors(response):
+    origin = request.headers.get('Origin')
+    allowed = _allowed_web_origins()
+    if origin and origin.rstrip('/') in allowed:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Vary'] = 'Origin'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+    return response
+
+
+@app.before_request
+def handle_shared_backend_preflight():
+    if request.method == 'OPTIONS' and request.path.startswith('/api/'):
+        return ('', 204)
+
+
+def _jwt_b64encode(value):
+    raw = value if isinstance(value, bytes) else json.dumps(value, separators=(',', ':'), sort_keys=True).encode('utf-8')
+    return base64.urlsafe_b64encode(raw).rstrip(b'=').decode('ascii')
+
+
+def _jwt_b64decode(value):
+    padding = '=' * (-len(value) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode('ascii'))
+
+
+def issue_api_token(user, community_id=None):
+    now = int(time.time())
+    header = {'alg': 'HS256', 'typ': 'JWT'}
+    payload = {
+        'sub': str(user.id),
+        'username': user.username,
+        'role': user.role,
+        'platform_role': user.platform_role,
+        'community_id': community_id,
+        'iss': JWT_ISSUER,
+        'aud': JWT_AUDIENCE,
+        'iat': now,
+        'exp': now + JWT_MAX_AGE_SECONDS,
+    }
+    signing_input = f"{_jwt_b64encode(header)}.{_jwt_b64encode(payload)}"
+    signature = hmac.new(JWT_SECRET, signing_input.encode('ascii'), hashlib.sha256).digest()
+    return f"{signing_input}.{_jwt_b64encode(signature)}"
+
+
+def verify_api_token(token):
+    try:
+        header_b64, payload_b64, signature_b64 = token.split('.', 2)
+        signing_input = f'{header_b64}.{payload_b64}'
+        expected = _jwt_b64encode(hmac.new(JWT_SECRET, signing_input.encode('ascii'), hashlib.sha256).digest())
+        if not hmac.compare_digest(signature_b64, expected):
+            return None
+        header = json.loads(_jwt_b64decode(header_b64))
+        payload = json.loads(_jwt_b64decode(payload_b64))
+    except Exception:
+        return None
+    if header.get('alg') != 'HS256' or payload.get('iss') != JWT_ISSUER or payload.get('aud') != JWT_AUDIENCE:
+        return None
+    if int(payload.get('exp') or 0) < int(time.time()):
+        return None
+    try:
+        user_id = int(payload.get('sub'))
+    except (TypeError, ValueError):
+        return None
+    user = User.query.get(user_id)
+    if not user or not getattr(user, 'active', False):
+        return None
+    return user, payload
+
+
+@app.before_request
+def hydrate_bearer_token_session():
+    if session.get('user_id') or not request.path.startswith('/api/'):
+        return None
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.lower().startswith('bearer '):
+        return None
+    verified = verify_api_token(auth_header.split(None, 1)[1].strip())
+    if not verified:
+        return None
+    user, payload = verified
+    _session_hydrate_user(user)
+    community_id = payload.get('community_id')
+    if community_id:
+        session['selected_community_id'] = community_id
+        session['active_community_id'] = community_id
+    session.modified = True
+    return None
 
 
 configure_database(app)
@@ -753,7 +869,7 @@ def _parse_socketio_allowed_origins():
     env_name = (os.environ.get('FLASK_ENV') or os.environ.get('APP_ENV') or '').strip().lower()
     is_production = env_name == 'production'
     configured = os.environ.get('SOCKETIO_ALLOWED_ORIGINS')
-    production_defaults = ['https://gtavcad.app', 'https://www.gtavcad.app']
+    production_defaults = ['https://gtavcad.app', 'https://www.gtavcad.app', 'https://gtavcad.com', 'https://www.gtavcad.com']
     development_defaults = [
         'http://localhost:5000',
         'http://127.0.0.1:5000',
@@ -844,10 +960,31 @@ def emit_community_event(event_name, payload, community_id=None):
     socketio.emit(event_name, payload, room=community_room_name(community.slug))
 
 
+def _socket_bearer_context(auth):
+    if not isinstance(auth, dict):
+        return None, None, None
+    raw_token = (auth.get('token') or auth.get('api_token') or auth.get('Authorization') or auth.get('authorization') or '').strip()
+    if raw_token.lower().startswith('bearer '):
+        raw_token = raw_token.split(None, 1)[1].strip()
+    if not raw_token:
+        return None, None, None
+    verified = verify_api_token(raw_token)
+    if not verified:
+        return None, None, None
+    user, payload = verified
+    community_id = payload.get('community_id') or auth.get('community_id')
+    community = get_community_by_any_id(community_id)
+    if not community:
+        return None, None, None
+    return user.id, community.community_id, community_room_name(community.slug)
+
+
 @socketio.on('connect')
 def socket_connect(auth=None):
     sid = getattr(request, 'sid', None)
     user_id, community_id, room_name = get_user_room_context()
+    if not user_id or not community_id or not room_name:
+        user_id, community_id, room_name = _socket_bearer_context(auth)
     if not user_id or not community_id or not room_name:
         logger.warning('Socket auth failed: missing user/session context')
         return False
@@ -860,6 +997,7 @@ def socket_connect(auth=None):
         emit('socket:warning', {'message': 'Duplicate session detected; replacing older socket.'})
     if sid:
         ACTIVE_SOCKET_CONNECTIONS[user_id] = sid
+        SOCKET_AUTH_CONTEXT[sid] = {'user_id': user_id, 'community_id': community_id, 'room_name': room_name}
     join_room(room_name)
     join_room(f'user:{user_id}')
     join_room(f'community:{community_id}')
@@ -884,10 +1022,17 @@ def socket_connect(auth=None):
 def socket_disconnect():
     sid = getattr(request, 'sid', None)
     user_id, community_id, room_name = get_user_room_context()
+    if (not user_id or not community_id or not room_name) and sid in SOCKET_AUTH_CONTEXT:
+        ctx = SOCKET_AUTH_CONTEXT.get(sid) or {}
+        user_id = ctx.get('user_id')
+        community_id = ctx.get('community_id')
+        room_name = ctx.get('room_name')
     if room_name:
         leave_room(room_name)
     if user_id in ACTIVE_SOCKET_CONNECTIONS and ACTIVE_SOCKET_CONNECTIONS.get(user_id) == sid:
         ACTIVE_SOCKET_CONNECTIONS.pop(user_id, None)
+    if sid:
+        SOCKET_AUTH_CONTEXT.pop(sid, None)
     if user_id and community_id:
         from cad_helpers import log_audit
         log_audit(str(user_id), 'websocket_leave', 'Socket', sid or 'unknown', actor_role=session.get('role'), ip_address=request.remote_addr)
@@ -911,6 +1056,11 @@ def socket_join_community(data):
             return emit('socket:error', {'error': 'Invalid payload'})
 
         user_id, community_id, room_name = get_user_room_context()
+        if (not user_id or not community_id or not room_name) and getattr(request, 'sid', None) in SOCKET_AUTH_CONTEXT:
+            ctx = SOCKET_AUTH_CONTEXT.get(getattr(request, 'sid', None)) or {}
+            user_id = ctx.get('user_id')
+            community_id = ctx.get('community_id')
+            room_name = ctx.get('room_name')
         requested_slug = (data or {}).get('community_slug', '')
         if not user_id or not room_name:
             return emit('socket:error', {'error': 'Unauthorized'})
@@ -3530,7 +3680,10 @@ def _user_login_impl():
             'requires_community_setup': requires_community_setup,
             'can_access_police_cad': _safe_user_can_access_police_cad(is_owner, community_role, user=user, membership=membership),
         },
-        'redirect': redirect_target
+        'redirect': redirect_target,
+        'api_token': issue_api_token(user, session.get('active_community_id') or session.get('selected_community_id')),
+        'token_type': 'Bearer',
+        'expires_in': JWT_MAX_AGE_SECONDS
     })
 
 
@@ -3570,6 +3723,9 @@ def user_register():
         'next_step': 'create_or_join_community',
         'redirect_url': '/create-community',
         'message': 'Registration successful',
+        'api_token': issue_api_token(user, session.get('active_community_id') or session.get('selected_community_id')),
+        'token_type': 'Bearer',
+        'expires_in': JWT_MAX_AGE_SECONDS,
     }), 201
 
 
@@ -11839,6 +11995,200 @@ def _query_notifications_for_user(user_id, community_id, auth_context):
     return q.filter(_notification_visibility_filter(user_id, community_id, auth_context))
 
 
+
+
+
+def _model_to_dict(row):
+    if hasattr(row, 'to_dict'):
+        return row.to_dict()
+    data = {}
+    for column in row.__table__.columns:
+        value = getattr(row, column.name)
+        if isinstance(value, datetime):
+            value = value.isoformat()
+        data[column.name] = value
+    return data
+
+
+def _limit_param(default=100, maximum=500):
+    try:
+        return min(max(int(request.args.get('limit', default)), 1), maximum)
+    except (TypeError, ValueError):
+        return default
+
+
+def _community_query(model, community_id):
+    q = model.query
+    if hasattr(model, 'community_id') and community_id:
+        q = q.filter_by(community_id=community_id)
+    return q
+
+
+def _shared_collection(model, authz, default_limit=100):
+    rows = _community_query(model, authz['community_id']).order_by(getattr(model, 'id').desc()).limit(_limit_param(default_limit)).all()
+    return jsonify({'success': True, 'community_id': authz['community_id'], 'items': [_model_to_dict(row) for row in rows]})
+
+
+def _active_departments_for_community(community_id):
+    departments = []
+    try:
+        configured = Config.query.filter_by(key='departments').first()
+        if configured and configured.value:
+            parsed = json.loads(configured.value)
+            if isinstance(parsed, list):
+                departments.extend(parsed)
+    except Exception:
+        logger.debug('Department config parse skipped', exc_info=True)
+    member_departments = [d[0] for d in db.session.query(CommunityMember.department).filter(
+        CommunityMember.community_id == community_id,
+        CommunityMember.status == 'Active',
+        CommunityMember.department.isnot(None),
+    ).distinct().all()]
+    departments.extend(member_departments)
+    normalized = []
+    seen = set()
+    for dept in departments or DEFAULT_COMMUNITY_DEPARTMENTS:
+        name = dept.get('name') if isinstance(dept, dict) else str(dept)
+        code = dept.get('id') if isinstance(dept, dict) else name
+        if not name or name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        normalized.append({'id': code, 'name': name})
+    return normalized
+
+
+@app.route('/api/shared/config', methods=['GET'])
+def shared_backend_config():
+    """Public connection metadata for gtavcad.app and gtavcad.com clients."""
+    return jsonify({
+        'success': True,
+        'api_base_url': os.environ.get('API_BASE_URL') or request.url_root.rstrip('/'),
+        'socketio_path': '/socket.io',
+        'allowed_origins': sorted(_allowed_web_origins()),
+        'auth': {'session_cookie': True, 'bearer_token': True, 'token_type': 'Bearer'},
+        'push': {'provider': os.environ.get('PUSH_PROVIDER', 'fcm'), 'configured': bool(os.environ.get('FCM_SERVER_KEY') or os.environ.get('FCM_SERVICE_ACCOUNT_JSON'))},
+    })
+
+
+@app.route('/api/auth/token', methods=['POST'])
+@require_auth
+def refresh_api_token():
+    user_id = session.get('user_id')
+    user = User.query.get(user_id) if isinstance(user_id, int) else None
+    if not user:
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+    return jsonify({
+        'success': True,
+        'api_token': issue_api_token(user, session.get('active_community_id') or session.get('selected_community_id')),
+        'token_type': 'Bearer',
+        'expires_in': JWT_MAX_AGE_SECONDS,
+    })
+
+
+@app.route('/api/users', methods=['GET'])
+@require_auth
+def api_users_index():
+    authz, denied = _require_modules('community_admin', 'member_management', 'cad', 'dispatch')
+    if denied:
+        return denied
+    members = CommunityMember.query.filter_by(community_id=authz['community_id']).all()
+    user_ids = [m.user_id for m in members]
+    users = {u.id: u for u in User.query.filter(User.id.in_(user_ids)).all()} if user_ids else {}
+    return jsonify({'success': True, 'community_id': authz['community_id'], 'users': [{**users.get(m.user_id).to_dict(), 'community_role': m.role, 'department': m.department, 'callsign': m.callsign, 'membership_status': m.status} for m in members if users.get(m.user_id)]})
+
+
+@app.route('/api/departments', methods=['GET'])
+@require_auth
+def api_departments_index():
+    authz, denied = _require_modules('cad', 'dispatch', 'community_admin', 'member_management')
+    if denied:
+        return denied
+    return jsonify({'success': True, 'community_id': authz['community_id'], 'departments': _active_departments_for_community(authz['community_id'])})
+
+
+@app.route('/api/calls', methods=['GET'])
+@require_auth
+def api_calls_index():
+    authz, denied = _require_modules('cad', 'dispatch', 'call_logs', 'report_911', 'civilian_portal')
+    if denied:
+        return denied
+    return _shared_collection(DispatchCall, authz)
+
+
+@app.route('/api/vehicles', methods=['GET'])
+@require_auth
+def api_vehicles_index():
+    authz, denied = _require_modules('cad', 'dmv_lookup', 'dmv')
+    if denied:
+        return denied
+    return _shared_collection(Vehicle, authz)
+
+
+@app.route('/api/warrants', methods=['GET'])
+@require_auth
+def api_warrants_index():
+    authz, denied = _require_modules('cad', 'police_records')
+    if denied:
+        return denied
+    return _shared_collection(Warrant, authz)
+
+
+@app.route('/api/units', methods=['GET'])
+@require_auth
+def api_units_index():
+    authz, denied = _require_modules('cad', 'dispatch', 'unit_status')
+    if denied:
+        return denied
+    return _shared_collection(OfficerSession, authz)
+
+
+@app.route('/api/reports', methods=['GET'])
+@require_auth
+def api_reports_index():
+    authz, denied = _require_modules('cad', 'police_records', 'reports')
+    if denied:
+        return denied
+    incidents = _community_query(Incident, authz['community_id']).order_by(Incident.id.desc()).limit(_limit_param()).all()
+    arrests = _community_query(Arrest, authz['community_id']).order_by(Arrest.id.desc()).limit(_limit_param()).all()
+    citations = _community_query(Citation, authz['community_id']).order_by(Citation.id.desc()).limit(_limit_param()).all()
+    uof = _community_query(UseOfForceReport, authz['community_id']).order_by(UseOfForceReport.id.desc()).limit(_limit_param()).all()
+    return jsonify({'success': True, 'community_id': authz['community_id'], 'reports': {'incidents': [_model_to_dict(r) for r in incidents], 'arrests': [_model_to_dict(r) for r in arrests], 'citations': [_model_to_dict(r) for r in citations], 'use_of_force': [_model_to_dict(r) for r in uof]}})
+
+
+@app.route('/api/push/register', methods=['POST'])
+@require_auth
+def register_push_token():
+    data = request.get_json(silent=True) or {}
+    token = (data.get('token') or '').strip()
+    provider = (data.get('provider') or os.environ.get('PUSH_PROVIDER') or 'fcm').strip().lower()
+    if not token:
+        return jsonify({'success': False, 'error': 'Push token is required'}), 400
+    user_id = session.get('user_id')
+    community_id = get_current_community_id()
+    row = MobilePushToken.query.filter_by(user_id=user_id, provider=provider, token=token).first()
+    if not row:
+        row = MobilePushToken(user_id=user_id, community_id=community_id, provider=provider, token=token)
+        db.session.add(row)
+    row.community_id = community_id
+    row.platform = (data.get('platform') or '').strip()[:32] or None
+    row.device_name = (data.get('device_name') or data.get('deviceName') or '').strip()[:255] or None
+    row.active = True
+    row.last_seen_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True, 'provider': provider, 'configured': bool(os.environ.get('FCM_SERVER_KEY') or os.environ.get('FCM_SERVICE_ACCOUNT_JSON'))})
+
+
+@app.route('/api/push/unregister', methods=['POST'])
+@require_auth
+def unregister_push_token():
+    data = request.get_json(silent=True) or {}
+    token = (data.get('token') or '').strip()
+    provider = (data.get('provider') or os.environ.get('PUSH_PROVIDER') or 'fcm').strip().lower()
+    if not token:
+        return jsonify({'success': False, 'error': 'Push token is required'}), 400
+    MobilePushToken.query.filter_by(user_id=session.get('user_id'), provider=provider, token=token).update({'active': False, 'updated_at': datetime.utcnow()})
+    db.session.commit()
+    return jsonify({'success': True})
 
 
 @app.route('/api/mobile/context', methods=['GET'])
