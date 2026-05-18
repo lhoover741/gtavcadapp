@@ -625,8 +625,19 @@ async function loadData() {
 
 function requestDataRefresh(options = {}) {
   if (options.force) loadData._forceNext = true;
+  if (requestDataRefresh._pendingResolve) {
+    requestDataRefresh._pendingResolve();
+    requestDataRefresh._pendingResolve = null;
+  }
   clearTimeout(requestDataRefresh._timer);
-  requestDataRefresh._timer = setTimeout(() => { loadData(); }, options.delayMs || 125);
+  return new Promise((resolve) => {
+    requestDataRefresh._pendingResolve = resolve;
+    requestDataRefresh._timer = setTimeout(async () => {
+      requestDataRefresh._pendingResolve = null;
+      await loadData();
+      resolve();
+    }, options.delayMs || 125);
+  });
 }
 
 function generateId(prefix) {
@@ -1396,7 +1407,7 @@ async function updateWarrantStatus(warrantId, newStatus) {
     });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant status update failed');
-    requestDataRefresh();
+    await requestDataRefresh();
     updateDashboard();
     renderWarrantsTable();
     addActivity('Warrant Update', `Warrant ${warrantId} marked as ${newStatus}`);
@@ -1424,7 +1435,7 @@ async function generateWarrantPdf(warrantId) {
     const res = await fetch(`/api/cad/warrants/${encodeURIComponent(warrantId)}/generate-pdf`, { method: 'POST', credentials: 'include' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant PDF generation failed');
-    requestDataRefresh();
+    await requestDataRefresh();
     renderWarrantsTable();
     if (typeof renderEvidenceTable === 'function') renderEvidenceTable();
     showToast('Warrant PDF generated. Added to evidence log.', 'success');
@@ -2065,6 +2076,7 @@ function handleWarrantForm() {
       showFormMessage(form, 'Creating warrant…', 'info');
       const data = getFormData(form);
       const warrant = await addWarrant(data);
+      await requestDataRefresh();
       updateDashboard();
       renderWarrantsTable();
       addActivity('Warrant', `Warrant issued for ${warrant.subject_name || data.subject_name} - ${warrant.charges_or_basis || data.charges_or_basis}`);
