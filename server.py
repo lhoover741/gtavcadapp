@@ -431,7 +431,17 @@ def verify_api_token(token):
     cache_key = (user_id, community_id, bool(session.get('impersonating_community_id')))
     cached = _cache_get(SESSION_CONTEXT_CACHE, cache_key)
     if cached:
-        if isinstance(cached, dict) and int(cached.get('user_id') or 0) == user_id:
+        cached_user_id = None
+        if isinstance(cached, dict):
+            if 'user_id' in cached:
+                cached_user_id = cached.get('user_id')
+            elif isinstance(cached.get('user'), dict):
+                cached_user_id = cached.get('user', {}).get('id')
+        try:
+            cached_user_id = int(cached_user_id) if cached_user_id is not None else None
+        except (TypeError, ValueError):
+            cached_user_id = None
+        if cached_user_id is None or cached_user_id == user_id:
             user = User.query.options(db.load_only(User.id, User.username, User.email, User.role, User.platform_role, User.active)).filter_by(id=user_id).first()
             if user and getattr(user, 'active', False):
                 return user, payload

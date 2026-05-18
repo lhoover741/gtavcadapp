@@ -625,17 +625,18 @@ async function loadData() {
 
 function requestDataRefresh(options = {}) {
   if (options.force) loadData._forceNext = true;
-  if (requestDataRefresh._pendingResolve) {
-    requestDataRefresh._pendingResolve();
-    requestDataRefresh._pendingResolve = null;
-  }
+  requestDataRefresh._waiters = requestDataRefresh._waiters || [];
   clearTimeout(requestDataRefresh._timer);
   return new Promise((resolve) => {
-    requestDataRefresh._pendingResolve = resolve;
+    requestDataRefresh._waiters.push(resolve);
     requestDataRefresh._timer = setTimeout(async () => {
-      requestDataRefresh._pendingResolve = null;
-      await loadData();
-      resolve();
+      try {
+        await loadData();
+      } finally {
+        const waiters = requestDataRefresh._waiters || [];
+        requestDataRefresh._waiters = [];
+        waiters.forEach((done) => done());
+      }
     }, options.delayMs || 125);
   });
 }
