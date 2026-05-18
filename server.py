@@ -431,7 +431,11 @@ def verify_api_token(token):
     cache_key = (user_id, community_id, bool(session.get('impersonating_community_id')))
     cached = _cache_get(SESSION_CONTEXT_CACHE, cache_key)
     if cached:
-        return jsonify(cached)
+        if isinstance(cached, dict) and int(cached.get('user_id') or 0) == user_id:
+            user = User.query.options(db.load_only(User.id, User.username, User.email, User.role, User.platform_role, User.active)).filter_by(id=user_id).first()
+            if user and getattr(user, 'active', False):
+                return user, payload
+        return None
 
     user = User.query.options(db.load_only(User.id, User.username, User.email, User.role, User.platform_role, User.active)).filter_by(id=user_id).first()
     if not user or not getattr(user, 'active', False):
@@ -8651,6 +8655,7 @@ def _can_access_module(module, allowed_modules):
 
 def _active_authz_context():
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     membership = auth_context.get('membership')
     allowed_modules = _module_policy_for_auth_context(getattr(g, 'current_user', None), getattr(g, 'community', None), membership, auth_context)
@@ -12291,6 +12296,7 @@ def mobile_context():
 @require_auth
 def get_notifications():
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     category = (request.args.get('category') or '').strip()
     unread_only = parse_bool(request.args.get('unread'), default=False)
@@ -12316,9 +12322,11 @@ def get_notifications():
 @require_auth
 def notifications_unread_count():
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
-    total = _query_notifications_for_user(user_id, community_id, auth_context).count()
-    visible_subquery = db.session.query(Notification.id).filter(_notification_visibility_filter(user_id, community_id, auth_context)).subquery()
+    visible_query = _query_notifications_for_user(user_id, community_id, auth_context)
+    total = visible_query.count()
+    visible_subquery = visible_query.with_entities(Notification.id).subquery()
     read = db.session.query(NotificationRecipient.notification_id).filter(
         NotificationRecipient.user_id == user_id,
         NotificationRecipient.read_at.isnot(None),
@@ -12332,6 +12340,7 @@ def notifications_unread_count():
 @require_auth
 def mark_notification_read(notification_id):
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     visible = _query_notifications_for_user(user_id, community_id, auth_context).filter(Notification.id == notification_id).first()
     if not visible:
@@ -12350,6 +12359,7 @@ def mark_notification_read(notification_id):
 @require_auth
 def mark_all_notifications_read():
     user_id = session.get('user_id')
+    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     now = datetime.utcnow()
     rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
