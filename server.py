@@ -419,7 +419,7 @@ def verify_api_token(token):
 
 @app.before_request
 def hydrate_bearer_token_session():
-    if session.get('user_id') or not request.path.startswith('/api/'):
+    if not request.path.startswith('/api/'):
         return None
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.lower().startswith('bearer '):
@@ -428,6 +428,8 @@ def hydrate_bearer_token_session():
     if not verified:
         return None
     user, payload = verified
+    if session.get('user_id') != user.id:
+        session.clear()
     _session_hydrate_user(user)
     community_id = payload.get('community_id')
     if community_id:
