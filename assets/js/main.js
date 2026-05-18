@@ -625,8 +625,20 @@ async function loadData() {
 
 function requestDataRefresh(options = {}) {
   if (options.force) loadData._forceNext = true;
+  requestDataRefresh._waiters = requestDataRefresh._waiters || [];
   clearTimeout(requestDataRefresh._timer);
-  requestDataRefresh._timer = setTimeout(() => { loadData(); }, options.delayMs || 125);
+  return new Promise((resolve) => {
+    requestDataRefresh._waiters.push(resolve);
+    requestDataRefresh._timer = setTimeout(async () => {
+      try {
+        await loadData();
+      } finally {
+        const waiters = requestDataRefresh._waiters || [];
+        requestDataRefresh._waiters = [];
+        waiters.forEach((done) => done());
+      }
+    }, options.delayMs || 125);
+  });
 }
 
 function generateId(prefix) {
@@ -1396,7 +1408,7 @@ async function updateWarrantStatus(warrantId, newStatus) {
     });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant status update failed');
-    requestDataRefresh();
+    await requestDataRefresh();
     updateDashboard();
     renderWarrantsTable();
     addActivity('Warrant Update', `Warrant ${warrantId} marked as ${newStatus}`);
@@ -1424,7 +1436,7 @@ async function generateWarrantPdf(warrantId) {
     const res = await fetch(`/api/cad/warrants/${encodeURIComponent(warrantId)}/generate-pdf`, { method: 'POST', credentials: 'include' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Warrant PDF generation failed');
-    requestDataRefresh();
+    await requestDataRefresh();
     renderWarrantsTable();
     if (typeof renderEvidenceTable === 'function') renderEvidenceTable();
     showToast('Warrant PDF generated. Added to evidence log.', 'success');
@@ -2065,6 +2077,7 @@ function handleWarrantForm() {
       showFormMessage(form, 'Creating warrant…', 'info');
       const data = getFormData(form);
       const warrant = await addWarrant(data);
+      await requestDataRefresh();
       updateDashboard();
       renderWarrantsTable();
       addActivity('Warrant', `Warrant issued for ${warrant.subject_name || data.subject_name} - ${warrant.charges_or_basis || data.charges_or_basis}`);
