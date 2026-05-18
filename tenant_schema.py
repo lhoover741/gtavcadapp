@@ -115,18 +115,59 @@ def ensure_tenant_community_columns(cursor, tables: Iterable[str] = None) -> Non
 
 
 def backfill_default_community(cursor, tables: Iterable[str] = None) -> None:
-    """Backfill community_id only where it is NULL."""
-    for table_name in tables or TENANT_TABLES:
+    """Backfill community_id only where it is NULL using per-table savepoints."""
+    for index, table_name in enumerate(tables or TENANT_TABLES):
         if not table_exists(cursor, table_name):
             logger.info('✓ %s not present; skipping community_id backfill', table_name)
             continue
 
-        cursor.execute(
-            f'UPDATE {_quote_identifier(table_name)} '
-            'SET community_id = %s WHERE community_id IS NULL',
-            (DEFAULT_COMMUNITY_ID,),
-        )
-        logger.info('✓ community_id backfill complete for %s (%s rows)', table_name, cursor.rowcount)
+        savepoint_name = f'community_backfill_{index}_{table_name}'
+        cursor.execute(f'SAVEPOINT {savepoint_name}')
+
+        try:
+            if table_name == 'config':
+                # Avoid duplicate (key, community_id) violations during repeat deploys.
+                cursor.execute(
+                    f'''
+                    UPDATE {_quote_identifier(table_name)} c
+                    SET community_id = %s
+                    WHERE c.community_id IS NULL
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM {_quote_identifier(table_name)} existing
+                          WHERE existing.key = c.key
+                            AND existing.community_id = %s
+                      )
+                    ''',
+                    (DEFAULT_COMMUNITY_ID, DEFAULT_COMMUNITY_ID),
+                )
+            else:
+                cursor.execute(
+                    f'UPDATE {_quote_identifier(table_name)} '
+                    'SET community_id = %s WHERE community_id IS NULL',
+                    (DEFAULT_COMMUNITY_ID,),
+                )
+
+            rows_updated = cursor.rowcount
+            cursor.execute(
+                f'SELECT COUNT(*) FROM {_quote_identifier(table_name)} WHERE community_id IS NULL'
+            )
+            remaining_null_rows = int(cursor.fetchone()[0])
+            cursor.execute(f'RELEASE SAVEPOINT {savepoint_name}')
+            logger.info(
+                '✓ community_id backfill complete for %s (%s rows updated, %s NULL remaining)',
+                table_name,
+                rows_updated,
+                remaining_null_rows,
+            )
+        except Exception as error:
+            cursor.execute(f'ROLLBACK TO SAVEPOINT {savepoint_name}')
+            cursor.execute(f'RELEASE SAVEPOINT {savepoint_name}')
+            logger.exception(
+                '✗ community_id backfill failed for %s; rolled back this table only: %s',
+                table_name,
+                error,
+            )
 
 
 def ensure_tenant_indexes(cursor, tables: Iterable[str] = None) -> None:
