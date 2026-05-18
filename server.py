@@ -110,6 +110,22 @@ ACTIVE_SOCKET_CONNECTIONS = {}
 SOCKET_AUTH_CONTEXT = {}
 SOCKET_RATE_LIMITS = {}
 WEBSOCKET_EVENTS_PER_MINUTE = 120
+SESSION_CONTEXT_CACHE = {}
+MOBILE_CONTEXT_CACHE = {}
+
+
+def _cache_get(store, key):
+    row = store.get(key)
+    if not row:
+        return None
+    if row.get('expires_at', 0) < time.time():
+        store.pop(key, None)
+        return None
+    return row.get('value')
+
+
+def _cache_put(store, key, value, ttl_seconds=10):
+    store[key] = {'value': value, 'expires_at': time.time() + max(int(ttl_seconds), 1)}
 
 
 def _safe_json_error(message, code, status=400, details=None):
@@ -411,7 +427,13 @@ def verify_api_token(token):
         user_id = int(payload.get('sub'))
     except (TypeError, ValueError):
         return None
-    user = User.query.get(user_id)
+    community_id = get_current_community_id()
+    cache_key = (user_id, community_id, bool(session.get('impersonating_community_id')))
+    cached = _cache_get(SESSION_CONTEXT_CACHE, cache_key)
+    if cached:
+        return jsonify(cached)
+
+    user = User.query.options(db.load_only(User.id, User.username, User.email, User.role, User.platform_role, User.active)).filter_by(id=user_id).first()
     if not user or not getattr(user, 'active', False):
         return None
     return user, payload
@@ -2572,7 +2594,7 @@ def _civilian_exact_name(civilian):
 
 
 def _dashboard_vehicle_rows(civilian, community_id):
-    rows = scoped_query(Vehicle, community_id).filter_by(owner_civilian_id=civilian.civilian_id).order_by(Vehicle.created_at.desc()).all()
+    rows = scoped_query(Vehicle, community_id).filter_by(owner_civilian_id=civilian.civilian_id).order_by(Vehicle.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
     vehicles = [{
         'plate': v.plate or '',
         'make': v.make or '',
@@ -2599,7 +2621,7 @@ def _dashboard_license_rows(civilian, community_id):
     full_name = _civilian_exact_name(civilian)
     licenses = []
     if full_name:
-        rows = scoped_query(License, community_id).filter(func.lower(License.owner_name) == full_name).order_by(License.created_at.desc()).all()
+        rows = scoped_query(License, community_id).filter(func.lower(License.owner_name) == full_name).order_by(License.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
         licenses = [{
             'license_type': l.license_type or '',
             'status': l.status or 'Valid',
@@ -2627,7 +2649,7 @@ def _dashboard_citation_rows(civilian, community_id):
         'status': c.status or 'Issued',
         'issued_date': c.created_at.isoformat() if c.created_at else None,
         'court_required': False,
-    } for c in scoped_query(Citation, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Citation.created_at.desc()).all()]
+    } for c in scoped_query(Citation, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Citation.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
 
 
 def _dashboard_fine_rows(citations):
@@ -2650,7 +2672,7 @@ def _dashboard_arrest_rows(civilian, community_id):
         'jail_time': a.penalty or '',
         'fine': '',
         'public_notes': '',
-    } for a in scoped_query(Arrest, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Arrest.created_at.desc()).all()]
+    } for a in scoped_query(Arrest, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Arrest.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
 
 
 def _dashboard_jail_rows(civilian, community_id):
@@ -2663,7 +2685,7 @@ def _dashboard_jail_rows(civilian, community_id):
         'jail_time': j.sentence_length or '',
         'fine': PENDING_FINE if j.sentence_length == PENDING_SENTENCE else (j.bond_amount if j.bond_amount is not None else ''),
         'release_date': j.release_date.isoformat() if j.release_date else None,
-    } for j in scoped_query(JailBooking, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(JailBooking.created_at.desc()).all()]
+    } for j in scoped_query(JailBooking, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(JailBooking.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     inmates = [{
         'booking_id': i.inmate_id,
         'arrest_id': i.arrest_id or '',
@@ -2673,7 +2695,7 @@ def _dashboard_jail_rows(civilian, community_id):
         'jail_time': i.penalty or '',
         'fine': '',
         'release_date': i.released_at.isoformat() if i.released_at else None,
-    } for i in scoped_query(Inmate, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Inmate.booked_at.desc()).all()]
+    } for i in scoped_query(Inmate, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Inmate.booked_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     return bookings + inmates
 
 
@@ -2701,8 +2723,9 @@ def _warrant_matches_civilian(warrant, civilian):
 
 
 def _dashboard_served_warrant_rows(civilian, community_id):
-    direct = scoped_query(Warrant, community_id).filter_by(civilian_id=civilian.civilian_id).all()
-    named = scoped_query(Warrant, community_id).filter(or_(Warrant.subject_name.ilike(_civilian_full_name(civilian)), Warrant.warrant_name.ilike(_civilian_full_name(civilian)))).all()
+    lim = _limit_param(default=40, maximum=150)
+    direct = scoped_query(Warrant, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Warrant.created_at.desc()).limit(lim).all()
+    named = scoped_query(Warrant, community_id).filter(or_(Warrant.subject_name.ilike(_civilian_full_name(civilian)), Warrant.warrant_name.ilike(_civilian_full_name(civilian)))).order_by(Warrant.created_at.desc()).limit(lim).all()
     seen = {}
     for warrant in direct + named:
         if _is_served_warrant_for_civilian(warrant) and _warrant_matches_civilian(warrant, civilian):
@@ -2728,7 +2751,7 @@ def _dashboard_court_rows(civilian, community_id):
         'status': h.status or 'Scheduled',
         'outcome': h.outcome or '',
         'hearing_type': _display_hearing_type(h.hearing_type),
-    } for h in scoped_query(Hearing, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Hearing.created_at.desc()).all()]
+    } for h in scoped_query(Hearing, community_id).filter_by(civilian_id=civilian.civilian_id).order_by(Hearing.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     case_rows = [{
         'hearing_date': cf.court_date.isoformat() if cf.court_date else '',
         'courtroom': '',
@@ -2736,7 +2759,7 @@ def _dashboard_court_rows(civilian, community_id):
         'status': cf.status or 'open',
         'outcome': cf.outcome or '',
         'hearing_type': cf.case_type or 'Court',
-    } for cf in scoped_query(CaseFile, community_id).filter_by(defendant_civilian_id=civilian.civilian_id).filter(CaseFile.court_date.isnot(None)).order_by(CaseFile.court_date.desc()).all()]
+    } for cf in scoped_query(CaseFile, community_id).filter_by(defendant_civilian_id=civilian.civilian_id).filter(CaseFile.court_date.isnot(None)).order_by(CaseFile.court_date.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     return hearings + case_rows
 
 
@@ -2745,7 +2768,7 @@ def _dashboard_complaint_rows(civilian, community_id, user):
     identifiers.discard('')
     if not identifiers:
         return []
-    rows = scoped_query(Complaint, community_id).filter(func.lower(Complaint.complaint_discord).in_(identifiers)).order_by(Complaint.submitted_at.desc()).all()
+    rows = scoped_query(Complaint, community_id).filter(func.lower(Complaint.complaint_discord).in_(identifiers)).order_by(Complaint.submitted_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
     return [{
         'complaint_id': c.complaint_id,
         'category': c.complaint_type or '',
@@ -2851,14 +2874,14 @@ def load_cad_data():
     vehicles    = [vehicle_to_dict(v)      for v in scoped_query(Vehicle, community_id).order_by(Vehicle.created_at).all()]
     licenses    = [license_to_dict(l)      for l in scoped_query(License, community_id).order_by(License.created_at).all()]
     warrants    = [warrant_to_dict(w)      for w in scoped_query(Warrant, community_id).order_by(Warrant.created_at.desc()).all()]
-    arrests     = [arrest_to_dict(a)       for a in scoped_query(Arrest, community_id).order_by(Arrest.created_at.desc()).all()]
+    arrests     = [arrest_to_dict(a)       for a in scoped_query(Arrest, community_id).order_by(Arrest.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     incidents   = [incident_to_dict(i)     for i in scoped_query(Incident, community_id).order_by(Incident.created_at.desc()).all()]
     evidence    = [evidence_to_dict(e)     for e in scoped_query(Evidence, community_id).order_by(Evidence.created_at.desc()).all()]
     traffic     = [traffic_stop_to_dict(t) for t in scoped_query(TrafficStop, community_id).order_by(TrafficStop.created_at.desc()).all()]
     calls911    = [call911_to_dict(c)      for c in scoped_query(Call911, community_id).order_by(Call911.created_at.desc()).all()]
     activity    = [activity_log_to_dict(a) for a in scoped_query(ActivityLog, community_id).order_by(ActivityLog.created_at.desc()).limit(200).all()]
-    hearings    = [hearing_to_dict(h)      for h in scoped_query(Hearing, community_id).order_by(Hearing.created_at.desc()).all()]
-    jail_records = [jail_booking_to_dict(j) for j in scoped_query(JailBooking, community_id).order_by(JailBooking.created_at.desc()).all()]
+    hearings    = [hearing_to_dict(h)      for h in scoped_query(Hearing, community_id).order_by(Hearing.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
+    jail_records = [jail_booking_to_dict(j) for j in scoped_query(JailBooking, community_id).order_by(JailBooking.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     officer_sessions = scoped_query(OfficerSession, community_id).filter(OfficerSession.status != 'Off Duty').order_by(OfficerSession.updated_at.desc()).all()
     officers = [
         {
@@ -3361,7 +3384,7 @@ def send_application_discord(app):
 
 
 def load_complaints():
-    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).all()
+    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
     return [complaint_to_dict(c) for c in complaints]
 
 
@@ -3756,7 +3779,13 @@ def user_session():
         logger.info("Auth session check has_user_id=false authenticated=false reason=missing_user_id")
         return jsonify({'success': False, 'authenticated': False, 'error': 'Session expired', 'code': 'SESSION_EXPIRED'}), 401
 
-    user = User.query.get(user_id)
+    community_id = get_current_community_id()
+    cache_key = (user_id, community_id, bool(session.get('impersonating_community_id')))
+    cached = _cache_get(SESSION_CONTEXT_CACHE, cache_key)
+    if cached:
+        return jsonify(cached)
+
+    user = User.query.options(db.load_only(User.id, User.username, User.email, User.role, User.platform_role, User.active)).filter_by(id=user_id).first()
     if not user or not user.active:
         logger.info("Auth session check has_user_id=true user_id=%s authenticated=false reason=user_inactive_or_missing", user_id)
         session.clear()
@@ -3771,7 +3800,7 @@ def user_session():
     requires_community_setup = False if owner else not bool(community_id)
     redirect_target = get_post_login_redirect(owner, community_slug, requires_community_setup)
     logger.info("Auth session check has_user_id=true user_id=%s authenticated=true is_platform_owner=%s", user_id, owner)
-    return jsonify({
+    payload = {
         'success': True,
         'authenticated': True,
         'user': {
@@ -3791,7 +3820,9 @@ def user_session():
             'can_access_police_cad': _safe_user_can_access_police_cad(owner, community_role, user=user, membership=membership),
         },
         'redirect': redirect_target,
-    })
+    }
+    _cache_put(SESSION_CONTEXT_CACHE, cache_key, payload, ttl_seconds=8)
+    return jsonify(payload)
 
 
 @app.route('/api/debug/session', methods=['GET'])
@@ -4242,7 +4273,7 @@ def list_complaints():
     if denied:
         return denied
     community_id = authz['community_id']
-    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).all()
+    complaints = scoped_query(Complaint, community_id).order_by(Complaint.submitted_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
     result = [complaint_to_dict(c) for c in complaints]
     return jsonify({'success': True, 'complaints': result, 'total': len(result)})
 
@@ -6765,7 +6796,7 @@ def get_all_vehicles():
     community_id = authz['community_id']
     """List all vehicles in DMV database."""
     try:
-        vehicles = scoped_query(Vehicle).order_by(Vehicle.created_at.desc()).all()
+        vehicles = scoped_query(Vehicle).order_by(Vehicle.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
         result = [vehicle_to_dict(v) for v in vehicles]
         return jsonify({'success': True, 'vehicles': result, 'total': len(result)})
     except Exception as e:
@@ -6906,7 +6937,7 @@ def get_all_licenses():
     community_id = authz['community_id']
     """List all licenses in DMV database."""
     try:
-        licenses = scoped_query(License).order_by(License.created_at.desc()).all()
+        licenses = scoped_query(License).order_by(License.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()
         result = [license_to_dict(l) for l in licenses]
         return jsonify({'success': True, 'licenses': result, 'total': len(result)})
     except Exception as e:
@@ -8620,7 +8651,6 @@ def _can_access_module(module, allowed_modules):
 
 def _active_authz_context():
     user_id = session.get('user_id')
-    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     membership = auth_context.get('membership')
     allowed_modules = _module_policy_for_auth_context(getattr(g, 'current_user', None), getattr(g, 'community', None), membership, auth_context)
@@ -11023,10 +11053,10 @@ def cad_warrant_find_civilian():
 def _criminal_record_for_civilian(civilian, community_id):
     full_name = _civilian_full_name(civilian)
     warrants = [warrant_to_dict(w) for w in scoped_query(Warrant, community_id).filter(or_(Warrant.civilian_id == civilian.civilian_id, Warrant.subject_name.ilike(full_name), Warrant.warrant_name.ilike(full_name))).order_by(Warrant.created_at.desc()).all() if _warrant_matches_civilian(w, civilian) or (w.civilian_id == civilian.civilian_id)]
-    arrests = [arrest_to_dict(a) for a in scoped_query(Arrest, community_id).filter(or_(Arrest.civilian_id == civilian.civilian_id, Arrest.suspect_name.ilike(full_name))).order_by(Arrest.created_at.desc()).all()]
-    citations = [citation_to_dict(c) for c in scoped_query(Citation, community_id).filter(Citation.civilian_id == civilian.civilian_id).order_by(Citation.created_at.desc()).all()]
-    jail_records = [jail_booking_to_dict(j) for j in scoped_query(JailBooking, community_id).filter(or_(JailBooking.civilian_id == civilian.civilian_id, JailBooking.suspect_name.ilike(full_name))).order_by(JailBooking.created_at.desc()).all()]
-    hearings = [hearing_to_dict(h) for h in scoped_query(Hearing, community_id).filter(or_(Hearing.civilian_id == civilian.civilian_id, Hearing.suspect_name.ilike(full_name))).order_by(Hearing.created_at.desc()).all()]
+    arrests = [arrest_to_dict(a) for a in scoped_query(Arrest, community_id).filter(or_(Arrest.civilian_id == civilian.civilian_id, Arrest.suspect_name.ilike(full_name))).order_by(Arrest.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
+    citations = [citation_to_dict(c) for c in scoped_query(Citation, community_id).filter(Citation.civilian_id == civilian.civilian_id).order_by(Citation.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
+    jail_records = [jail_booking_to_dict(j) for j in scoped_query(JailBooking, community_id).filter(or_(JailBooking.civilian_id == civilian.civilian_id, JailBooking.suspect_name.ilike(full_name))).order_by(JailBooking.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
+    hearings = [hearing_to_dict(h) for h in scoped_query(Hearing, community_id).filter(or_(Hearing.civilian_id == civilian.civilian_id, Hearing.suspect_name.ilike(full_name))).order_by(Hearing.created_at.desc()).limit(_limit_param(default=25, maximum=100)).all()]
     traffic_stops = [traffic_stop_to_dict(t) for t in scoped_query(TrafficStop, community_id).filter(TrafficStop.driver_name.ilike(full_name)).order_by(TrafficStop.created_at.desc()).all()]
     cases = [_case_to_dict(c) for c in scoped_query(CaseFile, community_id).filter(CaseFile.defendant_civilian_id == civilian.civilian_id).order_by(CaseFile.created_at.desc()).all()]
     evidence_count = scoped_query(EvidenceAttachment, community_id).filter(EvidenceAttachment.is_deleted.is_(False), or_(EvidenceAttachment.case_id.in_([c.get('case_id') for c in cases] or ['']), EvidenceAttachment.arrest_id.in_([a.get('id') for a in arrests] or ['']), EvidenceAttachment.warrant_id.in_([w.get('warrant_id') for w in warrants] or ['']))).count()
@@ -12209,8 +12239,12 @@ def unregister_push_token():
 @require_auth
 def mobile_context():
     user_id = session.get('user_id')
-    user = User.query.get(user_id) if isinstance(user_id, int) else None
     community_id = get_current_community_id()
+    cache_key = (user_id, community_id, bool(session.get('impersonating_community_id')))
+    cached = _cache_get(MOBILE_CONTEXT_CACHE, cache_key)
+    if cached:
+        return jsonify(cached)
+    user = User.query.get(user_id) if isinstance(user_id, int) else None
     auth_context = get_active_community_auth_context(user_id, community_id)
     membership = auth_context.get('membership')
     community = Community.query.filter_by(community_id=community_id).first() if community_id else None
@@ -12219,14 +12253,16 @@ def mobile_context():
         community_slug = getattr(community, 'slug', None) or getattr(community, 'community_slug', None)
     allowed_modules = _module_policy_for_auth_context(user, community, membership, auth_context)
     unread_count = 0
-    notif_context = get_active_community_auth_context(user_id, community_id)
-    rows = _query_notifications_for_user(user_id, community_id, notif_context).all() if isinstance(user_id, int) else []
-    notif_ids = [n.id for n in rows]
-    read_ids = set()
-    if notif_ids and isinstance(user_id, int):
-        read_ids = {r.notification_id for r in NotificationRecipient.query.filter(NotificationRecipient.user_id == user_id, NotificationRecipient.notification_id.in_(notif_ids), NotificationRecipient.read_at.isnot(None)).all()}
-    unread_count = len([nid for nid in notif_ids if nid not in read_ids])
-    return jsonify({
+    if isinstance(user_id, int):
+        total = _query_notifications_for_user(user_id, community_id, auth_context).count()
+        visible_subquery = db.session.query(Notification.id).filter(_notification_visibility_filter(user_id, community_id, auth_context)).subquery()
+        read = db.session.query(NotificationRecipient.notification_id).filter(
+            NotificationRecipient.user_id == user_id,
+            NotificationRecipient.read_at.isnot(None),
+            NotificationRecipient.notification_id.in_(db.session.query(visible_subquery.c.id))
+        ).distinct().count()
+        unread_count = max(total - read, 0)
+    payload = {
         'success': True,
         'user': {
             'id': user.id if user else None,
@@ -12247,13 +12283,14 @@ def mobile_context():
             'cad_name': getattr(community, 'cad_name', None) if community else None,
             'logo_url': '/assets/images/gtavcad-logo.png',
         },
-    })
+    }
+    _cache_put(MOBILE_CONTEXT_CACHE, cache_key, payload, ttl_seconds=8)
+    return jsonify(payload)
 
 @app.route('/api/notifications', methods=['GET'])
 @require_auth
 def get_notifications():
     user_id = session.get('user_id')
-    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     category = (request.args.get('category') or '').strip()
     unread_only = parse_bool(request.args.get('unread'), default=False)
@@ -12279,7 +12316,6 @@ def get_notifications():
 @require_auth
 def notifications_unread_count():
     user_id = session.get('user_id')
-    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     total = _query_notifications_for_user(user_id, community_id, auth_context).count()
     visible_subquery = db.session.query(Notification.id).filter(_notification_visibility_filter(user_id, community_id, auth_context)).subquery()
@@ -12296,7 +12332,6 @@ def notifications_unread_count():
 @require_auth
 def mark_notification_read(notification_id):
     user_id = session.get('user_id')
-    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     visible = _query_notifications_for_user(user_id, community_id, auth_context).filter(Notification.id == notification_id).first()
     if not visible:
@@ -12315,7 +12350,6 @@ def mark_notification_read(notification_id):
 @require_auth
 def mark_all_notifications_read():
     user_id = session.get('user_id')
-    community_id = get_current_community_id()
     auth_context = get_active_community_auth_context(user_id, community_id)
     now = datetime.utcnow()
     rows = _query_notifications_for_user(user_id, community_id, auth_context).all()
