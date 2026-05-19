@@ -84,7 +84,7 @@
     var currentPage = getCurrentPage();
     function tab(id, icon, label, page) {
       var isActive = currentPage === page ? ' active' : '';
-      if (id === 'tab-more') return '<button class="mobile-tab' + isActive + '" id="tab-more" aria-label="More navigation options" onclick="window.mobileMoreMenuOpen()"><span class="tab-icon">' + icon + '</span>' + label + '</button>';
+      if (id === 'tab-more') return '<button class="mobile-tab' + isActive + '" id="tab-more" type="button" data-mobile-more-toggle aria-label="More navigation options" aria-expanded="false"><span class="tab-icon">' + icon + '</span>' + label + '</button>';
       var href = buildCommunityHref(page);
       if (!href) return '';
       return '<a class="mobile-tab' + isActive + '" href="' + href + '" aria-label="' + label + '"><span class="tab-icon">' + icon + '</span>' + label + '</a>';
@@ -110,16 +110,42 @@
     var menu = document.createElement('div');
     menu.id = 'mobile-more-menu';
     menu.className = 'mobile-more-menu';
-    menu.innerHTML = '<div class="more-menu-header"><div class="more-menu-title"><img src="/assets/images/gtavcad-logo.png" alt="GTAVCAD logo" />GTAVCAD</div><button class="more-menu-close" onclick="window.mobileMoreMenuClose()" aria-label="Close menu">✕</button></div><div class="more-menu-links">'
+    menu.innerHTML = '<div class="more-menu-overlay" data-mobile-more-close></div><div class="more-menu-panel"><div class="more-menu-header"><div class="more-menu-title"><img src="/assets/images/gtavcad-logo.png" alt="GTAVCAD logo" />GTAVCAD</div><button class="more-menu-close" type="button" data-mobile-more-close aria-label="Close menu">✕</button></div><div class="more-menu-links">'
       + safeMenuLink('🏠', 'Home', 'home', currentPage) + safeMenuLink('🚔', 'CAD', 'cad', currentPage) + safeMenuLink('👮', 'Police', 'police', currentPage) + safeMenuLink('🪪', 'DMV', 'dmv', currentPage)
       + (hasModule('dispatch') ? safeMenuLink('🚨', 'Dispatch', 'dispatch', currentPage) : '') + (hasModule('businesses') ? safeMenuLink('🏢', 'Businesses', 'businesses', currentPage) : '') + (hasModule('applications') ? safeMenuLink('📋', 'Applications', 'applications', currentPage) : '')
       + (hasModule('complaints') ? safeMenuLink('💬', 'Complaints', 'complaints', currentPage) : '') + (hasModule('donations') ? safeMenuLink('💰', 'Donations', 'donations', currentPage) : '') + safeMenuLink('🗺️', 'Maps / Rules', 'rules', currentPage)
       + safeMenuLink('🌐', 'Communities', 'communities', currentPage) + (hasModule('community_admin') ? safeMenuLink('🛡️', 'Admin Tools', 'community-admin', currentPage) : '') + (hasModule('platform_admin') ? safeMenuLink('👑', 'Platform Admin', 'admin', currentPage) : '')
       + '<a class="more-menu-link" href="https://discord.gg/" target="_blank" rel="noopener noreferrer"><span class="link-icon">💬</span><span class="link-text">Join Discord</span><span class="link-arrow">↗</span></a>'
-      + authLinks + '</div>';
+      + authLinks + '</div></div>';
     document.body.appendChild(menu);
   }
 
+
+  function bindMobileMenuEvents() {
+    if (window.__GTAVCAD_MOBILE_MENU_BOUND__) return;
+    window.__GTAVCAD_MOBILE_MENU_BOUND__ = true;
+    document.addEventListener('click', function(event) {
+      var toggle = event.target.closest('[data-mobile-more-toggle]');
+      if (toggle) {
+        event.preventDefault();
+        window.mobileMoreMenuOpen();
+        return;
+      }
+      var close = event.target.closest('[data-mobile-more-close]');
+      if (close) {
+        event.preventDefault();
+        window.mobileMoreMenuClose();
+        return;
+      }
+      var menuLink = event.target.closest('#mobile-more-menu a.more-menu-link');
+      if (menuLink) {
+        window.mobileMoreMenuClose();
+      }
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') window.mobileMoreMenuClose();
+    });
+  }
 
   function refreshMobileNavigation() {
     window.mobileMoreMenuClose();
@@ -128,6 +154,7 @@
     var existingMenu = document.getElementById('mobile-more-menu');
     if (existingMenu) existingMenu.remove();
     injectMobileNav();
+    bindMobileMenuEvents();
     var topTitle = document.querySelector('.mobile-shell-title');
     if (topTitle) {
       var slug = (window.GTAVCAD_CONTEXT && window.GTAVCAD_CONTEXT.communitySlug) || '';
@@ -135,8 +162,8 @@
     }
   }
 
-  window.mobileMoreMenuOpen = function() { var m=document.getElementById('mobile-more-menu'); if (m) { m.classList.add('open'); document.body.style.overflow='hidden'; } };
-  window.mobileMoreMenuClose = function() { var m=document.getElementById('mobile-more-menu'); if (m) { m.classList.remove('open'); document.body.style.overflow=''; } };
+  window.mobileMoreMenuOpen = function() { var m=document.getElementById('mobile-more-menu'); var t=document.getElementById('tab-more'); if (m) { m.classList.add('open'); document.body.style.overflow='hidden'; } if (t) t.setAttribute('aria-expanded','true'); };
+  window.mobileMoreMenuClose = function() { var m=document.getElementById('mobile-more-menu'); var t=document.getElementById('tab-more'); if (m) { m.classList.remove('open'); document.body.style.overflow=''; } if (t) t.setAttribute('aria-expanded','false'); };
 
   async function injectTopMobileShell() {
     document.body.classList.add('mobile-only-app');
@@ -324,6 +351,7 @@
     } catch (e) {}
     await injectTopMobileShell();
     injectMobileNav();
+    bindMobileMenuEvents();
     tableToCards();
     setupLifecycleStates();
     if (!window.__GTAVCAD_MOBILE_CONTEXT_READY_BOUND__) {
