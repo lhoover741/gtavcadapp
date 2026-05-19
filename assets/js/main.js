@@ -2237,13 +2237,53 @@ function handleVehicleForm() {
 function handleDMVPlateForm() {
   const form = document.getElementById('dmv-plate-form');
   if (!form) return;
-  form.addEventListener('submit', (event) => {
+  if (form.dataset.bound === '1') return;
+  form.dataset.bound = '1';
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const plate = form.querySelector('[name="plateSearch"]').value;
-    const results = lookupVehiclePlate(plate);
-    renderLookupResults(document.getElementById('dmv-plate-results'), results, 'vehicle');
-    document.dispatchEvent(new CustomEvent('gtavcad:dmv-results', { detail: { count: Array.isArray(results) ? results.length : 0 } }));
-    showFormMessage(form, `Found ${results.length} vehicle record(s).`);
+    const status = document.getElementById('dmv-plate-status');
+    const resultsHost = document.getElementById('dmv-plate-results');
+    const button = form.querySelector('button[type="submit"]');
+    const plate = (form.querySelector('[name="plateSearch"]')?.value || '').trim();
+    if (!plate) {
+      showFormMessage(form, 'Enter a plate number first.', true);
+      return;
+    }
+    if (button) button.disabled = true;
+    if (status) { status.className = 'form-status'; status.textContent = 'Searching DMV records…'; }
+    if (resultsHost) resultsHost.innerHTML = '<div class="result-card"><p>Loading…</p></div>';
+    try {
+      const res = await fetch(`/api/dmv/vehicle/plate/${encodeURIComponent(plate)}`, { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Lookup failed (${res.status})`);
+      }
+      const vehicle = data.vehicle || null;
+      const results = vehicle ? [{
+        plate: vehicle.plate || '',
+        vehicleMake: vehicle.make || '',
+        vehicleModel: vehicle.model || '',
+        vehicleColor: vehicle.color || '',
+        vehicleYear: vehicle.year || '',
+        ownerName: vehicle.owner_name || '',
+        registrationStatus: vehicle.registration_status || '',
+        insuranceStatus: vehicle.insurance_status || '',
+      }] : [];
+      renderLookupResults(resultsHost, results, 'vehicle');
+      const count = results.length;
+      document.dispatchEvent(new CustomEvent('gtavcad:dmv-results', { detail: { count } }));
+      if (count === 0) {
+        showFormMessage(form, 'No vehicle found for that plate.', true);
+      } else {
+        showFormMessage(form, `Found ${count} vehicle record(s).`);
+      }
+    } catch (error) {
+      console.error('DMV plate lookup failed:', error);
+      if (resultsHost) resultsHost.innerHTML = `<div class="result-card"><p style="color:var(--accent);">${escapeHtml(error.message || 'Unable to run lookup.')}</p></div>`;
+      showFormMessage(form, `Lookup error: ${error.message || 'Unable to run lookup.'}`, true);
+    } finally {
+      if (button) button.disabled = false;
+    }
   });
 }
 
